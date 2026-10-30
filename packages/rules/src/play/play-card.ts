@@ -43,8 +43,12 @@ function playCard(draft: Draft, state: GameState, action: PlayCard): IllegalReas
   }
 
   // 355.2: choose a valid location: the base, or a battlefield the player controls (355.2.a).
-  // No battlefield has a controller before conquering arrives (M2), so only the base is valid.
-  if (action.location.kind !== 'base') {
+  const location = action.location;
+  const target =
+    location.kind === 'battlefield'
+      ? draft.battlefields.find((b) => b.object === location.battlefield)
+      : null;
+  if (location.kind === 'battlefield' && target?.controller !== action.player) {
     return {
       code: 'invalid-location',
       message: 'A unit enters your base or a battlefield you control',
@@ -64,7 +68,8 @@ function playCard(draft: Draft, state: GameState, action: PlayCard): IllegalReas
   player.zones[from] = player.zones[from].filter((id) => id !== action.card);
   const unit = renewObject(draft, action.card);
   updateObject(draft, unit.id, { exhausted: true });
-  player.zones.base.push(unit.id);
+  if (target === null || target === undefined) player.zones.base.push(unit.id);
+  else target.units.push(unit.id);
   emit(draft, {
     type: 'CardPlayed',
     rule: '359.2.c',
@@ -74,7 +79,7 @@ function playCard(draft: Draft, state: GameState, action: PlayCard): IllegalReas
     previousObject: action.card,
     card: unit.card,
     from,
-    to: 'base',
+    battlefield: target?.object ?? null,
   });
   cleanup(draft); // 319.6: an object entered the board.
   return null;

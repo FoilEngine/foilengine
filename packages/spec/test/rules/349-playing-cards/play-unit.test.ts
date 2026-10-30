@@ -44,7 +44,7 @@ describe('349–359 Playing a unit', () => {
         previousObject: card,
         card: 'test:vanilla-1',
         from: 'hand',
-        to: 'base',
+        battlefield: null,
       });
       const unit = played?.object as ObjectId;
       t.expect(t.player('A').zones.base).toContain(unit);

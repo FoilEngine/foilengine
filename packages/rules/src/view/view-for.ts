@@ -1,6 +1,7 @@
 // viewFor (ADR 0006): what one player is allowed to see. The server sends this, never the state.
 // Privacy follows the zones (107–108, 128): hands are private to their owner (108.7.c),
-// decks are secret to everyone, their owner included (108.4.e, 108.5.d), the rest is public.
+// decks are secret to everyone, their owner included (108.4.e, 108.5.d), the rest is public:
+// bases (107.1.d), battlefields and the permanents there (107.2.c).
 // Objects are shown without `previousObjectId`, which could link a public card to a hidden one.
 
 import type {
@@ -42,7 +43,13 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
         ...publicZones(player),
         hand: { size: player.zones.hand.length },
       };
-      return { id: player.id, points: player.points, runePool: player.runePool, zones };
+      return {
+        id: player.id,
+        points: player.points,
+        runePool: player.runePool,
+        scoredThisTurn: player.scoredThisTurn,
+        zones,
+      };
     });
 
   const decision = pendingDecision(state);
@@ -50,12 +57,23 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
     viewer,
     rulesVersion: state.rulesVersion,
     mode: state.mode,
-    self: { id: self.id, points: self.points, runePool: self.runePool, zones: ownZones },
+    self: {
+      id: self.id,
+      points: self.points,
+      runePool: self.runePool,
+      scoredThisTurn: self.scoredThisTurn,
+      zones: ownZones,
+    },
     opponents,
     turnOrder: state.turnOrder,
-    battlefields: state.battlefields.map((battlefield) =>
-      show(objectOf(state, battlefield.object)),
-    ),
+    battlefields: state.battlefields.map((battlefield) => ({
+      object: show(objectOf(state, battlefield.object)),
+      controller: battlefield.controller,
+      contestedBy: battlefield.contestedBy,
+      showdownStaged: battlefield.showdownStaged,
+      units: visible(battlefield.units),
+    })),
+    showdown: state.showdown,
     stage: state.stage,
     decision: decision !== null && decision.player === viewer ? decision : null,
     winner: state.winner,

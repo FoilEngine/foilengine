@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 3;
+export const STATE_VERSION = 4;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -45,13 +45,32 @@ export type PlayerState = {
   /** Turns this player has started; the First Turn Process of the mode depends on it (485.7). */
   readonly turnsTaken: number;
   readonly runePool: RunePool;
+  /** Battlefields this player has Scored this turn: once per battlefield per turn (472). */
+  readonly scoredThisTurn: readonly ObjectId[];
   /** Ordered zones list the top of the deck first. */
   readonly zones: PlayerZones;
 };
 
-/** A battlefield in the Battlefield Zone (107.2). Control, units and facedown cards arrive with M2. */
+/** A battlefield in the Battlefield Zone (107.2), a location (107.2.b). */
 export type BattlefieldState = {
   readonly object: ObjectId;
+  /** Controlled by a player, or by no one (190.2). */
+  readonly controller: PlayerId | null;
+  /** The player who applied the Contested status (190.3.a), or null when it is not Contested. */
+  readonly contestedBy: PlayerId | null;
+  /** A Showdown is Staged here (323.7), waiting for a Neutral Open State to begin (323.11). */
+  readonly showdownStaged: boolean;
+  /** Units present at this battlefield. Facedown cards (107.3) arrive later. */
+  readonly units: readonly ObjectId[];
+};
+
+/** A Showdown in progress (341–348). The turn is then in a Showdown State (343.1). */
+export type ShowdownState = {
+  readonly battlefield: ObjectId;
+  /** The player with Focus, and so with Priority (313.2). */
+  readonly focus: PlayerId;
+  /** Players who passed in sequence; when all have, the Showdown ends (347.2.a). */
+  readonly passes: number;
 };
 
 /** Phases of the turn (314–317). Start of Turn is split into its four phases (315.1–315.4). */
@@ -88,6 +107,8 @@ export type GameState = {
   /** Looping queue of turns, starting with the First Player (115.1.c). */
   readonly turnOrder: readonly PlayerId[];
   readonly battlefields: readonly BattlefieldState[];
+  /** The Showdown in progress, if any. M2 has no Combat yet. */
+  readonly showdown: ShowdownState | null;
   readonly stage: GameStage;
   readonly winner: PlayerId | null;
 };

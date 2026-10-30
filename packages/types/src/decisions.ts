@@ -1,7 +1,7 @@
 // A Decision is what the engine waits for: who must act, and on what (03-rules-engine.md).
 // It is answered by an Action, never by a callback.
 
-import type { PlayerId, RuleNumber } from './ids.ts';
+import type { ObjectId, PlayerId, RuleNumber } from './ids.ts';
 
 /** The player must choose which cards, if any, to set aside (117.1). */
 export type MulliganDecision = {
@@ -22,4 +22,12 @@ export type PriorityDecision = {
   readonly rule: RuleNumber;
 };
 
-export type Decision = MulliganDecision | PriorityDecision;
+/** The player has Focus in a Showdown (313, 347): play a legally timed card, or pass. */
+export type FocusDecision = {
+  readonly kind: 'Focus';
+  readonly player: PlayerId;
+  readonly battlefield: ObjectId;
+  readonly rule: RuleNumber;
+};
+
+export type Decision = MulliganDecision | PriorityDecision | FocusDecision;

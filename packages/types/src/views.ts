@@ -4,7 +4,7 @@
 import type { Decision } from './decisions.ts';
 import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
-import type { GameStage, RunePool } from './state.ts';
+import type { GameStage, RunePool, ShowdownState } from './state.ts';
 
 /** An object whose face the viewer may see. */
 export type VisibleObject = {
@@ -34,9 +34,19 @@ export type OwnZones = PublicZones & { readonly hand: readonly VisibleObject[] }
 /** Another player's zones: their hand is private to them (108.7.c). */
 export type OpponentZones = PublicZones & { readonly hand: HiddenZone };
 
+/** A battlefield and what is public about it (107.2.c). */
+export type BattlefieldView = {
+  readonly object: VisibleObject;
+  readonly controller: PlayerId | null;
+  readonly contestedBy: PlayerId | null;
+  readonly showdownStaged: boolean;
+  readonly units: readonly VisibleObject[];
+};
+
 export type SelfView = {
   readonly id: PlayerId;
   readonly points: number;
+  readonly scoredThisTurn: readonly ObjectId[];
   readonly runePool: RunePool;
   readonly zones: OwnZones;
 };
@@ -44,6 +54,7 @@ export type SelfView = {
 export type OpponentView = {
   readonly id: PlayerId;
   readonly points: number;
+  readonly scoredThisTurn: readonly ObjectId[];
   /** Rune Pools are public: resources are added by public runes. */
   readonly runePool: RunePool;
   readonly zones: OpponentZones;
@@ -57,7 +68,8 @@ export type PlayerView = {
   /** The other players, in seating order. */
   readonly opponents: readonly OpponentView[];
   readonly turnOrder: readonly PlayerId[];
-  readonly battlefields: readonly VisibleObject[];
+  readonly battlefields: readonly BattlefieldView[];
+  readonly showdown: ShowdownState | null;
   readonly stage: GameStage;
   /** The decision the viewer must make now, if any. */
   readonly decision: Decision | null;

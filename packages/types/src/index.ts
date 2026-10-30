@@ -4,10 +4,13 @@ export type {
   Action,
   ActionType,
   EndTurn,
+  MoveDestination,
   Mulligan,
+  PassFocus,
   PlayCard,
   PlayLocation,
   RuneUse,
+  StandardMove,
 } from './actions.ts';
 export {
   type CardCategory,
@@ -18,16 +21,21 @@ export {
   type PowerSymbol,
   type Supertype,
 } from './cards.ts';
-export type { Decision, MulliganDecision, PriorityDecision } from './decisions.ts';
+export type { Decision, FocusDecision, MulliganDecision, PriorityDecision } from './decisions.ts';
 export {
+  type BattlefieldContested,
+  type BattlefieldScored,
   type BattlefieldSelected,
   type BurnedOut,
   type CardDrawn,
   type CardPlaced,
   type CardPlayed,
   type CardRecycled,
+  type ControlEstablished,
+  type ControlLost,
   type DeckShuffled,
   type EventOfType,
+  type FocusPassed,
   type GameCreated,
   type GameEvent,
   type GameEventType,
@@ -45,9 +53,12 @@ export {
   type RuneChanneled,
   type RunePoolEmptied,
   type SetupCompleted,
+  type ShowdownEnded,
+  type ShowdownStarted,
   type TurnEnded,
   type TurnOrderDetermined,
   type TurnStarted,
+  type UnitsMoved,
   type Visibility,
   type VisibleEvent,
 } from './events.ts';
@@ -64,10 +75,12 @@ export {
   type PlayerZones,
   type RngState,
   type RunePool,
+  type ShowdownState,
   STATE_VERSION,
   type TurnPhase,
 } from './state.ts';
 export type {
+  BattlefieldView,
   HiddenZone,
   OpponentView,
   OpponentZones,

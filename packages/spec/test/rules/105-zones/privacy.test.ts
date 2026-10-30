@@ -47,7 +47,7 @@ describe('105–108 zones and 128 privacy, as seen by a player', () => {
   });
 
   it('rule 107.2.c: the battlefields are public', () => {
-    expect(view.battlefields.map((b) => b.owner)).toEqual([A, B]);
+    expect(view.battlefields.map((b) => b.object.owner)).toEqual([A, B]);
     expect(viewFor(state, B).battlefields).toEqual(view.battlefields);
   });
 

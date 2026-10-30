@@ -141,7 +141,66 @@ export type CardPlayed = EventBase & {
   readonly previousObject: ObjectId;
   readonly card: CardId;
   readonly from: PlayerZoneId;
-  readonly to: PlayerZoneId;
+  /** The battlefield it entered, or null for its controller's base. */
+  readonly battlefield: ObjectId | null;
+};
+
+/** Units moved to one destination (144, 448). */
+export type UnitsMoved = EventBase & {
+  readonly type: 'UnitsMoved';
+  readonly player: PlayerId;
+  readonly units: readonly ObjectId[];
+  /** The battlefield they moved to, or null for their base. */
+  readonly battlefield: ObjectId | null;
+};
+
+/** A battlefield became Contested (190.3.a, 452). */
+export type BattlefieldContested = EventBase & {
+  readonly type: 'BattlefieldContested';
+  readonly player: PlayerId;
+  readonly battlefield: ObjectId;
+};
+
+/** A Showdown began at a battlefield; `focus` gains Focus (344, 345). */
+export type ShowdownStarted = EventBase & {
+  readonly type: 'ShowdownStarted';
+  readonly battlefield: ObjectId;
+  readonly focus: PlayerId;
+};
+
+/** The player with Focus passed (347.2); `next` gains Focus, or null when the Showdown ends. */
+export type FocusPassed = EventBase & {
+  readonly type: 'FocusPassed';
+  readonly player: PlayerId;
+  readonly next: PlayerId | null;
+};
+
+/** A Showdown closed (348). */
+export type ShowdownEnded = EventBase & {
+  readonly type: 'ShowdownEnded';
+  readonly battlefield: ObjectId;
+};
+
+/** A player established Control of a battlefield (190.4, 348.2.a). */
+export type ControlEstablished = EventBase & {
+  readonly type: 'ControlEstablished';
+  readonly player: PlayerId;
+  readonly battlefield: ObjectId;
+};
+
+/** A player lost Control of a battlefield (190.4.c, 323.5). */
+export type ControlLost = EventBase & {
+  readonly type: 'ControlLost';
+  readonly player: PlayerId;
+  readonly battlefield: ObjectId;
+};
+
+/** A player Scored a battlefield, by Conquer or Hold (471). */
+export type BattlefieldScored = EventBase & {
+  readonly type: 'BattlefieldScored';
+  readonly player: PlayerId;
+  readonly battlefield: ObjectId;
+  readonly method: 'conquer' | 'hold';
 };
 
 /** A turn began (301, 315). */
@@ -225,7 +284,15 @@ export type GameEvent =
   | ResourcesAdded
   | ResourcesPaid
   | RunePoolEmptied
-  | CardPlayed;
+  | CardPlayed
+  | UnitsMoved
+  | BattlefieldContested
+  | ShowdownStarted
+  | FocusPassed
+  | ShowdownEnded
+  | ControlEstablished
+  | ControlLost
+  | BattlefieldScored;
 
 export type GameEventType = GameEvent['type'];
 
@@ -255,6 +322,14 @@ export const PRIVATE_EVENT_FIELDS = {
   ResourcesPaid: [],
   RunePoolEmptied: [],
   CardPlayed: [],
+  UnitsMoved: [],
+  BattlefieldContested: [],
+  ShowdownStarted: [],
+  FocusPassed: [],
+  ShowdownEnded: [],
+  ControlEstablished: [],
+  ControlLost: [],
+  BattlefieldScored: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */

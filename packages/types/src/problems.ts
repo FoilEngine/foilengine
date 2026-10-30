@@ -23,7 +23,11 @@ export type IllegalCode =
   /** A rune of the payment cannot be used as requested. */
   | 'invalid-payment'
   /** The resources in the Rune Pool do not cover the cost (358.2). */
-  | 'cannot-pay';
+  | 'cannot-pay'
+  /** A unit of the move cannot make it: not yours, not ready, or not at a valid origin (144). */
+  | 'invalid-move'
+  /** The rules allow it, but the engine does not implement it yet (the reason names what is missing). */
+  | 'not-implemented';
 
 /** Why an action is illegal, with the rule that forbids it when there is one. */
 export type IllegalReason = {
