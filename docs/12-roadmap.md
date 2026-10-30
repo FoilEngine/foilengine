@@ -6,12 +6,12 @@ L'ordre est dicté par les dépendances : le moteur d'abord, testé, puis tout c
 
 ## M0 — Outillage
 
-- [ ] Monorepo pnpm + Turborepo, TypeScript strict (`tsconfig.base.json` : `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
-- [ ] Biome (lint et format), Vitest, fast-check.
-- [ ] CI GitHub Actions : install, lint, typecheck, test, sur chaque PR et sur `main`.
-- [ ] Vérification des règles de dépendance entre packages (`01-architecture.md`) en CI.
-- [ ] Conventional Commits vérifiés (commitlint) et modèles d'issues et de PR.
-- [ ] Les PDF des Core Rules et des Tournament Rules dans `docs/rules/`.
+- [x] Monorepo pnpm + Turborepo, TypeScript strict (`tsconfig.base.json` : `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
+- [x] Biome (lint et format), Vitest, fast-check.
+- [x] CI GitHub Actions : install, lint, typecheck, test, sur chaque PR et sur `main`.
+- [x] Vérification des règles de dépendance entre packages (`01-architecture.md`) en CI.
+- [x] Conventional Commits vérifiés (commitlint) et modèles d'issues et de PR.
+- [x] Les PDF des Core Rules et des Tournament Rules dans `docs/rules/`.
 
 **Accepté quand** : `pnpm install && pnpm lint && pnpm typecheck && pnpm test` passe en local et en CI sur un repo sans code métier.
 
