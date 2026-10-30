@@ -6,6 +6,21 @@ export {
   testSetup,
 } from './cards/test-cards.ts';
 export {
+  BoardBuilder,
+  BoardError,
+  board,
+  type CardRef,
+  type PlayerLayout,
+  resolveCard,
+} from './harness/board.ts';
+export { currentCoreRules, ruleExists } from './harness/core-rules.ts';
+export {
+  checkScenarioDefinition,
+  type ScenarioContext,
+  type ScenarioDefinition,
+  scenario,
+} from './harness/scenario.ts';
+export {
   CORE_RULES_INDEX_FORMAT,
   type CoreRule,
   type CoreRulesIndex,
