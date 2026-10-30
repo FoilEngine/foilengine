@@ -14,6 +14,7 @@ import type {
   RngState,
 } from '@foilengine/types';
 import { EngineInvariantError } from './errors.ts';
+import { copyPool } from './resources/rune-pool.ts';
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
@@ -22,7 +23,13 @@ export type EventInput = DistributiveOmit<GameEvent, 'seq'>;
 
 type MutableZones = { [Z in PlayerZoneId]: ObjectId[] };
 
-export type DraftPlayer = { id: PlayerId; points: number; turnsTaken: number; zones: MutableZones };
+export type DraftPlayer = {
+  id: PlayerId;
+  points: number;
+  turnsTaken: number;
+  runePool: ReturnType<typeof copyPool>;
+  zones: MutableZones;
+};
 
 export type Draft = {
   rng: RngState;
@@ -46,6 +53,7 @@ export function draftOf(state: GameState): Draft {
       id: player.id,
       points: player.points,
       turnsTaken: player.turnsTaken,
+      runePool: copyPool(player.runePool),
       zones: {
         base: [...player.zones.base],
         legendZone: [...player.zones.legendZone],
@@ -77,6 +85,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
         id: player.id,
         points: player.points,
         turnsTaken: player.turnsTaken,
+        runePool: player.runePool,
         zones: player.zones,
       }),
     ),

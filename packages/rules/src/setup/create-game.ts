@@ -14,6 +14,7 @@ import {
 } from '@foilengine/types';
 import { drawCards } from '../actions/draw.ts';
 import { createObject, type Draft, emit, emptyZones, playerOf, stateOf } from '../draft.ts';
+import { emptyPool } from '../resources/rune-pool.ts';
 import { createRng, nextInt, shuffle } from '../rng/xoshiro128.ts';
 import { validateSetup } from './validate-setup.ts';
 
@@ -41,6 +42,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
       id: player.id,
       points: 0,
       turnsTaken: 0,
+      runePool: emptyPool(),
       zones: emptyZones(),
     })),
     turnOrder: [],

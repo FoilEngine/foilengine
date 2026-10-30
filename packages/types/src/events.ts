@@ -5,6 +5,7 @@
 // "a card was drawn" without learning which one. Object ids of private cards are
 // private too: they would let a player follow a card they cannot see.
 
+import type { Domain } from './cards.ts';
 import type { CardId, ObjectId, PlayerId, RuleNumber, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { TurnPhase } from './state.ts';
@@ -94,6 +95,55 @@ export type SetupCompleted = EventBase & {
   readonly firstPlayer: PlayerId;
 };
 
+/** Resources, as added to or removed from a Rune Pool. */
+export type Resources = {
+  readonly energy: number;
+  readonly power: { readonly [D in Domain | 'any']?: number };
+};
+
+/** A game object on the board was exhausted (415). */
+export type ObjectExhausted = EventBase & {
+  readonly type: 'ObjectExhausted';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+};
+
+/** Resources were added to a player's Rune Pool (430, 166.1). */
+export type ResourcesAdded = EventBase & {
+  readonly type: 'ResourcesAdded';
+  readonly player: PlayerId;
+  /** The rune whose ability added them. */
+  readonly source: ObjectId;
+  readonly resources: Resources;
+};
+
+/** Resources were paid from a player's Rune Pool (445, 357.1). */
+export type ResourcesPaid = EventBase & {
+  readonly type: 'ResourcesPaid';
+  readonly player: PlayerId;
+  readonly resources: Resources;
+};
+
+/** A Rune Pool emptied (167); the unspent resources are lost (167.1). */
+export type RunePoolEmptied = EventBase & {
+  readonly type: 'RunePoolEmptied';
+  readonly player: PlayerId;
+  readonly lost: Resources;
+};
+
+/** A card was played (349–359). For a unit: it entered the board, exhausted (359.2.c). */
+export type CardPlayed = EventBase & {
+  readonly type: 'CardPlayed';
+  readonly player: PlayerId;
+  /** The new object on the board. */
+  readonly object: ObjectId;
+  /** The object the card was in the zone it was played from (hand, Champion Zone). */
+  readonly previousObject: ObjectId;
+  readonly card: CardId;
+  readonly from: PlayerZoneId;
+  readonly to: PlayerZoneId;
+};
+
 /** A turn began (301, 315). */
 export type TurnStarted = EventBase & {
   readonly type: 'TurnStarted';
@@ -170,7 +220,12 @@ export type GameEvent =
   | BurnedOut
   | PointsGained
   | TurnEnded
-  | GameWon;
+  | GameWon
+  | ObjectExhausted
+  | ResourcesAdded
+  | ResourcesPaid
+  | RunePoolEmptied
+  | CardPlayed;
 
 export type GameEventType = GameEvent['type'];
 
@@ -195,6 +250,11 @@ export const PRIVATE_EVENT_FIELDS = {
   PointsGained: [],
   TurnEnded: [],
   GameWon: [],
+  ObjectExhausted: [],
+  ResourcesAdded: [],
+  ResourcesPaid: [],
+  RunePoolEmptied: [],
+  CardPlayed: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */

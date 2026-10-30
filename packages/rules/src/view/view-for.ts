@@ -42,7 +42,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
         ...publicZones(player),
         hand: { size: player.zones.hand.length },
       };
-      return { id: player.id, points: player.points, zones };
+      return { id: player.id, points: player.points, runePool: player.runePool, zones };
     });
 
   const decision = pendingDecision(state);
@@ -50,7 +50,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
     viewer,
     rulesVersion: state.rulesVersion,
     mode: state.mode,
-    self: { id: self.id, points: self.points, zones: ownZones },
+    self: { id: self.id, points: self.points, runePool: self.runePool, zones: ownZones },
     opponents,
     turnOrder: state.turnOrder,
     battlefields: state.battlefields.map((battlefield) =>

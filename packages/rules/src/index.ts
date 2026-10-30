@@ -7,6 +7,8 @@ export {
   DUEL_SECOND_PLAYER_EXTRA_RUNES,
   DUEL_VICTORY_SCORE,
 } from './modes/duel.ts';
+export { autoPayment } from './resources/payment.ts';
+export { payFromPool } from './resources/rune-pool.ts';
 export {
   createRng,
   type Drawn,

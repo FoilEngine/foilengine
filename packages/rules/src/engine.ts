@@ -11,6 +11,8 @@ import {
 } from '@foilengine/types';
 import { draftOf, stateOf } from './draft.ts';
 import { IllegalActionError } from './errors.ts';
+import { applyPlayCard, checkPlayCard } from './play/play-card.ts';
+import { autoPayment } from './resources/payment.ts';
 import {
   applyMulligan,
   checkMulligan,
@@ -22,6 +24,8 @@ import { endTurn } from './turn/turn.ts';
 export type Outcome =
   | { readonly kind: 'ongoing' }
   | { readonly kind: 'won'; readonly winner: PlayerId };
+
+type Legality = { ok: true } | { ok: false; reason: IllegalReason };
 
 /** What the engine waits for now, if anything. */
 export function pendingDecision(state: GameState): Decision | null {
@@ -45,10 +49,32 @@ export function outcome(state: GameState): Outcome {
   return state.winner === null ? { kind: 'ongoing' } : { kind: 'won', winner: state.winner };
 }
 
-export function isLegal(
-  state: GameState,
-  action: Action,
-): { ok: true } | { ok: false; reason: IllegalReason } {
+/** Discretionary Actions need Priority (312.1): the decision must be this player's Priority. */
+function checkPriority(decision: Decision, player: PlayerId): Legality {
+  if (decision.kind !== 'Priority') {
+    return {
+      ok: false,
+      reason: {
+        code: 'wrong-action',
+        message: `Waiting for a ${decision.kind} decision`,
+        rule: null,
+      },
+    };
+  }
+  if (player !== decision.player) {
+    return {
+      ok: false,
+      reason: {
+        code: 'not-your-decision',
+        message: `${decision.player} has Priority`,
+        rule: '312.1',
+      },
+    };
+  }
+  return { ok: true };
+}
+
+export function isLegal(state: GameState, action: Action): Legality {
   const decision = pendingDecision(state);
   if (decision === null) {
     return {
@@ -61,28 +87,13 @@ export function isLegal(
       const reason = checkMulligan(state, action);
       return reason === null ? { ok: true } : { ok: false, reason };
     }
-    case 'EndTurn': {
-      if (decision.kind !== 'Priority') {
-        return {
-          ok: false,
-          reason: {
-            code: 'wrong-action',
-            message: `Waiting for a ${decision.kind} decision`,
-            rule: null,
-          },
-        };
-      }
-      if (action.player !== decision.player) {
-        return {
-          ok: false,
-          reason: {
-            code: 'not-your-decision',
-            message: `${decision.player} has Priority`,
-            rule: '312.1',
-          },
-        };
-      }
-      return { ok: true };
+    case 'EndTurn':
+      return checkPriority(decision, action.player);
+    case 'PlayCard': {
+      const priority = checkPriority(decision, action.player);
+      if (!priority.ok) return priority;
+      const reason = checkPlayCard(state, action);
+      return reason === null ? { ok: true } : { ok: false, reason };
     }
     default:
       return assertNever(action);
@@ -97,8 +108,7 @@ export function legalActions(state: GameState, player: PlayerId): Action[] {
     case 'Mulligan':
       return mulliganActions(state);
     case 'Priority':
-      // Discretionary Actions arrive with M2 (play a unit, move); ending the turn is always possible (316.9).
-      return [{ type: 'EndTurn', player }];
+      return [...playableUnits(state, player), { type: 'EndTurn', player }];
     default:
       return assertNever(decision);
   }
@@ -114,6 +124,8 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
   switch (action.type) {
     case 'Mulligan':
       return applyMulligan(state, action);
+    case 'PlayCard':
+      return applyPlayCard(state, action);
     case 'EndTurn': {
       const draft = draftOf(state);
       endTurn(draft);
@@ -122,4 +134,25 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
     default:
       return assertNever(action);
   }
+}
+
+/**
+ * One PlayCard per unit the player can afford, paid with `autoPayment` and played to their base.
+ * Other payments of the same card are legal too (`isLegal` accepts any valid payment);
+ * listing them all would explode, so legalActions offers one per card.
+ */
+function playableUnits(state: GameState, player: PlayerId): Action[] {
+  const zones = state.players.find((p) => p.id === player)?.zones;
+  if (zones === undefined) return [];
+  const actions: Action[] = [];
+  for (const card of [...zones.hand, ...zones.championZone]) {
+    const object = state.objects[card];
+    const definition = object === undefined ? undefined : state.cards[object.card];
+    if (definition?.category !== 'unit' || definition.cost === undefined) continue;
+    const payment = autoPayment(state, player, definition.cost);
+    if (payment === null) continue;
+    const action: Action = { type: 'PlayCard', player, card, location: { kind: 'base' }, payment };
+    if (checkPlayCard(state, action) === null) actions.push(action);
+  }
+  return actions;
 }
