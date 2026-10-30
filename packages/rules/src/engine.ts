@@ -10,6 +10,12 @@ import {
   type ObjectId,
   type PlayerId,
 } from '@foilengine/types';
+import {
+  assignDamage,
+  assignmentOptions,
+  checkAssignment,
+  damageDecision,
+} from './combat/combat.ts';
 import { draftOf, stateOf } from './draft.ts';
 import { IllegalActionError } from './errors.ts';
 import { applyStandardMove, checkStandardMove, movableUnits } from './movement/standard-move.ts';
@@ -38,6 +44,8 @@ export function pendingDecision(state: GameState): Decision | null {
       return mulliganDecision(state);
     case 'turn':
       if (stage.phase !== 'main') return null;
+      // 467.2.c: in the Combat Damage Step, the Attacker then the Defender assign damage.
+      if (state.combat?.step === 'damage') return damageDecision(state);
       // 313.2, 347: in a Showdown, the player with Focus acts, and has Priority.
       if (state.showdown !== null) {
         return {
@@ -110,6 +118,10 @@ export function isLegal(state: GameState, action: Action): Legality {
     }
     case 'PassFocus':
       return checkDecision(decision, 'Focus', action.player);
+    case 'AssignCombatDamage': {
+      const turn = checkDecision(decision, 'AssignDamage', action.player);
+      return turn.ok ? fromReason(checkAssignment(state, action)) : turn;
+    }
     default:
       return assertNever(action);
   }
@@ -131,6 +143,8 @@ export function legalActions(state: GameState, player: PlayerId): Action[] {
     case 'Focus':
       // M2 has no spell or ability to play during a Showdown: the player can only pass (347.2).
       return [{ type: 'PassFocus', player }];
+    case 'AssignDamage':
+      return assignmentOptions(state);
     default:
       return assertNever(decision);
   }
@@ -151,10 +165,12 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
     case 'StandardMove':
       return applyStandardMove(state, action);
     case 'EndTurn':
-    case 'PassFocus': {
+    case 'PassFocus':
+    case 'AssignCombatDamage': {
       const draft = draftOf(state);
       if (action.type === 'EndTurn') endTurn(draft);
-      else passFocus(draft);
+      else if (action.type === 'PassFocus') passFocus(draft);
+      else assignDamage(draft, action);
       return { state: stateOf(state, draft), events: draft.events };
     }
     default:

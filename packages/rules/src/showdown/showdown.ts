@@ -3,6 +3,7 @@
 
 import type { ObjectId } from '@foilengine/types';
 import { cleanup } from '../cleanup/cleanup.ts';
+import { closeCombatShowdown } from '../combat/combat.ts';
 import { battlefieldOf, type Draft, emit, playersAt } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { score } from '../scoring/score.ts';
@@ -29,6 +30,17 @@ export function passFocus(draft: Draft): void {
   const showdown = draft.showdown;
   if (showdown === null) throw new EngineInvariantError('No Showdown in progress');
   const passes = showdown.passes + 1;
+  if (passes >= draft.turnOrder.length && draft.combat?.battlefield === showdown.battlefield) {
+    emit(draft, {
+      type: 'FocusPassed',
+      rule: '347.2.a',
+      visibility: { kind: 'public' },
+      player: showdown.focus,
+      next: null,
+    });
+    closeCombatShowdown(draft); // 348.1
+    return;
+  }
   if (passes >= draft.turnOrder.length) {
     emit(draft, {
       type: 'FocusPassed',
