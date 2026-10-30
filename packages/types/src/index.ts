@@ -23,6 +23,7 @@ export {
 } from './events.ts';
 export type { CardId, ObjectId, PlayerId, RuleNumber, RulesVersion, Seed } from './ids.ts';
 export type { Json } from './json.ts';
+export type { IllegalCode, IllegalReason, SetupProblem, SetupProblemCode } from './problems.ts';
 export type { DeckList, GameSetup, ModeId, PlayerSetup } from './setup.ts';
 export {
   type BattlefieldState,

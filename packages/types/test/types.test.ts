@@ -14,6 +14,7 @@ import {
   type GameSetup,
   type GameState,
   type HiddenZone,
+  type IllegalReason,
   type Json,
   type ObjectId,
   type OpponentZones,
@@ -24,6 +25,7 @@ import {
   PRIVATE_EVENT_FIELDS,
   type RedactedEvent,
   type RuleNumber,
+  type SetupProblem,
   STATE_VERSION,
   type VisibleEvent,
   type VisibleObject,
@@ -38,6 +40,8 @@ describe('pure JSON (ADR 0004)', () => {
     expectTypeOf<VisibleEvent>().toExtend<Json>();
     expectTypeOf<Decision>().toExtend<Json>();
     expectTypeOf<PlayerView>().toExtend<Json>();
+    expectTypeOf<IllegalReason>().toExtend<Json>();
+    expectTypeOf<SetupProblem>().toExtend<Json>();
   });
 
   it('the state has a schema version', () => {
