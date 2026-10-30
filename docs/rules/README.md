@@ -58,6 +58,10 @@ Use `/rules-update <version>`:
 
 Riot also publishes rules patch notes: quote them in `changes/<version>.md`.
 
+## Rules that do not apply to the engine
+
+`not-applicable.json` lists the rules with no effect on the engine (definitions, advice), each with its reason: `{ "rules": [{ "number": "…", "reason": "…" }] }`. The rule coverage report gives them the `not-applicable` status. The list starts empty: a rule is added only after it was read and judged, never by default.
+
 ## Open questions
 
 Every ambiguous, contradictory or missing rule goes into `questions.md`. We never guess.

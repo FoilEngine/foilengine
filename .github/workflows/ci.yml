@@ -58,6 +58,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Rule coverage
+        run: pnpm test:rules
+
   commitlint:
     name: Conventional Commits
     if: github.event_name == 'pull_request'

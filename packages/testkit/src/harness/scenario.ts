@@ -23,6 +23,14 @@ import type {
   PlayerState,
 } from '@foilengine/types';
 import { expect, it } from 'vitest';
+
+declare module 'vitest' {
+  interface TaskMeta {
+    /** Rules declared by a scenario, read by the rule coverage report. */
+    rules?: string[];
+  }
+}
+
 import { type BoardBuilder, type CardRef, resolveCard } from './board.ts';
 import { ruleExists } from './core-rules.ts';
 
@@ -76,7 +84,9 @@ export function scenario(title: string, definition: ScenarioDefinition): void {
   const problems = checkScenarioDefinition(title, definition.rules);
   if (problems.length > 0) throw new Error(`Invalid scenario "${title}": ${problems.join('; ')}`);
 
-  it(title, () => {
+  it(title, ({ task }) => {
+    // Read by the rule coverage report (pnpm test:rules).
+    task.meta.rules = [...definition.rules];
     const initial =
       typeof definition.setup === 'function' ? definition.setup() : definition.setup.build();
     const t = createContext(initial);

@@ -5,6 +5,27 @@ export {
   testDeckVariant,
   testSetup,
 } from './cards/test-cards.ts';
+export { exercisedRules } from './coverage/exercised.ts';
+export {
+  type CoverageInput,
+  type CoverageProblems,
+  type CoverageTotals,
+  hasCoverageProblems,
+  type NotApplicableRule,
+  type OpenQuestion,
+  parseOpenQuestions,
+  pinCoveredRules,
+  RULE_STATUSES,
+  type RuleCoverageEntry,
+  type RuleCoverageReport,
+  type RulePins,
+  type RuleStatus,
+  renderCoverageMarkdown,
+  ruleCoverage,
+  rulesOfTest,
+  type ScenarioResult,
+  sectionOf,
+} from './coverage/rule-coverage.ts';
 export {
   BoardBuilder,
   BoardError,

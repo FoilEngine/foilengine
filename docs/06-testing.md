@@ -59,8 +59,8 @@ The parts of the harness:
 ## Rule coverage
 
 1. **Indexing the Core Rules**: `pnpm foil rules index` extracts the list of rules from the PDF and writes it to `docs/rules/index/<version>.json`: for each rule its number, its parent rule, its full text and a fingerprint of that text (format in `docs/rules/README.md`). The index is committed, and a CLI test regenerates it from the PDF and fails if the committed file is out of date.
-2. **Collection**: each scenario declares its `rules`. The engine, for its part, marks in the events the rule that produced them.
-3. **Report** (`pnpm test:rules`): for each rule, its status:
+2. **Collection**: each scenario declares its `rules` (scenario() stores them in the test metadata; a plain test quotes one rule at the start of its title). The engine, for its part, marks in the events the rule that produced them.
+3. **Report** (`pnpm test:rules`, i.e. `foil rules coverage`): runs the scenarios of `@foilengine/spec`, plays games to collect the rules their events quote, and gives each rule its status:
 
 | Status | Meaning |
 | --- | --- |
@@ -71,7 +71,17 @@ The parts of the harness:
 | `not-applicable` | Rule with no effect on the engine (definitions, advice), with a justification |
 | `question` | Ambiguous rule, pending in `docs/rules/questions.md` |
 
-The report is produced in JSON (for the console and the CI) and in Markdown (for the PR). The CI fails if a `covered` rule becomes `uncovered` or if a `stale` test is not handled.
+The report is written to `reports/rule-coverage.json` (every rule, for the console and the CI) and `reports/rule-coverage.md` (a per-section summary, for the PR); `reports/` is not committed.
+
+**Pins.** `packages/spec/rule-pins.json` records, for every covered rule, the fingerprint of its text when its scenarios were written or last reviewed. It is the memory of the report:
+
+- a covered rule whose text changed in a new Core Rules version becomes `stale`: review its scenarios, then re-pin;
+- a pinned rule that is no longer covered is a **regression**;
+- a newly covered rule must be pinned: `pnpm test:rules --pin`, and the pins file is committed with the scenarios.
+
+`pnpm test:rules` fails (and so does the CI) on failing scenarios, stale rules, regressions, unpinned rules, and rule numbers that do not exist in the current version. Rules with no effect on the engine are listed in `docs/rules/not-applicable.json`, each with its reason; the list starts empty, and a rule is added to it only after review. Open questions are read from `docs/rules/questions.md` (entries whose status is `open`).
+
+In M1, the games played for `exercised` stop after setup; the M2 fuzzer will play them to the end.
 
 The same mechanism produces **card coverage** (statuses from `04-cards-and-effects.md`) and **keyword coverage**.
 

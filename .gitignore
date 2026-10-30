@@ -1,9 +1,13 @@
 node_modules/
 dist/
-coverage/
+# Code coverage output only: a source folder may be named coverage.
+/coverage/
+/packages/*/coverage/
+/apps/*/coverage/
 .turbo/
 *.tsbuildinfo
 .env
 .env.*
 !.env.example
 .DS_Store
+/reports/
