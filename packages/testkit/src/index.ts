@@ -27,6 +27,21 @@ export {
   sectionOf,
 } from './coverage/rule-coverage.ts';
 export {
+  FUZZ_POLICIES,
+  type FuzzCase,
+  type FuzzGameOptions,
+  type FuzzGameResult,
+  type FuzzOptions,
+  type FuzzPolicy,
+  type FuzzReport,
+  type FuzzViolation,
+  fuzz,
+  fuzzCaseArbitrary,
+  playFuzzGame,
+  reproductionFiles,
+} from './fuzz/fuzz.ts';
+export { type FuzzStep, INVARIANTS, type Invariant, MAX_ACTIONS } from './fuzz/invariants.ts';
+export {
   BoardBuilder,
   BoardError,
   board,
