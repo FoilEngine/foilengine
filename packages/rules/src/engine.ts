@@ -16,6 +16,7 @@ import {
   checkAssignment,
   damageDecision,
 } from './combat/combat.ts';
+import { checkConcede, concede } from './concede.ts';
 import { draftOf, stateOf } from './draft.ts';
 import { IllegalActionError } from './errors.ts';
 import { applyStandardMove, checkStandardMove, movableUnits } from './movement/standard-move.ts';
@@ -94,6 +95,8 @@ const fromReason = (reason: IllegalReason | null): Legality =>
   reason === null ? { ok: true } : { ok: false, reason };
 
 export function isLegal(state: GameState, action: Action): Legality {
+  // 650: conceding needs no decision: a player may concede at any time.
+  if (action.type === 'Concede') return fromReason(checkConcede(state, action));
   const decision = pendingDecision(state);
   if (decision === null) {
     return {
@@ -127,10 +130,19 @@ export function isLegal(state: GameState, action: Action): Legality {
   }
 }
 
-/** Every legal action for `player` right now. */
+/**
+ * Every legal action for `player` right now. Conceding is always among them while the game goes
+ * on (650), last, even for a player who has no decision to make.
+ */
 export function legalActions(state: GameState, player: PlayerId): Action[] {
+  if (!state.players.some((p) => p.id === player) || state.stage.kind === 'ended') return [];
+  const concede: Action = { type: 'Concede', player };
   const decision = pendingDecision(state);
-  if (decision === null || decision.player !== player) return [];
+  if (decision === null || decision.player !== player) return [concede];
+  return [...decisionActions(state, decision, player), concede];
+}
+
+function decisionActions(state: GameState, decision: Decision, player: PlayerId): Action[] {
   switch (decision.kind) {
     case 'Mulligan':
       return mulliganActions(state);
@@ -166,10 +178,12 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
       return applyStandardMove(state, action);
     case 'EndTurn':
     case 'PassFocus':
-    case 'AssignCombatDamage': {
+    case 'AssignCombatDamage':
+    case 'Concede': {
       const draft = draftOf(state);
       if (action.type === 'EndTurn') endTurn(draft);
       else if (action.type === 'PassFocus') passFocus(draft);
+      else if (action.type === 'Concede') concede(draft, action);
       else assignDamage(draft, action);
       return { state: stateOf(state, draft), events: draft.events };
     }

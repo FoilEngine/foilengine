@@ -21,7 +21,9 @@ export function exercisedRules(games = 25): Set<string> {
       decision !== null;
       decision = pendingDecision(state)
     ) {
-      const actions = legalActions(state, decision.player);
+      const actions = legalActions(state, decision.player).filter(
+        (action) => action.type !== 'Concede',
+      );
       const action = actions[(game * 7 + turn++) % actions.length];
       if (action === undefined) break;
       const result = apply(state, action);
