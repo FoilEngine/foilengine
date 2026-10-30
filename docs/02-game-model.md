@@ -207,6 +207,16 @@ Every event has a `visibility`: `public`, or `private` to a list of players. For
 
 Filtering is done by `log` and `viewFor`, never by hand in the server.
 
+## Replays
+
+`@foilengine/log` writes and reads replays: the `.foilreplay` format (ADR 0005), versioned by `REPLAY_FORMAT` (currently 1). A replay holds the Core Rules version, the setup, the seed and the actions. Events are not stored: replaying the actions derives them again, byte for byte (ADR 0003).
+
+Each step (the creation of the game, then each action) records a fingerprint, `stepHash`, of the state the step led to and of the events it produced. Fingerprints are Merkle hashes (`digestOf`): the 128-bit digest of an object or an array hashes the digests of its items, keys sorted, and is cached by reference. A state never changes once built and shares most of its objects with the previous one, so each step only hashes what it changed. `replay` re-applies the actions, checks that each one is legal and that each fingerprint matches, and reports the first problem: another rules version, a refused setup, an illegal action, or a divergence at a given step. `rewindTo(replay, n)` gives the state after the first `n` actions.
+
+The text of a replay is canonical JSON, so the same game always gives the same file. `stateHash` fingerprints a state alone, for the fuzzer and the server's background replays. The fingerprint detects changes, it is not a security measure.
+
+`filterEventsFor(events, player)` redacts the events a player must not see (see Visibility above), for the server and for replays shown to a player.
+
 ## Per-player views
 
 `viewFor(state, player)` returns a `PlayerView`: what that player is allowed to see. Their own hand as objects; the opponents' hands and every deck (their own included, 108.4.e) as a size only (`HiddenZone`); the public zones; the battlefields; the stage; and the decision that player must make, if any. The view carries no card definitions, so it cannot reveal a deck list.

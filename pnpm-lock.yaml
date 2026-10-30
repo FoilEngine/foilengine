@@ -217,7 +217,14 @@ importers:
 
   packages/db: {}
 
-  packages/log: {}
+  packages/log:
+    dependencies:
+      '@foilengine/rules':
+        specifier: workspace:*
+        version: link:../rules
+      '@foilengine/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/mind: {}
 
