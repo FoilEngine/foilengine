@@ -75,7 +75,7 @@ type GameState = {
   version: 1;                       // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
-  rng: RngState;                    // seeded PRNG state, serializable
+  rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
   nextObjectId: number;             // counter for ObjectIds
   eventSeq: number;                 // sequence number of the last event
   cards: Record<CardId, CardDefinition>;   // definitions of this game's cards: a state is self-contained

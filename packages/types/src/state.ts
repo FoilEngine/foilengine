@@ -8,7 +8,7 @@ import type { PlayerZoneId } from './zones.ts';
 
 export const STATE_VERSION = 1;
 
-/** State of the seeded PRNG (ADR 0003). Its exact shape is fixed with the RNG implementation. */
+/** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
   readonly algorithm: string;
   readonly state: readonly number[];

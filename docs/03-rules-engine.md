@@ -22,7 +22,7 @@ pendingDecision(state: GameState): Decision | null   // who must act, and on wha
 1. **Pure.** No I/O, no clock, no `Math.random`, no mutable global variable. The same input always gives the same output.
 2. **Immutable from the outside.** `apply` returns a new state. Transitions are hand-written immutable updates with structural sharing, without Immer (ADR 0004): no state received as an argument is ever modified.
 3. **Serializable.** The state is pure JSON: no `Map`, class, function or circular reference. `JSON.parse(JSON.stringify(state))` must give an equivalent state.
-4. **Deterministic.** The RNG lives in the state (`rng`): a good-quality seeded PRNG (xoshiro128** or PCG) whose full state is serialized. Every draw advances the counter.
+4. **Deterministic.** The RNG lives in the state (`rng`): xoshiro128** (ADR 0003), whose full 128-bit state is serialized. RNG functions are pure: `nextUint32`, `nextInt` (no modulo bias) and `shuffle` (Fisher–Yates) take a state and return the value with the next state. `createRng(seed)` derives the initial state from the game seed; it is part of the replay contract.
 5. **Bounded.** Every loop (cleanup, chain, triggers) has a bound. Exceeding it throws an `EngineInvariantError`, never an infinite loop.
 6. **Traceable.** Every event carries the rule that produced it when relevant.
 
