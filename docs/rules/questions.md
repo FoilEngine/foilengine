@@ -19,10 +19,12 @@ One entry per question. An entry is never removed: it is marked resolved, with t
 
 ### Q-001 — Second player's extra runes on the first turn
 
-- **Rules**: 315.3, 115.2, game modes section
+- **Rules**: 115.2, 485.7, 487.7, 488.7, 489.7, 490.7, 491.7 (first quoted as 315.3 and 115.2 against CR-1.4)
 - **Version**: CR-2026-10-09 (question opened against CR-1.4)
-- **Question**: rule 315.3 says the active player channels 2 runes. Play guides say the second player channels 3 on their first turn. Check in the PDF where and how this bonus is defined (first-turn adjustments in 115.2 or the 1v1 mode section), and whether it depends on the mode.
-- **Sources consulted**: Core Rules 1.4 (315.3), unofficial play guides, maintainer confirmation.
-- **Decision**: in 1v1, the first player channels 2 runes on their first turn, the second player channels 3. After that, 2 runes per turn for both. The test must quote the exact number of the rule that defines this bonus in the PDF (115.2 or the mode section); if it is not found, the test is marked `question` until it is.
-- **Status**: resolved on behavior (2026-10-30, maintainer). Rule number to be confirmed in the PDF.
-- **To do (CR-2026-10-09)**: the second player's bonus must be found in the new PDF. The numbers quoted above come from CR-1.4: in CR-2026-10-09, 315.3 is the "Channel Phase" heading, and 431.4.a is the rule saying a player channels two runes during the Channel Phase. Renumbering is done with `/rules-update` at the start of M1.
+- **Question**: the active player channels 2 runes at the Channel Phase. Play guides say the second player channels 3 on their first turn. Where and how is this bonus defined, and does it depend on the mode?
+- **Sources consulted**: Core Rules CR-2026-10-09: 315.3.b (channel 2 runes), 115.2 (first-turn adjustments are defined by the mode of play), 485.7 (every mode defines a First Turn Process), 487.7 to 491.7 (the First Turn Process of each sanctioned mode). Earlier: Core Rules 1.4, unofficial play guides, maintainer confirmation.
+- **Decision**: it depends on the mode.
+  - 1v1 Duel (487.7) and 1v1 Match (488.7): "The player going second channels an extra Rune from their Rune Deck during their first Channel Phase of the game." So 2 runes for the first player, 3 for the second on their first turn, then 2 per turn for both. This matches the maintainer's decision of 2026-10-30.
+  - FFA3 (489.7), FFA4 (490.7) and 2v2 (491.7): "The player going first does not draw a card during their first Draw Phase of the game. The player going last channels an extra Rune from their Rune Deck during their first Channel Phase of the game."
+  - Tests quote the rule of the mode under test (`rule 487.7: …` for 1v1).
+- **Status**: resolved (2026-10-30, Core Rules CR-2026-10-09, rules 115.2, 485.7, 487.7–491.7).

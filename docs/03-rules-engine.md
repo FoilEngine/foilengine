@@ -37,13 +37,13 @@ src/
   chain/                chain and HOT FEPR loop (325–340)
   showdown/             showdowns (341–348)
   play/                 card play process, costs (349–359)
-  abilities/            passive, replacement, activated, triggered abilities (360–406)
-  actions/              atomic game actions: draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal… (407–444)
-  movement/             movement (445–458)
-  combat/               combat and its steps (459–466)
-  scoring/              hold, conquer, last point (467–472)
-  layers/               continuous effects applied by layers (473–480)
-  modes/                game modes (481–648)
+  abilities/            passive, replacement, activated, triggered abilities (360–407)
+  actions/              atomic game actions: draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal… (408–446)
+  movement/             movement and recalls (447–460)
+  combat/               combat and its steps (461–468)
+  scoring/              hold, conquer, final point (469–474)
+  layers/               continuous effects applied by layers (475–482)
+  modes/                modes of play (483–491)
   resources/            runes, pool, payment and automatic payment (160–168)
   view/                 viewFor
   legal/                legalActions, isLegal, refusal reasons
@@ -67,7 +67,7 @@ Card effects (`cards`) may only change the state by calling these atomic actions
 
 ## Continuous effects and layers
 
-An object's characteristics (might, keywords, cost…) are never stored "computed" in the state. They are derived on read by `characteristics(state, objectId)`, which starts from the printed values and applies the continuous effects in layer order (473–480). The result may be cached per state version, but the source of truth remains the list of effects.
+An object's characteristics (might, keywords, cost…) are never stored "computed" in the state. They are derived on read by `characteristics(state, objectId)`, which starts from the printed values and applies the continuous effects in layer order (475–482). The result may be cached per state version, but the source of truth remains the list of effects.
 
 ## Player choices
 
