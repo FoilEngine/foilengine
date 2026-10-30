@@ -15,18 +15,21 @@ function fmix32(h: number): number {
 
 /** Four independent FNV-1a lanes over the UTF-16 code units, each finalized: 32 hex characters. */
 export function hash128(text: string): string {
-  const lanes = [0x811c_9dc5, 0x2b99_2ddf, 0x9e37_79b9, 0x5bd1_e995];
+  // The four lanes are unrolled: this loop runs over every character of every fingerprint.
+  let h0 = 0x811c_9dc5;
+  let h1 = 0x2b99_2ddf;
+  let h2 = 0x9e37_79b9;
+  let h3 = 0x5bd1_e995;
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
-    for (let lane = 0; lane < 4; lane++) {
-      lanes[lane] = Math.imul((lanes[lane] as number) ^ (code + lane * 0x9e37), 0x0100_0193) >>> 0;
-    }
+    h0 = Math.imul(h0 ^ code, 0x0100_0193);
+    h1 = Math.imul(h1 ^ (code + 0x9e37), 0x0100_0193);
+    h2 = Math.imul(h2 ^ (code + 2 * 0x9e37), 0x0100_0193);
+    h3 = Math.imul(h3 ^ (code + 3 * 0x9e37), 0x0100_0193);
   }
-  return lanes
-    .map((h, lane) =>
-      fmix32(h ^ text.length ^ (lane << 24))
-        .toString(16)
-        .padStart(8, '0'),
-    )
-    .join('');
+  const hex = (h: number, lane: number) =>
+    fmix32(h ^ text.length ^ (lane << 24))
+      .toString(16)
+      .padStart(8, '0');
+  return hex(h0, 0) + hex(h1, 1) + hex(h2, 2) + hex(h3, 3);
 }
