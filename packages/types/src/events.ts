@@ -7,6 +7,7 @@
 
 import type { CardId, ObjectId, PlayerId, RuleNumber, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
+import type { TurnPhase } from './state.ts';
 import type { PlayerZoneId } from './zones.ts';
 
 export type Visibility =
@@ -93,6 +94,65 @@ export type SetupCompleted = EventBase & {
   readonly firstPlayer: PlayerId;
 };
 
+/** A turn began (301, 315). */
+export type TurnStarted = EventBase & {
+  readonly type: 'TurnStarted';
+  readonly player: PlayerId;
+  readonly turnNumber: number;
+};
+
+/** A phase of the turn began (314–317). */
+export type PhaseStarted = EventBase & {
+  readonly type: 'PhaseStarted';
+  readonly player: PlayerId;
+  readonly phase: TurnPhase;
+};
+
+/** Game objects on the board were readied (416). */
+export type ObjectsReadied = EventBase & {
+  readonly type: 'ObjectsReadied';
+  readonly player: PlayerId;
+  readonly objects: readonly ObjectId[];
+};
+
+/** A rune was channeled from the top of the Rune Deck onto the board (431). */
+export type RuneChanneled = EventBase & {
+  readonly type: 'RuneChanneled';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+  readonly card: CardId;
+  readonly exhausted: boolean;
+};
+
+/** A player Burned Out (432): they had to take cards from an empty Main Deck. */
+export type BurnedOut = EventBase & {
+  readonly type: 'BurnedOut';
+  readonly player: PlayerId;
+  /** The opponent chosen to gain 1 point (432.2.c). */
+  readonly opponent: PlayerId;
+};
+
+/** A player gained points (194.1). */
+export type PointsGained = EventBase & {
+  readonly type: 'PointsGained';
+  readonly player: PlayerId;
+  readonly amount: number;
+  readonly total: number;
+};
+
+/** The Turn Player ended their turn (316.9, 317). */
+export type TurnEnded = EventBase & {
+  readonly type: 'TurnEnded';
+  readonly player: PlayerId;
+  readonly turnNumber: number;
+};
+
+/** A player won the game (194.2, 195); the game ends (196). */
+export type GameWon = EventBase & {
+  readonly type: 'GameWon';
+  readonly player: PlayerId;
+};
+
 export type GameEvent =
   | GameCreated
   | CardPlaced
@@ -102,7 +162,15 @@ export type GameEvent =
   | CardDrawn
   | MulliganTaken
   | CardRecycled
-  | SetupCompleted;
+  | SetupCompleted
+  | TurnStarted
+  | PhaseStarted
+  | ObjectsReadied
+  | RuneChanneled
+  | BurnedOut
+  | PointsGained
+  | TurnEnded
+  | GameWon;
 
 export type GameEventType = GameEvent['type'];
 
@@ -119,6 +187,14 @@ export const PRIVATE_EVENT_FIELDS = {
   MulliganTaken: [],
   CardRecycled: ['object', 'previousObject', 'card'],
   SetupCompleted: [],
+  TurnStarted: [],
+  PhaseStarted: [],
+  ObjectsReadied: [],
+  RuneChanneled: [],
+  BurnedOut: [],
+  PointsGained: [],
+  TurnEnded: [],
+  GameWon: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */

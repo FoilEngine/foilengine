@@ -10,6 +10,12 @@ export type Mulligan = {
   readonly setAside: readonly ObjectId[];
 };
 
-export type Action = Mulligan;
+/** The Turn Player ends their turn: they have no more Discretionary Actions to take (316.9). */
+export type EndTurn = {
+  readonly type: 'EndTurn';
+  readonly player: PlayerId;
+};
+
+export type Action = Mulligan | EndTurn;
 
 export type ActionType = Action['type'];

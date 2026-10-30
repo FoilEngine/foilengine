@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -22,6 +22,8 @@ export type GameObject = {
   readonly owner: PlayerId;
   /** The object it was before its last change to or from a Non-Board Zone (124), if any. */
   readonly previousObjectId: ObjectId | null;
+  /** Exhausted (415) or ready (416). Only meaningful on the board; a new object starts ready. */
+  readonly exhausted: boolean;
 };
 
 export type PlayerZones = { readonly [Z in PlayerZoneId]: readonly ObjectId[] };
@@ -30,6 +32,8 @@ export type PlayerState = {
   readonly id: PlayerId;
   /** Never below 0 (194.4). */
   readonly points: number;
+  /** Turns this player has started; the First Turn Process of the mode depends on it (485.7). */
+  readonly turnsTaken: number;
   /** Ordered zones list the top of the deck first. */
   readonly zones: PlayerZones;
 };
@@ -39,12 +43,22 @@ export type BattlefieldState = {
   readonly object: ObjectId;
 };
 
-/** Where the game stands. M2 replaces `started` with the turn structure (300–317). */
+/** Phases of the turn (314–317). Start of Turn is split into its four phases (315.1–315.4). */
+export type TurnPhase = 'awaken' | 'beginning' | 'channel' | 'draw' | 'main' | 'ending';
+
+/** Where the game stands. */
 export type GameStage =
   /** Mulligans in turn order (117): `pending` lists the players who still have to decide. */
   | { readonly kind: 'mulligan'; readonly pending: readonly PlayerId[] }
-  /** Setup is complete and the first player takes their turn (118). */
-  | { readonly kind: 'started'; readonly turnPlayer: PlayerId };
+  /** A turn is in progress (301). `turnNumber` counts the turns of the game, from 1. */
+  | {
+      readonly kind: 'turn';
+      readonly turnPlayer: PlayerId;
+      readonly turnNumber: number;
+      readonly phase: TurnPhase;
+    }
+  /** The game is over (196); `winner` says who won. */
+  | { readonly kind: 'ended' };
 
 export type GameState = {
   readonly version: typeof STATE_VERSION;

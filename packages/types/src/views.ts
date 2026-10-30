@@ -11,6 +11,7 @@ export type VisibleObject = {
   readonly id: ObjectId;
   readonly card: CardId;
   readonly owner: PlayerId;
+  readonly exhausted: boolean;
 };
 
 /** A zone whose cards the viewer may not see: only its size is public (108.4.d, 108.7.e). */
