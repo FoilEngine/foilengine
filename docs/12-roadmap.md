@@ -85,6 +85,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [ ] `ui`: tokens synced from `brand`, components, sound, motion.
 - [ ] `apps/play`: full event-driven table, decks, library, replays.
 - [ ] Rewind and forward, automatic payment, showdown controls, emotes.
+- [ ] Targeting arrow: from a source card to a legal target given by the engine, with keyboard and touch alternatives (`10-clients.md`).
 - [ ] Touch, keyboard, screen readers, `prefers-reduced-motion`.
 
 **Accepted when**: a full game can be played with the keyboard alone, on mobile, and with reduced animations; Playwright tests cover a full turn.
