@@ -14,6 +14,7 @@
     "format": "biome check --write .",
     "typecheck": "turbo run typecheck && tsc -p tsconfig.json --noEmit",
     "test": "turbo run test && vitest run",
+    "test:rules": "node apps/cli/src/main.ts rules coverage",
     "check:deps": "node scripts/check-deps.ts",
     "prepare": "lefthook install",
     "foil": "node apps/cli/src/main.ts"

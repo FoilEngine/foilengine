@@ -2,6 +2,7 @@
 
 import { relative } from 'node:path';
 import { parseArgs } from 'node:util';
+import { runRulesCoverage } from './commands/rules-coverage.ts';
 import { runRulesIndex } from './commands/rules-index.ts';
 import { REPO_ROOT } from './paths.ts';
 
@@ -13,6 +14,12 @@ Commands:
       --pdf     PDF to index (default: the most recent docs/rules/core-rules-<date>.pdf)
       --check   Fail if the committed index is missing or out of date, write nothing
       --json    Machine-readable output
+
+  rules coverage [--pin] [--json]
+      Run the rule scenarios and report the status of every rule (also: pnpm test:rules).
+      Writes reports/rule-coverage.json and reports/rule-coverage.md.
+      --pin     Pin every covered rule to its current text (packages/spec/rule-pins.json)
+      --json    Machine-readable summary
 `;
 
 async function main(argv: readonly string[]): Promise<number> {
@@ -21,6 +28,7 @@ async function main(argv: readonly string[]): Promise<number> {
     allowPositionals: true,
     options: {
       pdf: { type: 'string' },
+      pin: { type: 'boolean', default: false },
       check: { type: 'boolean', default: false },
       json: { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h', default: false },
@@ -60,6 +68,33 @@ async function main(argv: readonly string[]): Promise<number> {
       console.error(`✗ ${result.reason}`);
     }
     return result.ok ? 0 : 1;
+  }
+
+  if (command === 'rules coverage') {
+    const { report, pinsWritten } = await runRulesCoverage({ pin: values.pin });
+    const problems = Object.entries(report.problems).filter(([, list]) => list.length > 0);
+    if (values.json) {
+      console.log(
+        JSON.stringify({
+          rulesVersion: report.rulesVersion,
+          totals: report.totals,
+          problems: report.problems,
+        }),
+      );
+    } else {
+      const t = report.totals;
+      console.log(
+        `${report.rulesVersion}: ${report.ruleCount} rules — ${t.covered} covered, ${t.stale} stale, ${t.question} question, ${t['not-applicable']} not-applicable, ${t.exercised} exercised, ${t.uncovered} uncovered`,
+      );
+      if (pinsWritten) console.log('✓ Pins written to packages/spec/rule-pins.json');
+      for (const [kind, list] of problems) console.error(`✗ ${kind}: ${list.join(', ')}`);
+      if (report.problems.unpinned.length > 0)
+        console.error('  Pin new covered rules with `pnpm test:rules --pin`.');
+      if (report.problems.stale.length > 0)
+        console.error('  Review the scenarios of stale rules, then re-pin them.');
+      console.log('Reports: reports/rule-coverage.json, reports/rule-coverage.md');
+    }
+    return problems.length === 0 ? 0 : 1;
   }
 
   console.error(`Unknown command: ${command}\n\n${USAGE}`);
