@@ -24,7 +24,9 @@ function statesOf(seed: string, picks: readonly number[]): GameState[] {
     decision !== null && states.length <= MAX_ACTIONS;
     decision = pendingDecision(state)
   ) {
-    const actions = legalActions(state, decision.player);
+    const actions = legalActions(state, decision.player).filter(
+      (action) => action.type !== 'Concede',
+    );
     const action = actions[(picks[i++] ?? 0) % actions.length];
     if (action === undefined) throw new Error('no legal action');
     state = apply(state, action).state;

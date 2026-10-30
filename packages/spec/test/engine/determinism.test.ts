@@ -21,7 +21,9 @@ function playSetup(
     decision !== null;
     decision = pendingDecision(state)
   ) {
-    const actions = legalActions(state, decision.player);
+    const actions = legalActions(state, decision.player).filter(
+      (action) => action.type !== 'Concede',
+    );
     const action = actions[pick(actions.length) % actions.length];
     if (action === undefined) throw new Error('no legal action');
     const result = apply(state, action);
@@ -69,7 +71,9 @@ describe('state', () => {
     const created = createGame(testSetup(), 'immutable' as Seed);
     if (!created.ok) throw new Error('setup refused');
     const copy = JSON.parse(JSON.stringify(created.state));
-    const [action] = legalActions(created.state, created.state.turnOrder[0] as never);
+    const [action] = legalActions(created.state, created.state.turnOrder[0] as never).filter(
+      (a) => a.type !== 'Concede',
+    );
     if (action === undefined) throw new Error('no action');
     apply(created.state, action);
     expect(created.state).toEqual(copy);
