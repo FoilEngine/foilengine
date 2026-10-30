@@ -72,7 +72,7 @@ The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 n
 
 ```ts
 type GameState = {
-  version: 4;                       // STATE_VERSION, incremented on every shape change
+  version: 5;                       // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
   rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
@@ -82,14 +82,15 @@ type GameState = {
   objects: Record<ObjectId, GameObject>;   // every object, by id
   players: PlayerState[];           // seating order; points, turnsTaken, runePool, zones (lists of ObjectIds)
   turnOrder: PlayerId[];            // looping queue (115.1.c)
-  battlefields: BattlefieldState[]; // controller, contestedBy, showdownStaged, units present
+  battlefields: BattlefieldState[]; // controller, contestedBy, showdownStaged, combatStaged, units present
   showdown: ShowdownState | null;   // battlefield, player with Focus, passes in sequence
+  combat: CombatState | null;       // battlefield, attacker, defender, step, damage assigned
   stage: GameStage;                 // mulligan | turn (turnPlayer, turnNumber, phase) | ended
   winner: PlayerId | null;
 };
 ```
 
-Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Units are on the board either in their controller's base or in a battlefield's `units`; a unit's location (146.1) is where its id is listed. Each player also keeps `scoredThisTurn`, the battlefields they Scored this turn (472). Arriving later: the chain, combat, damage, continuous effects (475+), control of units and the other statuses of objects.
+Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Units are on the board either in their controller's base or in a battlefield's `units`; a unit's location (146.1) is where its id is listed. Each player also keeps `scoredThisTurn`, the battlefields they Scored this turn (472). Each `GameObject` carries the `damage` marked on it (142). Arriving later: the chain, continuous effects (475+), control of units and the other statuses of objects.
 
 ## The turn
 

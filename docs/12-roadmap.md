@@ -35,7 +35,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [x] Playing a unit (349–359, without abilities).
 - [x] Standard move (144, 447+).
 - [ ] Fixed-point cleanups (318–324).
-- [ ] Showdowns without spells (341–348) and combat (461–468).
+- [x] Showdowns without spells (341–348) and combat (461–468).
 - [ ] Hold and conquer, the final point (469–474), victory (193–196), conceding (649–652).
 - [ ] The 1v1 mode (487), with its first-turn process: the player going second channels an extra rune during their first Channel Phase (487.7, see Q-001).
 - [ ] `log`: log format, serialization, replay, state fingerprint.
