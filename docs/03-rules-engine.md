@@ -55,6 +55,10 @@ src/
 
 Each folder matches a section of the Core Rules. A file that implements a rule has a header comment quoting the numbers it covers.
 
+## The turn and cleanups (M2, in progress)
+
+Phases without a player decision run on their own (305): after the last mulligan, `apply` runs the First Player's Start of Turn (315.1 to 315.4) and stops when they get Priority in their Main Phase (312.2.a); `EndTurn` (316.9) runs the Ending Phase (317) and the next player's Start of Turn. A cleanup runs after each phase transition (319.2) and after objects enter the board (319.6). For now it only performs its first step, the victory check (323.1): the other steps act on combat, damage, battlefield control and showdowns, which arrive later in M2. Burn Out (432) is part of drawing: repeated Burn Outs within one draw win at once (432.3.c.1).
+
 ## Atomic game actions
 
 Every state change goes through an **atomic game action** (draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal, score…). Each one:

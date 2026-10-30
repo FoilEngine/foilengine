@@ -42,7 +42,7 @@ export function keepAll(state: GameState): { state: GameState; events: GameEvent
   const events: GameEvent[] = [];
   for (
     let decision = pendingDecision(current);
-    decision !== null;
+    decision?.kind === 'Mulligan';
     decision = pendingDecision(current)
   ) {
     const result = apply(current, { type: 'Mulligan', player: decision.player, setAside: [] });
@@ -54,4 +54,30 @@ export function keepAll(state: GameState): { state: GameState; events: GameEvent
 
 export function eventsOfType<T extends GameEvent['type']>(events: readonly GameEvent[], type: T) {
   return events.filter((event): event is Extract<GameEvent, { type: T }> => event.type === type);
+}
+
+/**
+ * Moves every object of one player zone to another, keeping the objects. For scenarios that
+ * need a state the engine cannot produce yet (e.g. cards in the trash before units can die):
+ * the state stays legal (every card in exactly one zone), but is not reachable by play today.
+ */
+export function moveZone(
+  state: GameState,
+  id: PlayerId,
+  from: keyof PlayerState['zones'],
+  to: keyof PlayerState['zones'],
+): GameState {
+  return {
+    ...state,
+    players: state.players.map((p) =>
+      p.id === id
+        ? { ...p, zones: { ...p.zones, [from]: [], [to]: [...p.zones[to], ...p.zones[from]] } }
+        : p,
+    ),
+  };
+}
+
+/** Sets a player's points: a legal state the engine reaches through scoring, which arrives later in M2. */
+export function withPoints(state: GameState, id: PlayerId, points: number): GameState {
+  return { ...state, players: state.players.map((p) => (p.id === id ? { ...p, points } : p)) };
 }

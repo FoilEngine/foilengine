@@ -12,9 +12,9 @@ import {
   type SetupProblem,
   STATE_VERSION,
 } from '@foilengine/types';
-import { createObject, type Draft, emit, emptyZones, playerOf, playerStates } from '../draft.ts';
+import { drawCards } from '../actions/draw.ts';
+import { createObject, type Draft, emit, emptyZones, playerOf, stateOf } from '../draft.ts';
 import { createRng, nextInt, shuffle } from '../rng/xoshiro128.ts';
-import { drawCards } from './draw.ts';
 import { validateSetup } from './validate-setup.ts';
 
 /** 116: players each draw 4. */
@@ -37,7 +37,15 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     nextObjectId: 1,
     eventSeq: 0,
     objects: {},
-    players: setup.players.map((player) => ({ id: player.id, points: 0, zones: emptyZones() })),
+    players: setup.players.map((player) => ({
+      id: player.id,
+      points: 0,
+      turnsTaken: 0,
+      zones: emptyZones(),
+    })),
+    turnOrder: [],
+    stage: { kind: 'mulligan', pending: [] },
+    winner: null,
     events: [],
   };
   const battlefields: { object: ObjectId }[] = [];
@@ -128,7 +136,9 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
   }
 
   // 117: then players perform their Mulligan in turn order; the game waits for the first decision.
-  const state: GameState = {
+  draft.turnOrder = turnOrder;
+  draft.stage = { kind: 'mulligan', pending: turnOrder };
+  const base: GameState = {
     version: STATE_VERSION,
     rulesVersion: setup.rulesVersion,
     mode: setup.mode,
@@ -137,12 +147,13 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     eventSeq: draft.eventSeq,
     cards: setup.cards,
     objects: draft.objects,
-    players: playerStates(draft),
+    players: [],
     turnOrder,
     battlefields,
-    stage: { kind: 'mulligan', pending: turnOrder },
+    stage: draft.stage,
     winner: null,
   };
+  const state = stateOf(base, draft);
   return { ok: true, state, events: draft.events };
 }
 

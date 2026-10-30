@@ -8,18 +8,11 @@ import type {
   MulliganDecision,
   ObjectId,
 } from '@foilengine/types';
-import {
-  type Draft,
-  draftOf,
-  emit,
-  objectOf,
-  playerOf,
-  playerStates,
-  renewObject,
-} from '../draft.ts';
+import { drawCards } from '../actions/draw.ts';
+import { type Draft, draftOf, emit, objectOf, playerOf, renewObject, stateOf } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { shuffle } from '../rng/xoshiro128.ts';
-import { drawCards } from './draw.ts';
+import { startTurn } from '../turn/turn.ts';
 
 /** 117.1: up to two cards. */
 export const MULLIGAN_MAX = 2;
@@ -124,31 +117,20 @@ export function applyMulligan(
   }
 
   const pending = state.stage.pending.slice(1);
-  const first = state.turnOrder[0];
-  if (first === undefined) throw new EngineInvariantError('Empty turn order');
-  if (pending.length === 0) {
-    // 118: begin play with the First Player taking their turn.
-    emit(draft, {
-      type: 'SetupCompleted',
-      rule: '118',
-      visibility: { kind: 'public' },
-      firstPlayer: first,
-    });
+  if (pending.length > 0) {
+    draft.stage = { kind: 'mulligan', pending };
+    return { state: stateOf(state, draft), events: draft.events };
   }
 
-  return {
-    state: {
-      ...state,
-      rng: draft.rng,
-      nextObjectId: draft.nextObjectId,
-      eventSeq: draft.eventSeq,
-      objects: draft.objects,
-      players: playerStates(draft),
-      stage:
-        pending.length === 0
-          ? { kind: 'started', turnPlayer: first }
-          : { kind: 'mulligan', pending },
-    },
-    events: draft.events,
-  };
+  // 118: begin play with the First Player taking their turn.
+  const first = state.turnOrder[0];
+  if (first === undefined) throw new EngineInvariantError('Empty turn order');
+  emit(draft, {
+    type: 'SetupCompleted',
+    rule: '118',
+    visibility: { kind: 'public' },
+    firstPlayer: first,
+  });
+  startTurn(draft, first, 1);
+  return { state: stateOf(state, draft), events: draft.events };
 }

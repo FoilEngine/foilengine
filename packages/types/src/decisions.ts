@@ -12,4 +12,14 @@ export type MulliganDecision = {
   readonly rule: RuleNumber;
 };
 
-export type Decision = MulliganDecision;
+/**
+ * The player has Priority (312): they may take Discretionary Actions (411.1).
+ * In M2's first step, the only one is ending the turn (316.9).
+ */
+export type PriorityDecision = {
+  readonly kind: 'Priority';
+  readonly player: PlayerId;
+  readonly rule: RuleNumber;
+};
+
+export type Decision = MulliganDecision | PriorityDecision;

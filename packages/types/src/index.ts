@@ -1,10 +1,11 @@
 // @foilengine/types: shared types and constants. No logic (packages/types/CLAUDE.md).
 
-export type { Action, ActionType, Mulligan } from './actions.ts';
+export type { Action, ActionType, EndTurn, Mulligan } from './actions.ts';
 export type { CardCategory, CardDefinition, Domain, Supertype } from './cards.ts';
-export type { Decision, MulliganDecision } from './decisions.ts';
+export type { Decision, MulliganDecision, PriorityDecision } from './decisions.ts';
 export {
   type BattlefieldSelected,
+  type BurnedOut,
   type CardDrawn,
   type CardPlaced,
   type CardRecycled,
@@ -13,11 +14,18 @@ export {
   type GameCreated,
   type GameEvent,
   type GameEventType,
+  type GameWon,
   type MulliganTaken,
+  type ObjectsReadied,
+  type PhaseStarted,
+  type PointsGained,
   PRIVATE_EVENT_FIELDS,
   type RedactedEvent,
+  type RuneChanneled,
   type SetupCompleted,
+  type TurnEnded,
   type TurnOrderDetermined,
+  type TurnStarted,
   type Visibility,
   type VisibleEvent,
 } from './events.ts';
@@ -34,6 +42,7 @@ export {
   type PlayerZones,
   type RngState,
   STATE_VERSION,
+  type TurnPhase,
 } from './state.ts';
 export type {
   HiddenZone,

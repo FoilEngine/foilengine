@@ -10,7 +10,9 @@ import type { CardId, GameObject, GameState, ObjectId, PlayerId, Seed } from '@f
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-/** Every state from creation to the end of setup, with mulligans chosen by `picks`. */
+/** The states of the first actions of a game (setup, mulligans, then turns), mulligans chosen by `picks`. */
+const MAX_ACTIONS = 30;
+
 function statesOf(seed: string, picks: readonly number[]): GameState[] {
   const created = createGame(testSetup({ distinctDecks: true }), seed as Seed);
   if (!created.ok) throw new Error('setup refused');
@@ -19,7 +21,7 @@ function statesOf(seed: string, picks: readonly number[]): GameState[] {
   let i = 0;
   for (
     let decision = pendingDecision(state);
-    decision !== null;
+    decision !== null && states.length <= MAX_ACTIONS;
     decision = pendingDecision(state)
   ) {
     const actions = legalActions(state, decision.player);
@@ -68,17 +70,30 @@ describe('viewFor leaks no hidden information', () => {
     );
   });
 
-  it("names no card of the opponent's hand or decks", () => {
+  it("names no card of the opponent's hand or decks, unless a copy of it is public", () => {
     fc.assert(
       fc.property(arbitraryGame, ({ seed, picks }) => {
         for (const state of statesOf(seed, picks)) {
-          const json = JSON.stringify(viewFor(state, 'A' as PlayerId));
-          // B plays test:b:… cards: their vanillas and runes are only ever in B's hand or decks.
-          expect(json).not.toMatch(/test:b:(vanilla|rune)/);
-          // A's own deck cards are only visible once in A's hand.
-          const a = state.players.find((p) => p.id === 'A');
-          for (const id of [...(a?.zones.mainDeck ?? []), ...(a?.zones.runeDeck ?? [])]) {
-            expect(json).not.toContain(`"${id}"`);
+          for (const viewer of state.turnOrder) {
+            const json = JSON.stringify(viewFor(state, viewer));
+            const publicIds = state.players.flatMap((p) => [
+              ...p.zones.base,
+              ...p.zones.legendZone,
+              ...p.zones.championZone,
+              ...p.zones.trash,
+              ...p.zones.banishment,
+              ...(p.id === viewer ? p.zones.hand : []),
+            ]);
+            const publicCards = new Set([
+              ...publicIds.map((id) => state.objects[id]?.card),
+              ...state.battlefields.map((b) => state.objects[b.object]?.card),
+            ]);
+            // B plays test:b:… cards, so a card name in the view tells whose card it is.
+            for (const id of hiddenFrom(state, viewer)) {
+              const card = state.objects[id]?.card;
+              if (card !== undefined && !publicCards.has(card))
+                expect(json).not.toContain(`"${card}"`);
+            }
           }
         }
       }),

@@ -131,16 +131,18 @@ describe('117 Mulligan', () => {
     },
   });
 
-  scenario(
-    'rule 118: after the last mulligan, no decision is pending until the turn structure (M2)',
-    {
-      rules: ['118'],
-      setup: stacked(),
-      act: (t) => t.act(t.mulligan('A', []), t.mulligan('B', [])),
-      check: (t) => {
-        t.expectDecision(null);
-        t.expectIllegal(t.mulligan('A', []), 'no-pending-decision');
-      },
+  scenario('rule 118: after the last mulligan, the First Player takes their first turn', {
+    rules: ['118'],
+    setup: stacked(),
+    act: (t) => t.act(t.mulligan('A', []), t.mulligan('B', [])),
+    check: (t) => {
+      t.expect(t.events.find((e) => e.type === 'SetupCompleted')).toMatchObject({ firstPlayer: A });
+      t.expect(t.events.find((e) => e.type === 'TurnStarted')).toMatchObject({
+        player: A,
+        turnNumber: 1,
+      });
+      t.expectDecision({ kind: 'Priority', player: A });
+      t.expectIllegal(t.mulligan('A', []), 'wrong-action');
     },
-  );
+  });
 });
