@@ -155,9 +155,9 @@ This loop must be explicit in the code, with one name per step, because that is 
 1. Each player puts their Champion Legend in their legend zone (111) and their Chosen Champion in their champion zone (112).
 2. Battlefields are set aside, then placed according to the mode (113.1). In 1v1, each player randomly selects one of their three battlefields with the state's RNG; the other two are not used (487.4.a, 487.5).
 3. Each player shuffles their main deck and rune deck separately (114): with the state's RNG.
-4. Turn order is drawn at random (115), with the state's RNG.
+4. Turn order is drawn at random (115), with the state's RNG: the 1v1 mode does not say how to pick the First Player (115.1.a), so the engine draws it, then follows seating order (115.1.b). In tournament matches, the Tournament Rules add the Play First Rule (TR 407): a randomly designated player chooses to play first or last, and the loser of a game chooses for the next one. It belongs to matches (M8).
 5. Each player draws 4 cards (116).
-6. Mulligan, in turn order: each player sets aside up to 2 cards, draws as many, then recycles the cards set aside (117.1–117.3).
+6. Mulligan, in turn order: each player sets aside up to 2 cards, draws as many, then recycles the cards set aside (117.1–117.3) to the bottom of their Main Deck, in a random order when there are two (417.5).
 7. The first player starts their turn (118).
 
 Deck construction (101–103) is validated in two places. `createGame` checks the structure it needs to set up a game (M1): one legend, one Chosen Champion that is in the main deck, 12 runes, the number of battlefields required by the mode, and only known cards. `codex` checks the deckbuilding rules (M4): 40 cards minimum, Domain Identity (103.2.b), Champion Tag (103.3.a.2), 3 copies maximum (103.3.b), Signature cards (103.3.d), format legality.

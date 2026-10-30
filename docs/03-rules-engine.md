@@ -5,8 +5,8 @@ The referee. It decides what is legal, resolves everything that happens and dete
 ## Public API
 
 ```ts
-createGame(setup: GameSetup, seed: Seed): { state: GameState; events: GameEvent[] }
-legalActions(state: GameState, player: PlayerId): ActionTemplate[]
+createGame(setup: GameSetup, seed: Seed): { ok: true; state: GameState; events: GameEvent[] } | { ok: false; problems: SetupProblem[] }
+legalActions(state: GameState, player: PlayerId): Action[]
 isLegal(state: GameState, action: Action): { ok: true } | { ok: false; reason: IllegalReason }
 apply(state: GameState, action: Action): { state: GameState; events: GameEvent[] }
 outcome(state: GameState): Outcome            // ongoing, winner, draw, conceded
@@ -15,7 +15,9 @@ pendingDecision(state: GameState): Decision | null   // who must act, and on wha
 ```
 
 - `apply` on an illegal action **changes nothing** and throws an `IllegalActionError` with the reason. The server calls `isLegal` first.
-- `GameSetup` contains the resolved decks (card definitions from `codex` and implementations from `cards`), the mode and the rules version.
+- `createGame` refuses an invalid setup with the list of problems (an expected error, so a value): wrong rules version, unsupported mode, wrong number of players, or a deck whose structure breaks 103 or 133 (see `docs/02-game-model.md`, Setup). In M1 it supports the 1v1 Duel mode only.
+- `legalActions` returns complete actions while their number stays small (11 mulligans for a hand of 4). Templates (`PlayCard` with its valid targets) will replace them when the space grows (M2).
+- `GameSetup` contains the decks, the definitions of their cards (from `codex`), the mode and the rules version. Card implementations from `cards` arrive with M3.
 
 ## Design invariants
 

@@ -231,11 +231,25 @@ importers:
 
   packages/sim: {}
 
-  packages/spec: {}
+  packages/spec:
+    dependencies:
+      '@foilengine/rules':
+        specifier: workspace:*
+        version: link:../rules
+      '@foilengine/testkit':
+        specifier: workspace:*
+        version: link:../testkit
+      '@foilengine/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/telemetry: {}
 
-  packages/testkit: {}
+  packages/testkit:
+    dependencies:
+      '@foilengine/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/types: {}
 

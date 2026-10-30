@@ -1,3 +1,4 @@
+export { TEST_CARD_DEFINITIONS, TEST_CARDS, testDeck, testSetup } from './cards/test-cards.ts';
 export {
   CORE_RULES_INDEX_FORMAT,
   type CoreRule,

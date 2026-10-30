@@ -19,7 +19,7 @@ The order is driven by dependencies: the engine first, tested, then everything t
 
 - [x] `types`: identifiers, `CardDefinition`, state, zones, actions, events, views, decisions.
 - [x] `rules`: serializable seeded RNG (xoshiro128** or PCG) and its tests.
-- [ ] `rules`: `createGame` with the complete setup (104–118), mulligan included.
+- [x] `rules`: `createGame` with the complete setup (104–118), mulligan included.
 - [ ] `rules`: `viewFor` and the no-leak test.
 - [ ] `testkit`: `board()`, `scenario()`, test cards, and Core Rules indexing (`foil rules index`).
 - [ ] `testkit`: rule coverage report (even empty).
@@ -103,7 +103,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [ ] `sim`: jobs, workers, queue, results with confidence intervals.
 - [ ] Weak spot of a deck and of a move.
 - [ ] Sealed: booster opening faithful to `booster-config.json`, building from the pool.
-- [ ] Public matchmaking (constructed and sealed, BO1 and BO3), spectators.
+- [ ] Public matchmaking (constructed and sealed, BO1 and BO3), spectators, and the Play First Rule of the Tournament Rules (TR 407).
 
 **Accepted when**: a simulation of 10,000 games between two decks gives a reproducible result with its confidence interval, and booster opening reproduces the configured rates over 100,000 draws.
 
