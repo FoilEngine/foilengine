@@ -20,7 +20,7 @@ pendingDecision(state: GameState): Decision | null   // who must act, and on wha
 ## Design invariants
 
 1. **Pure.** No I/O, no clock, no `Math.random`, no mutable global variable. The same input always gives the same output.
-2. **Immutable from the outside.** `apply` returns a new state. Internally, a draft may be mutated (structural sharing through Immer or equivalent, to be decided in ADR 0004), but no state received as an argument is ever modified.
+2. **Immutable from the outside.** `apply` returns a new state. Transitions are hand-written immutable updates with structural sharing, without Immer (ADR 0004): no state received as an argument is ever modified.
 3. **Serializable.** The state is pure JSON: no `Map`, class, function or circular reference. `JSON.parse(JSON.stringify(state))` must give an equivalent state.
 4. **Deterministic.** The RNG lives in the state (`rng`): a good-quality seeded PRNG (xoshiro128** or PCG) whose full state is serialized. Every draw advances the counter.
 5. **Bounded.** Every loop (cleanup, chain, triggers) has a bound. Exceeding it throws an `EngineInvariantError`, never an infinite loop.

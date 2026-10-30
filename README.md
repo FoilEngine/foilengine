@@ -45,6 +45,10 @@ pnpm lint && pnpm typecheck && pnpm test
 
 The reference documentation is in `docs/`. `CLAUDE.md` gives the working rules.
 
+## License
+
+Foil's code is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only, see ADR 0016). The license covers the code only: Riot Games' assets (card images, card backs, logos) and the card data are not covered by it.
+
 ## Legal notice
 
 Foil was created under Riot Games' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project.
