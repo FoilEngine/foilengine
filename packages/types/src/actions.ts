@@ -43,6 +43,28 @@ export type PlayCard = {
   readonly payment: readonly RuneUse[];
 };
 
-export type Action = Mulligan | EndTurn | PlayCard;
+/** Where units move to (144.4): a battlefield, or back to their base. */
+export type MoveDestination =
+  | { readonly kind: 'base' }
+  | { readonly kind: 'battlefield'; readonly battlefield: ObjectId };
+
+/**
+ * Standard Move (144): exhaust ready units to move them to one destination (144.2, 144.3.a).
+ * Units move from their base to a battlefield, or from a battlefield to their base (144.4).
+ */
+export type StandardMove = {
+  readonly type: 'StandardMove';
+  readonly player: PlayerId;
+  readonly units: readonly ObjectId[];
+  readonly destination: MoveDestination;
+};
+
+/** The player with Focus passes (347.2). */
+export type PassFocus = {
+  readonly type: 'PassFocus';
+  readonly player: PlayerId;
+};
+
+export type Action = Mulligan | EndTurn | PlayCard | StandardMove | PassFocus;
 
 export type ActionType = Action['type'];
