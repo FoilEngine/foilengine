@@ -39,7 +39,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [x] Hold and conquer, the final point (469–474), victory (193–196), conceding (649–652).
 - [x] The 1v1 mode (487), with its first-turn process: the player going second channels an extra rune during their first Channel Phase (487.7, see Q-001).
 - [x] `log`: log format, serialization, replay, state fingerprint.
-- [ ] Fuzzer and invariants (`06-testing.md`), 10,000 games without a violation.
+- [x] Fuzzer and invariants (`06-testing.md`), 10,000 games without a violation.
 - [x] Engine benchmarks and budgets in CI.
 
 **Accepted when**: 10,000 random games run to the end without an invariant violation, every rule of the sections above is `covered`, and the replay of every game is deterministic.
