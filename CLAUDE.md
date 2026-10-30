@@ -59,6 +59,7 @@ pnpm typecheck
 pnpm lint               # biome (lint and format, CI mode)
 pnpm format             # biome: applies formatting and safe fixes
 pnpm check:deps         # dependency rules between packages (docs/01-architecture.md)
+pnpm foil <command>     # the foil CLI (apps/cli), e.g. `pnpm foil rules index`
 ```
 
 Prerequisites: Node 24 LTS (`.nvmrc`); the pnpm version is pinned by `packageManager`.
