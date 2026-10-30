@@ -1,24 +1,24 @@
 # CLAUDE.md — packages/log
 
-Journal d'événements, replays, notation, empreinte d'état, filtrage par visibilité.
+Event log, replays, notation, state fingerprint, visibility filtering.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `types`, `rules`.
-- **Interdites** : entrée-sortie (la persistance est faite par le serveur).
+- **Allowed**: `types`, `rules`.
+- **Forbidden**: I/O (persistence is done by the server).
 
-## API publique
+## Public API
 
-`serializeReplay`, `parseReplay`, `replay`, `rewindTo`, `stateHash`, `filterEventsFor`, la notation.
+`serializeReplay`, `parseReplay`, `replay`, `rewindTo`, `stateHash`, `filterEventsFor`, the notation.
 
-## Points d'attention
+## Points of attention
 
-- Le format `.foilreplay` est versionné : un ancien replay doit rester lisible.
-- `stateHash` doit être stable (ordre des clés normalisé).
+- The `.foilreplay` format is versioned: an old replay must stay readable.
+- `stateHash` must be stable (normalized key order).
 
-## À lire
+## Read
 
 - `docs/02-game-model.md`
 - `docs/03-rules-engine.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

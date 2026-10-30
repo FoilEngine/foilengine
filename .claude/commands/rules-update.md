@@ -1,12 +1,13 @@
 ---
-description: Intègre une nouvelle version des Core Rules
-argument-hint: <version, ex. 1.5>
+description: Integrates a new version of the Core Rules
+argument-hint: <version, e.g. CR-2026-10-09>
 ---
 
-Intègre la version $ARGUMENTS des Core Rules, en suivant `docs/rules/README.md`.
+Integrate version $ARGUMENTS of the Core Rules, following `docs/rules/README.md`.
 
-1. Vérifie que le nouveau PDF est dans `docs/rules/`. Archive l'ancien dans `docs/rules/archive/`.
-2. Réindexe (`foil rules index`) et compare avec l'index précédent : règles ajoutées, supprimées, renumérotées, au texte modifié.
-3. Écris `docs/rules/changes/$ARGUMENTS.md` : la liste des changements, regroupés par section, avec leur impact sur le moteur.
-4. Marque les tests concernés en `stale` et donne la liste.
-5. Ne change pas `rulesVersion` du moteur tant que tous les tests `stale` n'ont pas été relus et mis à jour.
+1. Check that the new PDF is in `docs/rules/`, named `core-rules-<date>.pdf`. Archive the old one in `docs/rules/archive/`.
+2. Re-index (`foil rules index`) and compare with the previous index: rules added, removed, renumbered, with changed text.
+3. Write `docs/rules/changes/$ARGUMENTS.md`: the list of changes, grouped by section, with their impact on the engine.
+4. Mark the affected tests as `stale` and list them.
+5. Update the rule numbers quoted in the docs (`docs/`, `CLAUDE.md` files, `docs/rules/questions.md`): the PDF wins over the docs.
+6. Do not change the engine's `rulesVersion` until every `stale` test has been reviewed and updated.

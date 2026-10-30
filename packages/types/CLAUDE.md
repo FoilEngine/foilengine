@@ -1,25 +1,25 @@
 # CLAUDE.md — packages/types
 
-Types partagés : identifiants marqués, définitions de cartes, état de jeu, zones, actions, événements, décisions, vues.
+Shared types: branded identifiers, card definitions, game state, zones, actions, events, decisions, views.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : rien.
-- **Interdites** : toute dépendance, toute logique, toute fonction (sauf gardes de type triviales et `assertNever`).
+- **Allowed**: nothing.
+- **Forbidden**: any dependency, any logic, any function (except trivial type guards and `assertNever`).
 
-## API publique
+## Public API
 
-Uniquement des types et des constantes. Exporté depuis `src/index.ts`.
+Only types and constants. Exported from `src/index.ts`.
 
-## Points d'attention
+## Points of attention
 
-- Tout changement de forme de `GameState`, `Action` ou `GameEvent` incrémente la version concernée et doit rester rejouable (voir `log`).
-- L'état doit rester du JSON pur : pas de `Map`, `Set`, `Date`, classe ni fonction.
-- Nommer les événements au passé, les actions à l'impératif.
+- Any change to the shape of `GameState`, `Action` or `GameEvent` increments the relevant version and must stay replayable (see `log`).
+- The state must stay pure JSON: no `Map`, `Set`, `Date`, class or function.
+- Name events in the past tense, actions in the imperative.
 
-## À lire
+## Read
 
 - `docs/02-game-model.md`
 - `docs/13-conventions.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

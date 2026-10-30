@@ -1,73 +1,73 @@
-# 07 — Observabilité et santé
+# 07 — Observability and health
 
-Objectif : pouvoir vérifier à tout moment que le backend va bien, comprendre ce qui se passe dans une partie, et être prévenu avant les joueurs quand quelque chose casse.
+Goal: be able to check at any time that the backend is healthy, understand what happens in a game, and be warned before the players when something breaks.
 
-## Les trois signaux
+## The three signals
 
-Tout passe par `@foilengine/telemetry`. Aucun package n'utilise directement `console.log`, un client Prometheus ou un SDK de traces.
+Everything goes through `@foilengine/telemetry`. No package uses `console.log`, a Prometheus client or a tracing SDK directly.
 
 ### Logs
 
-- **Pino**, en JSON, une ligne par événement.
-- Champs systématiques : `ts`, `level`, `service`, `version` (commit), `env`, `msg`, et selon le contexte `requestId`, `gameId`, `playerId` (pseudonymisé), `traceId`, `spanId`.
-- Niveaux : `error` (action requise), `warn` (anomalie tolérée), `info` (cycle de vie : partie créée, terminée, joueur connecté), `debug` (détail, désactivé en production par défaut, activable à chaud par partie).
-- Jamais de secret, de jeton, d'adresse e-mail ni de main de joueur en clair dans les logs.
-- Collecte par Grafana Alloy (ou Promtail) vers **Loki**.
+- **Pino**, in JSON, one line per event.
+- Systematic fields: `ts`, `level`, `service`, `version` (commit), `env`, `msg`, and depending on context `requestId`, `gameId`, `playerId` (pseudonymized), `traceId`, `spanId`.
+- Levels: `error` (action required), `warn` (tolerated anomaly), `info` (lifecycle: game created, finished, player connected), `debug` (detail, off in production by default, can be turned on live per game).
+- Never a secret, a token, an e-mail address or a player's hand in clear in the logs.
+- Collected by Grafana Alloy (or Promtail) into **Loki**.
 
-### Métriques
+### Metrics
 
-- Format **Prometheus**, exposé sur `/metrics` (port interne, non public).
-- Préfixe `foil_`. Les noms suivent les conventions Prometheus (`_total` pour les compteurs, `_seconds` pour les durées).
+- **Prometheus** format, exposed on `/metrics` (internal port, not public).
+- `foil_` prefix. Names follow the Prometheus conventions (`_total` for counters, `_seconds` for durations).
 
-Métriques minimales :
+Minimal metrics:
 
-| Métrique | Type | Labels | Pourquoi |
+| Metric | Type | Labels | Why |
 | --- | --- | --- | --- |
-| `foil_games_active` | gauge | `mode` | Parties en cours |
-| `foil_games_started_total` / `foil_games_finished_total` | counter | `mode`, `result` | Activité, abandons |
-| `foil_engine_apply_seconds` | histogram | `action_type` | Latence du moteur |
-| `foil_engine_legal_actions_seconds` | histogram | | Latence du moteur |
-| `foil_engine_illegal_actions_total` | counter | `reason` | Clients qui tentent des coups illégaux (bug client ou triche) |
-| `foil_engine_errors_total` | counter | `kind` (`invariant`, `not_implemented`) | Bugs moteur, cartes manquantes |
-| `foil_engine_invariant_violations_total` | counter | `invariant` | Vérifications échantillonnées en production |
-| `foil_engine_nondeterminism_total` | counter | | Rejeu de contrôle qui diverge |
-| `foil_cards_not_implemented_total` | counter | `card` | Quelles cartes manquent le plus en vrai |
-| `foil_manual_overrides_total` | counter | `card` | Usage du mode manuel |
-| `foil_ws_connections` | gauge | | Connexions WebSocket |
-| `foil_ws_messages_total` | counter | `direction`, `type` | Trafic |
-| `foil_ws_reconnects_total` | counter | | Stabilité réseau |
-| `foil_action_roundtrip_seconds` | histogram | | Du message client à l'envoi des événements |
-| `foil_matchmaking_wait_seconds` | histogram | `mode` | Attente en file |
-| `foil_ai_think_seconds` | histogram | `policy` | Temps de réflexion de l'IA |
-| `foil_sim_jobs` | gauge | `state` (`queued`, `running`, `failed`) | File des simulations |
-| `foil_sim_games_per_second` | gauge | | Débit des workers |
+| `foil_games_active` | gauge | `mode` | Running games |
+| `foil_games_started_total` / `foil_games_finished_total` | counter | `mode`, `result` | Activity, concessions |
+| `foil_engine_apply_seconds` | histogram | `action_type` | Engine latency |
+| `foil_engine_legal_actions_seconds` | histogram | | Engine latency |
+| `foil_engine_illegal_actions_total` | counter | `reason` | Clients attempting illegal moves (client bug or cheating) |
+| `foil_engine_errors_total` | counter | `kind` (`invariant`, `not_implemented`) | Engine bugs, missing cards |
+| `foil_engine_invariant_violations_total` | counter | `invariant` | Sampled checks in production |
+| `foil_engine_nondeterminism_total` | counter | | Control replay that diverges |
+| `foil_cards_not_implemented_total` | counter | `card` | Which cards are missing most in practice |
+| `foil_manual_overrides_total` | counter | `card` | Manual mode usage |
+| `foil_ws_connections` | gauge | | WebSocket connections |
+| `foil_ws_messages_total` | counter | `direction`, `type` | Traffic |
+| `foil_ws_reconnects_total` | counter | | Network stability |
+| `foil_action_roundtrip_seconds` | histogram | | From the client message to the events being sent |
+| `foil_matchmaking_wait_seconds` | histogram | `mode` | Queue wait |
+| `foil_ai_think_seconds` | histogram | `policy` | AI thinking time |
+| `foil_sim_jobs` | gauge | `state` (`queued`, `running`, `failed`) | Simulation queue |
+| `foil_sim_games_per_second` | gauge | | Worker throughput |
 | `foil_http_request_seconds` | histogram | `route`, `status` | API |
-| `foil_db_query_seconds` | histogram | `query` | Base de données |
+| `foil_db_query_seconds` | histogram | `query` | Database |
 
-Plus les métriques par défaut du runtime Node (event loop lag, mémoire, GC).
+Plus the default Node runtime metrics (event loop lag, memory, GC).
 
 ### Traces
 
-- **OpenTelemetry**, exportées vers **Tempo**.
-- Une trace par requête HTTP et par message WebSocket. Spans dédiés autour de `isLegal`, `apply`, la persistance du journal, la diffusion aux clients, la réflexion de l'IA.
-- Le `traceId` est présent dans les logs pour passer d'une ligne de log à sa trace dans Grafana.
+- **OpenTelemetry**, exported to **Tempo**.
+- One trace per HTTP request and per WebSocket message. Dedicated spans around `isLegal`, `apply`, log persistence, broadcast to clients, AI thinking.
+- The `traceId` is in the logs, to go from a log line to its trace in Grafana.
 
-### Erreurs
+### Errors
 
-- **GlitchTip** auto-hébergé (compatible avec le SDK Sentry, donc gratuit) pour le serveur, les workers et le client. Chaque erreur moteur joint le `gameId`, la version des règles et un lien vers le replay dans la console.
+- Self-hosted **GlitchTip** (compatible with the Sentry SDK, so free) for the server, the workers and the client. Every engine error attaches the `gameId`, the rules version and a link to the replay in the console.
 
-## Endpoints de santé
+## Health endpoints
 
-Sur `apps/server` (et chaque worker expose les mêmes sur son port interne) :
+On `apps/server` (and every worker exposes the same ones on its internal port):
 
-| Endpoint | Rôle | Contenu |
+| Endpoint | Role | Content |
 | --- | --- | --- |
-| `GET /healthz` | Vivant ? Pour le redémarrage automatique. | `200 {"status":"ok"}` si le processus répond. Ne vérifie aucune dépendance. |
-| `GET /readyz` | Prêt à recevoir du trafic ? | `200` si toutes les dépendances critiques répondent, sinon `503` avec le détail. |
-| `GET /health/details` | Diagnostic complet (protégé, admin uniquement) | Voir ci-dessous |
-| `GET /metrics` | Prometheus | Port interne uniquement |
+| `GET /healthz` | Alive? For automatic restarts. | `200 {"status":"ok"}` if the process answers. Checks no dependency. |
+| `GET /readyz` | Ready to receive traffic? | `200` if all critical dependencies answer, otherwise `503` with the details. |
+| `GET /health/details` | Full diagnosis (protected, admin only) | See below |
+| `GET /metrics` | Prometheus | Internal port only |
 
-Réponse de `/health/details` :
+Response of `/health/details`:
 
 ```json
 {
@@ -89,76 +89,76 @@ Réponse de `/health/details` :
 }
 ```
 
-Chaque check a un seuil `warn` et `fail`, défini dans la config et documenté ici quand il change.
+Each check has a `warn` and a `fail` threshold, defined in the config and documented here when it changes.
 
-**L'auto-test du moteur** (`engineSelfTest`) rejoue les replays de référence au démarrage et toutes les 10 minutes, et compare les empreintes. Les replays de référence sont des fichiers de données (`.foilreplay`) lus au démarrage : le serveur n'importe pas `testkit`, il les rejoue avec `rules` et `log`. S'il échoue, `/readyz` passe en échec : un moteur qui ne joue plus juste ne doit pas recevoir de parties.
+**The engine self-test** (`engineSelfTest`) replays the reference replays at startup and every 10 minutes, and compares the fingerprints. The reference replays are data files (`.foilreplay`) read at startup: the server does not import `testkit`, it replays them with `rules` and `log`. If the self-test fails, `/readyz` fails: an engine that no longer plays correctly must not receive games.
 
-## La commande `pnpm health` (et `foil health`)
+## The `pnpm health` command (and `foil health`)
 
-Un seul point d'entrée pour vérifier un environnement, en local ou en production :
+A single entry point to check an environment, locally or in production:
 
 ```bash
-pnpm health                 # environnement local
-foil health --env prod      # production (avec un jeton admin)
-foil health --json          # pour un script ou la CI
+pnpm health                 # local environment
+foil health --env prod      # production (with an admin token)
+foil health --json          # for a script or the CI
 ```
 
-Elle vérifie, dans l'ordre :
-1. Les services répondent (`/healthz`, `/readyz`) : serveur, workers, Postgres, Valkey, Prometheus, Grafana, Loki, Tempo, GlitchTip.
-2. Le détail de `/health/details`.
-3. Un **parcours synthétique** : se connecter en WebSocket, créer une partie solo contre l'IA aléatoire, jouer jusqu'à la fin, vérifier le replay, supprimer la partie.
-4. Les alertes actives dans Alertmanager.
-5. Les versions déployées (commit, version des règles, snapshot codex).
+It checks, in order:
+1. The services answer (`/healthz`, `/readyz`): server, workers, Postgres, Valkey, Prometheus, Grafana, Loki, Tempo, GlitchTip.
+2. The details of `/health/details`.
+3. A **synthetic journey**: connect over WebSocket, create a solo game against the random AI, play to the end, check the replay, delete the game.
+4. The active alerts in Alertmanager.
+5. The deployed versions (commit, rules version, codex snapshot).
 
-Sortie lisible, une ligne par vérification avec un statut, et un code de sortie non nul en cas d'échec. Le même parcours synthétique tourne toutes les 5 minutes en production et alimente une métrique `foil_synthetic_check_success`.
+Readable output, one line per check with a status, and a non-zero exit code on failure. The same synthetic journey runs every 5 minutes in production and feeds a `foil_synthetic_check_success` metric.
 
-## La console (`apps/console`)
+## The console (`apps/console`)
 
-Une application web réservée aux administrateurs. Elle passe par l'API du serveur pour tout ce qu'elle affiche ou lance, et n'importe pas `testkit`. Pages :
+A web application for administrators only. It goes through the server API for everything it displays or launches, and does not import `testkit`. Pages:
 
-1. **Santé** : l'équivalent visuel de `/health/details`, en direct, avec l'historique des dernières 24 heures.
-2. **Parties en cours** : liste, mode, durée, joueurs (pseudonymisés), dernière action, latence. Ouvrir une partie en spectateur administrateur, ce qui permet de voir l'état complet.
-3. **Replays** : rechercher une partie, la rejouer pas à pas avec l'état complet et les événements, exporter le replay, lancer `/investigate-replay` sur un replay (génère un fichier pour Claude Code).
-4. **Règles** : le rapport de couverture des règles (statut par numéro), les questions ouvertes, et un **lanceur de scénarios** : choisir ou écrire un scénario (YAML), l'exécuter contre la version déployée via l'API du serveur et voir le résultat. Question ouverte (ADR 0017) : le serveur n'importe pas `testkit`, il reste à décider comment il exécute un scénario.
-5. **Cartes** : couverture des cartes par set et par legend, cartes les plus souvent en mode manuel, cartes les plus impliquées dans des erreurs moteur.
-6. **Simulations** : file des jobs, débit des workers, résultats récents.
-7. **Erreurs** : les dernières erreurs moteur avec un lien vers GlitchTip et vers le replay.
-8. **Métriques** : graphes Grafana intégrés pour les tableaux de bord principaux.
+1. **Health**: the visual equivalent of `/health/details`, live, with the history of the last 24 hours.
+2. **Running games**: list, mode, duration, players (pseudonymized), last action, latency. Open a game as an administrator spectator, which shows the full state.
+3. **Replays**: search for a game, replay it step by step with the full state and the events, export the replay, run `/investigate-replay` on a replay (generates a file for Claude Code).
+4. **Rules**: the rule coverage report (status per number), the open questions, and a **scenario runner**: pick or write a scenario (YAML), run it against the deployed version through the server API and see the result. Open question (ADR 0017): the server does not import `testkit`, and how it runs a scenario is still to be decided.
+5. **Cards**: card coverage per set and per legend, the cards most often in manual mode, the cards most involved in engine errors.
+6. **Simulations**: job queue, worker throughput, recent results.
+7. **Errors**: the latest engine errors with a link to GlitchTip and to the replay.
+8. **Metrics**: embedded Grafana graphs for the main dashboards.
 
-## Tableaux de bord Grafana
+## Grafana dashboards
 
-Versionnés dans `infra/grafana/dashboards/` en JSON, provisionnés automatiquement :
+Versioned in `infra/grafana/dashboards/` as JSON, provisioned automatically:
 
-- **Vue d'ensemble** : parties actives, joueurs connectés, erreurs, latences p50/p95/p99, état des checks.
-- **Moteur** : latences `apply` et `legalActions` par type d'action, actions illégales par raison, erreurs moteur, cartes non implémentées.
-- **Temps réel** : connexions, messages, reconnexions, aller-retour d'une action.
-- **Simulations et IA** : file, débit, temps de réflexion.
-- **Infrastructure** : CPU, mémoire, disque, Postgres, Valkey.
+- **Overview**: active games, connected players, errors, p50/p95/p99 latencies, check status.
+- **Engine**: `apply` and `legalActions` latencies per action type, illegal actions per reason, engine errors, unimplemented cards.
+- **Real time**: connections, messages, reconnections, action round trip.
+- **Simulations and AI**: queue, throughput, thinking time.
+- **Infrastructure**: CPU, memory, disk, Postgres, Valkey.
 
-## Alertes
+## Alerts
 
-Règles Prometheus versionnées dans `infra/prometheus/alerts/`, routées par Alertmanager vers un webhook Discord (et e-mail en secours) :
+Prometheus rules versioned in `infra/prometheus/alerts/`, routed by Alertmanager to a Discord webhook (and e-mail as a fallback):
 
-| Alerte | Condition | Gravité |
+| Alert | Condition | Severity |
 | --- | --- | --- |
-| `ServerDown` | `/healthz` ne répond pas depuis 1 min | critique |
-| `NotReady` | `/readyz` en échec depuis 2 min | critique |
-| `EngineSelfTestFailed` | auto-test du moteur en échec | critique |
-| `EngineNondeterminism` | `foil_engine_nondeterminism_total` augmente | critique |
-| `EngineInvariantViolations` | violations d'invariants > 0 sur 10 min | haute |
-| `EngineErrorsSpike` | erreurs moteur > 1 % des actions sur 10 min | haute |
-| `SyntheticCheckFailing` | parcours synthétique en échec deux fois de suite | haute |
-| `HighActionLatency` | p95 de l'aller-retour d'une action > 250 ms sur 10 min | moyenne |
-| `SimQueueBacklog` | job le plus ancien > 15 min | moyenne |
-| `DiskAlmostFull` | moins de 15 % libre | moyenne |
-| `BackupMissing` | aucune sauvegarde réussie depuis 26 h | haute |
+| `ServerDown` | `/healthz` has not answered for 1 min | critical |
+| `NotReady` | `/readyz` failing for 2 min | critical |
+| `EngineSelfTestFailed` | engine self-test failing | critical |
+| `EngineNondeterminism` | `foil_engine_nondeterminism_total` increases | critical |
+| `EngineInvariantViolations` | invariant violations > 0 over 10 min | high |
+| `EngineErrorsSpike` | engine errors > 1% of actions over 10 min | high |
+| `SyntheticCheckFailing` | synthetic journey failing twice in a row | high |
+| `HighActionLatency` | p95 of the action round trip > 250 ms over 10 min | medium |
+| `SimQueueBacklog` | oldest job > 15 min | medium |
+| `DiskAlmostFull` | less than 15% free | medium |
+| `BackupMissing` | no successful backup for 26 h | high |
 
-Chaque alerte renvoie vers un runbook dans le repo `infra` (`docs/runbooks/`).
+Every alert links to a runbook in the `infra` repo (`docs/runbooks/`).
 
-## Uptime externe
+## External uptime
 
-**Uptime Kuma** vérifie depuis l'extérieur la page publique, l'API et le WebSocket, et publie une page de statut publique.
+**Uptime Kuma** checks the public page, the API and the WebSocket from the outside, and publishes a public status page.
 
-## En local
+## Locally
 
-`infra/docker-compose.observability.yml` démarre Prometheus, Grafana (avec les tableaux de bord), Loki, Tempo, Alertmanager, GlitchTip et Uptime Kuma. `pnpm dev:obs` lance l'application avec cette stack, pour développer le monitoring dans les mêmes conditions qu'en production.
+`infra/docker-compose.observability.yml` starts Prometheus, Grafana (with the dashboards), Loki, Tempo, Alertmanager, GlitchTip and Uptime Kuma. `pnpm dev:obs` runs the application with this stack, to develop the monitoring in the same conditions as in production.

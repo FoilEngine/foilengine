@@ -1,14 +1,14 @@
-# 04 — Cartes et effets (`@foilengine/cards`)
+# 04 — Cards and effects (`@foilengine/cards`)
 
-Implémenter les effets de plus de mille cartes, c'est le plus gros chantier du projet. Il faut donc que l'ajout d'une carte soit simple, sûr et vérifiable.
+Implementing the effects of more than a thousand cards is the biggest job of the project. Adding a card must therefore be simple, safe and verifiable.
 
-## Principe
+## Principle
 
-- La plupart des cartes sont **des données** écrites dans un DSL typé : déclencheurs, conditions, cibles, actions atomiques. Pas de code.
-- Une carte qui ne rentre pas dans le DSL a une **implémentation sur mesure**, en TypeScript, qui n'utilise que l'API d'effets exposée par `rules`. C'est l'exception, et chaque cas doit être justifié dans un commentaire.
-- Quand trois cartes sur mesure partagent un motif, on l'ajoute au DSL.
+- Most cards are **data** written in a typed DSL: triggers, conditions, targets, atomic actions. No code.
+- A card that does not fit the DSL gets a **custom implementation**, in TypeScript, that only uses the effect API exposed by `rules`. It is the exception, and each case must be justified in a comment.
+- When three custom cards share a pattern, it is added to the DSL.
 
-## Le DSL (forme indicative)
+## The DSL (indicative shape)
 
 ```ts
 defineCard('ogn-011-298', {
@@ -30,46 +30,46 @@ defineCard('ogn-011-298', {
 });
 ```
 
-Les briques du DSL suivent les sections des Core Rules :
+The DSL building blocks follow the sections of the Core Rules:
 
-| Brique | Sections |
+| Building block | Sections |
 | --- | --- |
-| Déclencheurs (`on.played`, `on.attack`, `on.defend`, `on.conquer`, `on.hold`, `on.dies`, début ou fin de tour…) | capacités déclenchées (360+) |
-| Capacités passives et effets continus | 360+, couches 473+ |
-| Effets de remplacement | 360+ |
-| Capacités activées, coûts, timing (Action, Reaction) | 360+, 806, 813 |
-| Actions atomiques (`deal`, `draw`, `move`, `ready`, `exhaust`, `kill`, `heal`, `buff`, `recycle`, `banish`, `recall`, `channel`, `add`, `score`, `createToken`…) | 407–444, 700+ |
-| Ciblage et sélecteurs | jouer une carte (349+), non-ciblable (756) |
-| Mots-clés | 800+ (un module par mot-clé) |
+| Triggers (`on.played`, `on.attack`, `on.defend`, `on.conquer`, `on.hold`, `on.dies`, start or end of turn…) | triggered abilities (360+) |
+| Passive abilities and continuous effects | 360+, layers 473+ |
+| Replacement effects | 360+ |
+| Activated abilities, costs, timing (Action, Reaction) | 360+, 806, 813 |
+| Atomic actions (`deal`, `draw`, `move`, `ready`, `exhaust`, `kill`, `heal`, `buff`, `recycle`, `banish`, `recall`, `channel`, `add`, `score`, `createToken`…) | 407–444, 700+ |
+| Targeting and selectors | playing a card (349+), untargetable (756) |
+| Keywords | 800+ (one module per keyword) |
 
-La liste exacte des mots-clés et leur texte se lisent dans la section 800 du PDF. Chaque mot-clé a son module, ses tests et sa ligne dans le rapport de couverture.
+The exact list of keywords and their text are read in section 800 of the PDF. Each keyword has its module, its tests and its line in the coverage report.
 
-## Statut de chaque carte
+## Status of each card
 
-Chaque carte a un statut, stocké avec son implémentation :
+Each card has a status, stored with its implementation:
 
-| Statut | Signification |
+| Status | Meaning |
 | --- | --- |
-| `missing` | Pas implémentée. En partie, on bascule en mode manuel pour elle. |
-| `partial` | Une partie de l'effet fonctionne. Les écarts sont décrits dans `notes`. |
-| `complete` | Effet complet, tests verts. |
-| `verified` | Complète, et vérifiée contre les rulings officiels et FAQ (liens dans `sources`). |
+| `missing` | Not implemented. In a game, it switches to manual mode. |
+| `partial` | Part of the effect works. The gaps are described in `notes`. |
+| `complete` | Full effect, tests green. |
+| `verified` | Complete, and checked against the official rulings and FAQ (links in `sources`). |
 
-Le rapport de couverture des cartes (`pnpm cards:coverage`) donne, par set et par legend, le pourcentage de cartes `complete` ou `verified`. La console l'affiche. Une legend est « jouable » quand toutes les cartes de son deck champion sont au moins `complete`.
+The card coverage report (`pnpm cards:coverage`) gives, per set and per legend, the percentage of cards that are `complete` or `verified`. The console displays it. A legend is "playable" when every card of its champion deck is at least `complete`.
 
-## Ajouter une carte (workflow `/implement-card`)
+## Adding a card (`/implement-card` workflow)
 
-1. Récupérer la définition de la carte dans le snapshot `codex` (texte exact, coût, domaine, might, mots-clés, errata en vigueur).
-2. Lire le texte et identifier les règles concernées. En cas de doute, chercher dans les FAQ officielles et noter la question dans `docs/rules/questions.md`.
-3. Écrire les tests d'abord, avec le harnais de scénarios (`06-testing.md`) : un test par comportement, avec les cas limites (cible illégale, carte qui quitte le plateau en cours de résolution, interaction avec un remplacement…).
-4. Écrire l'implémentation en DSL, ou sur mesure si nécessaire.
-5. Mettre à jour le statut et les `sources`.
-6. Vérifier que le fuzzer tourne toujours sans violation d'invariant avec la carte incluse dans les decks aléatoires.
+1. Get the card definition from the `codex` snapshot (exact text, cost, domain, might, keywords, errata in force).
+2. Read the text and identify the relevant rules. When in doubt, search the official FAQ and record the question in `docs/rules/questions.md`.
+3. Write the tests first, with the scenario harness (`06-testing.md`): one test per behavior, with the edge cases (illegal target, card leaving the board during resolution, interaction with a replacement…).
+4. Write the implementation in the DSL, or custom if needed.
+5. Update the status and the `sources`.
+6. Check that the fuzzer still runs without invariant violations with the card included in the random decks.
 
-## Mode manuel
+## Manual mode
 
-Pour une carte `missing` ou `partial`, le serveur propose au joueur de résoudre l'effet à la main : il décrit ce qu'il fait (texte libre) et applique les modifications avec des actions atomiques autorisées (déplacer, infliger des dégâts, piocher…). L'action est enregistrée comme `ManualOverride` dans le journal, avec la carte concernée. Une partie qui contient des actions manuelles est exclue des statistiques de simulation et des données d'entraînement de l'IA.
+For a `missing` or `partial` card, the server offers the player to resolve the effect by hand: they describe what they do (free text) and apply the changes with allowed atomic actions (move, deal damage, draw…). The action is recorded as a `ManualOverride` in the log, with the card concerned. A game that contains manual actions is excluded from simulation statistics and from AI training data.
 
-## Errata et cartes interdites
+## Errata and banned cards
 
-Les errata changent le texte de règles d'une carte imprimée. L'implémentation suit **le texte en vigueur**, et la version d'errata appliquée est enregistrée. La liste des cartes interdites vient de `codex` et est vérifiée à la validation du deck, selon le format.
+Errata change the rules text of a printed card. The implementation follows **the text in force**, and the applied errata version is recorded. The list of banned cards comes from `codex` and is checked at deck validation, depending on the format.

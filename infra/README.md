@@ -1,32 +1,34 @@
-# infra/ — Environnement local
+# infra/ — Local environment
 
-Tout ce qu'il faut pour faire tourner Foil Engine et son monitoring **en local**. Aucun secret ici. La production est dans le repo privé `FoilEngine/infra`.
+Everything needed to run Foil Engine and its monitoring **locally**. No secrets here. Production lives in the private `FoilEngine/infra` repo.
 
-## Contenu attendu
+## Expected content
 
 ```
 infra/
   docker-compose.yml                 Postgres, Valkey
-  docker-compose.observability.yml   Prometheus, Alertmanager, Grafana, Loki, Tempo, GlitchTip, Uptime Kuma, collecteur (Alloy)
+  docker-compose.observability.yml   Prometheus, Alertmanager, Grafana, Loki, Tempo, GlitchTip, Uptime Kuma, collector (Alloy)
   prometheus/
-    prometheus.yml                   cibles : server, workers
-    alerts/*.yml                     règles d'alerte (liste dans docs/07-observability.md)
-  alertmanager/alertmanager.yml      routage (webhook Discord en local optionnel)
+    prometheus.yml                   targets: server, workers
+    alerts/*.yml                     alert rules (list in docs/07-observability.md)
+  alertmanager/alertmanager.yml      routing (optional local Discord webhook)
   grafana/
-    provisioning/                    sources de données et tableaux de bord provisionnés
-    dashboards/*.json                vue d'ensemble, moteur, temps réel, simulations et IA, infrastructure
-  loki/, tempo/                      configurations minimales
+    provisioning/                    provisioned data sources and dashboards
+    dashboards/*.json                overview, engine, real time, simulations and AI, infrastructure
+  loki/, tempo/                      minimal configurations
 ```
 
-## Commandes
+## Commands
+
+These scripts arrive with milestone M5 (see the table in the root `CLAUDE.md`).
 
 ```bash
-pnpm infra:up        # dépendances
-pnpm infra:obs       # stack d'observabilité
-pnpm dev:obs         # application + dépendances + observabilité
-pnpm health          # vérification complète
+pnpm infra:up        # dependencies
+pnpm infra:obs       # observability stack
+pnpm dev:obs         # application + dependencies + observability
+pnpm health          # full check
 ```
 
-Grafana : `http://localhost:3001` (identifiants dans `.env.example`). Les tableaux de bord et les alertes sont versionnés ici : les modifier dans Grafana puis exporter le JSON dans `grafana/dashboards/`.
+Grafana: `http://localhost:3001` (credentials in `.env.example`). Dashboards and alerts are versioned here: edit them in Grafana, then export the JSON into `grafana/dashboards/`.
 
-Les mêmes fichiers de configuration (alertes, tableaux de bord) sont réutilisés par la production : le repo privé ne contient que ce qui diffère (secrets, domaines, ressources).
+Production reuses the same configuration files (alerts, dashboards): the private repo only contains what differs (secrets, domains, resources).

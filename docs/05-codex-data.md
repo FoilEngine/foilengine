@@ -1,49 +1,49 @@
-# 05 — Données de cartes (`@foilengine/codex`)
+# 05 — Card data (`@foilengine/codex`)
 
-`codex` récupère les données de cartes, les normalise et produit des **snapshots versionnés** utilisés par le reste du projet. Le moteur ne va jamais chercher de données en ligne.
+`codex` fetches the card data, normalizes it and produces **versioned snapshots** used by the rest of the project. The engine never fetches data online.
 
 ## Sources
 
-| Source | Ce qu'elle apporte | Ce qu'elle n'apporte pas |
+| Source | What it provides | What it does not provide |
 | --- | --- | --- |
-| **Riftcodex** (`api.riftcodex.com`, API ouverte, sans clé) | Données de jeu : nom, type, supertype, rareté, domaines, coût (énergie, puissance), might, texte (riche et brut), mots-clés, set, numéro de collection, `riftbound_id`, artiste, image, orientation, et trois drapeaux : `alternate_art`, `overnumbered`, `signature`. Identifiant TCGplayer. | Le statut foil, les promos, les prix |
-| **Catalogue TCGplayer** (via l'identifiant `tcgplayer_id`) | Les impressions (normal ou foil), la rareté de catalogue (dont « Showcase » et « Promo »), les sets de promos, les prix | Le texte de règles fiable |
-| **Pages officielles de Riot** (Rules Hub, errata, bannissements, FAQ) | Errata, cartes interdites, rulings | Données structurées : à saisir à la main dans `codex/data/manual/` |
+| **Riftcodex** (`api.riftcodex.com`, open API, no key) | Game data: name, type, supertype, rarity, domains, cost (energy, power), might, text (rich and plain), keywords, set, collector number, `riftbound_id`, artist, image, orientation, and three flags: `alternate_art`, `overnumbered`, `signature`. TCGplayer identifier. | Foil status, promos, prices |
+| **TCGplayer catalog** (through the `tcgplayer_id` identifier) | Printings (normal or foil), catalog rarity (including "Showcase" and "Promo"), promo sets, prices | Reliable rules text |
+| **Riot's official pages** (Rules Hub, errata, bans, FAQ) | Errata, banned cards, rulings | Structured data: entered by hand in `codex/data/manual/` |
 
-Le détail des raretés, traitements et promos est documenté dans le repo `brand` (`04-design-system/cartes.md`). Résumé utile pour le code :
+The details of rarities, treatments and promos are documented in the `brand` repo (`04-design-system/cartes.md`). Summary useful for the code:
 
-- Le numéro de collection porte l'information : suffixe `a` pour une alt art, numéro au-dessus du total du set pour une overnumbered, astérisque pour une signature, préfixe `R` pour une rune, `T` pour un jeton.
-- Ultimate (une carte par set qui en a une) et Special Art n'ont pas de drapeau : ils se repèrent par le nom ou la rareté de catalogue.
-- Les rares et épiques sont toujours foil en booster.
+- The collector number carries the information: suffix `a` for an alt art, a number above the set total for an overnumbered, an asterisk for a signature, prefix `R` for a rune, `T` for a token.
+- Ultimate (one card per set that has one) and Special Art have no flag: they are identified by name or by catalog rarity.
+- Rares and epics are always foil in boosters.
 
-## Modèle normalisé
+## Normalized model
 
-On sépare deux notions :
+Two notions are kept apart:
 
-- **`CardDefinition`** : la carte **en tant que règle** (un seul enregistrement pour toutes les impressions d'une même carte) : nom, type, supertype, domaines, coûts, might, texte de règles en vigueur, mots-clés, tags.
-- **`Printing`** : une **impression** de cette carte : set, numéro, rareté, traitements (`alternateArt`, `overnumbered`, `signature`, `ultimate`, `specialArt`, `promo` avec son origine, `metal`), finitions disponibles (`normal`, `foil`), image, artiste, identifiants externes.
+- **`CardDefinition`**: the card **as a rule** (a single record for all printings of the same card): name, type, supertype, domains, costs, might, rules text in force, keywords, tags.
+- **`Printing`**: a **printing** of that card: set, number, rarity, treatments (`alternateArt`, `overnumbered`, `signature`, `ultimate`, `specialArt`, `promo` with its origin, `metal`), available finishes (`normal`, `foil`), image, artist, external identifiers.
 
-Le moteur ne connaît que `CardDefinition`. Le client et la collection utilisent `Printing`. Deux impressions de la même carte sont strictement équivalentes en jeu.
+The engine only knows `CardDefinition`. The client and the collection use `Printing`. Two printings of the same card are strictly equivalent in play.
 
 ## Snapshots
 
-- La commande `foil codex sync` interroge les sources, normalise, valide (Zod) et écrit `packages/codex/data/snapshots/<date>/<set>.json`, plus un `manifest.json` (version, sources, nombres de cartes, empreinte).
-- Les snapshots sont **commités**. Les tests et les simulations utilisent un snapshot précis, jamais le réseau.
-- Un diff lisible entre deux snapshots est produit à chaque synchronisation (cartes ajoutées, texte modifié, rareté modifiée) : c'est ce qui signale un errata à répercuter dans `cards`.
+- The `foil codex sync` command queries the sources, normalizes, validates (Zod) and writes `packages/codex/data/snapshots/<date>/<set>.json`, plus a `manifest.json` (version, sources, card counts, fingerprint).
+- Snapshots are **committed**. Tests and simulations use a specific snapshot, never the network.
+- A readable diff between two snapshots is produced at every sync (cards added, text changed, rarity changed): that is what signals an erratum to carry over into `cards`.
 
-## Données saisies à la main
+## Data entered by hand
 
-Dans `packages/codex/data/manual/` :
+In `packages/codex/data/manual/`:
 
-- `errata.json` : carte, date, ancien texte, nouveau texte, source.
-- `bans.json` : format, carte, date, source.
-- `booster-config.json` : composition des boosters et taux de tirage par set, avec pour chaque taux sa source et s'il est officiel ou estimé par la communauté (voir `brand/04-design-system/cartes.md`).
-- `rulings.json` : rulings officiels utiles aux tests.
+- `errata.json`: card, date, old text, new text, source.
+- `bans.json`: format, card, date, source.
+- `booster-config.json`: booster composition and pull rates per set, with for each rate its source and whether it is official or estimated by the community (see `brand/04-design-system/cartes.md`).
+- `rulings.json`: official rulings useful for tests.
 
-## Validation de deck
+## Deck validation
 
-`codex` expose `validateDeck(deck, format, snapshot)` : nombre de cartes, legend, chosen champion, 12 runes, battlefields, domaines autorisés par la legend, nombre maximal d'exemplaires, cartes interdites. Les règles exactes sont dans la section 101 des Core Rules et dans les Tournament Rules.
+`codex` exposes `validateDeck(deck, format, snapshot)`: number of cards, legend, chosen champion, 12 runes, battlefields, domains allowed by the legend, maximum number of copies, banned cards. The exact rules are in section 101 of the Core Rules and in the Tournament Rules.
 
-## Formats d'import de deck
+## Deck import formats
 
-À supporter : liste texte (une ligne par carte avec quantité), codes de deck des principaux deckbuilders (Piltover Archive, Riftbound.gg, Rift Atlas) si leur format est documenté, et un format Foil natif en JSON. Chaque format a ses tests avec des exemples réels.
+To support: text list (one line per card with a quantity), deck codes from the main deckbuilders (Piltover Archive, Riftbound.gg, Rift Atlas) if their format is documented, and a native Foil format in JSON. Each format has its tests with real examples.

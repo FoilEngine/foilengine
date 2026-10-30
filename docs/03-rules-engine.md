@@ -1,105 +1,105 @@
-# 03 — Moteur de règles (`@foilengine/rules`)
+# 03 — Rules engine (`@foilengine/rules`)
 
-L'arbitre. Il décide de ce qui est légal, résout tout ce qui se passe et détecte la victoire. Tout le reste du projet s'appuie sur lui.
+The referee. It decides what is legal, resolves everything that happens and detects victory. The rest of the project builds on it.
 
-## API publique
+## Public API
 
 ```ts
 createGame(setup: GameSetup, seed: Seed): { state: GameState; events: GameEvent[] }
 legalActions(state: GameState, player: PlayerId): ActionTemplate[]
 isLegal(state: GameState, action: Action): { ok: true } | { ok: false; reason: IllegalReason }
 apply(state: GameState, action: Action): { state: GameState; events: GameEvent[] }
-outcome(state: GameState): Outcome            // en cours, gagnant, égalité, abandon
+outcome(state: GameState): Outcome            // ongoing, winner, draw, conceded
 viewFor(state: GameState, player: PlayerId): PlayerView
-pendingDecision(state: GameState): Decision | null   // qui doit agir, et sur quoi
+pendingDecision(state: GameState): Decision | null   // who must act, and on what
 ```
 
-- `apply` sur une action illégale **ne modifie rien** et lève une `IllegalActionError` avec la raison. Le serveur appelle `isLegal` d'abord.
-- `GameSetup` contient les decks résolus (définitions de cartes issues de `codex` et implémentations issues de `cards`), le mode et la version des règles.
+- `apply` on an illegal action **changes nothing** and throws an `IllegalActionError` with the reason. The server calls `isLegal` first.
+- `GameSetup` contains the resolved decks (card definitions from `codex` and implementations from `cards`), the mode and the rules version.
 
-## Invariants de conception
+## Design invariants
 
-1. **Pur.** Aucune entrée-sortie, aucune horloge, aucun `Math.random`, aucune variable globale mutable. Une même entrée donne toujours la même sortie.
-2. **Immuable vu de l'extérieur.** `apply` renvoie un nouvel état. En interne, on peut muter un brouillon (structural sharing via Immer ou équivalent, à décider dans l'ADR 0004), mais aucun état reçu en argument n'est jamais modifié.
-3. **Sérialisable.** L'état est du JSON pur : pas de `Map`, de classe, de fonction ni de référence circulaire. `JSON.parse(JSON.stringify(state))` doit donner un état équivalent.
-4. **Déterministe.** Le RNG est dans l'état (`rng`) : un PRNG à graine, de qualité (xoshiro128** ou PCG), dont l'état complet est sérialisé. Chaque tirage avance le compteur.
-5. **Borné.** Toute boucle (cleanup, chaîne, déclencheurs) a une borne. La dépasser lève une `EngineInvariantError`, jamais une boucle infinie.
-6. **Traçable.** Chaque événement porte la règle qui l'a produit quand c'est pertinent.
+1. **Pure.** No I/O, no clock, no `Math.random`, no mutable global variable. The same input always gives the same output.
+2. **Immutable from the outside.** `apply` returns a new state. Internally, a draft may be mutated (structural sharing through Immer or equivalent, to be decided in ADR 0004), but no state received as an argument is ever modified.
+3. **Serializable.** The state is pure JSON: no `Map`, class, function or circular reference. `JSON.parse(JSON.stringify(state))` must give an equivalent state.
+4. **Deterministic.** The RNG lives in the state (`rng`): a good-quality seeded PRNG (xoshiro128** or PCG) whose full state is serialized. Every draw advances the counter.
+5. **Bounded.** Every loop (cleanup, chain, triggers) has a bound. Exceeding it throws an `EngineInvariantError`, never an infinite loop.
+6. **Traceable.** Every event carries the rule that produced it when relevant.
 
-## Organisation interne
+## Internal layout
 
 ```
 src/
-  index.ts              API publique uniquement
-  setup/                mise en place, mulligan, ordre du tour (104–118)
-  turn/                 phases et étapes (300–317)
-  cleanup/              cleanup à point fixe (318–324)
-  chain/                chaîne et boucle HOT FEPR (325–340)
+  index.ts              public API only
+  setup/                setup, mulligan, turn order (104–118)
+  turn/                 phases and steps (300–317)
+  cleanup/              fixed-point cleanup (318–324)
+  chain/                chain and HOT FEPR loop (325–340)
   showdown/             showdowns (341–348)
-  play/                 processus de jeu d'une carte, coûts (349–359)
-  abilities/            capacités passives, de remplacement, activées, déclenchées (360–406)
-  actions/              actions de jeu atomiques : draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal… (407–444)
-  movement/             déplacements (445–458)
-  combat/               combat et ses étapes (459–466)
-  scoring/              tenir, conquérir, dernier point (467–472)
-  layers/               effets continus appliqués par couches (473–480)
-  modes/                modes de jeu (481–648)
-  resources/            runes, pool, paiement et paiement automatique (160–168)
+  play/                 card play process, costs (349–359)
+  abilities/            passive, replacement, activated, triggered abilities (360–406)
+  actions/              atomic game actions: draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal… (407–444)
+  movement/             movement (445–458)
+  combat/               combat and its steps (459–466)
+  scoring/              hold, conquer, last point (467–472)
+  layers/               continuous effects applied by layers (473–480)
+  modes/                game modes (481–648)
+  resources/            runes, pool, payment and automatic payment (160–168)
   view/                 viewFor
-  legal/                legalActions, isLegal, raisons de refus
-  rng/                  PRNG à graine
+  legal/                legalActions, isLegal, refusal reasons
+  rng/                  seeded PRNG
   errors.ts
 ```
 
-Chaque dossier correspond à une section des Core Rules. Un fichier qui implémente une règle a un commentaire d'en-tête citant les numéros couverts.
+Each folder matches a section of the Core Rules. A file that implements a rule has a header comment quoting the numbers it covers.
 
-## Actions de jeu atomiques
+## Atomic game actions
 
-Toute modification d'état passe par une **action de jeu atomique** (draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal, score…). Chacune :
+Every state change goes through an **atomic game action** (draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal, score…). Each one:
 
-- vérifie ses préconditions ;
-- passe par les **effets de remplacement** applicables avant de s'exécuter ;
-- émet ses événements ;
-- met un cleanup en file si la règle 319 le demande ;
-- notifie les **déclencheurs** concernés, qui créent des tâches ou des éléments de chaîne selon les règles des capacités déclenchées.
+- checks its preconditions;
+- goes through the applicable **replacement effects** before running;
+- emits its events;
+- queues a cleanup if rule 319 requires it;
+- notifies the relevant **triggers**, which create tasks or chain items according to the rules of triggered abilities.
 
-Les effets des cartes (`cards`) n'ont pas le droit de modifier l'état autrement qu'en appelant ces actions atomiques. C'est ce qui garantit que les remplacements, les déclencheurs et les cleanups s'appliquent partout.
+Card effects (`cards`) may only change the state by calling these atomic actions. That is what guarantees that replacements, triggers and cleanups apply everywhere.
 
-## Effets continus et couches
+## Continuous effects and layers
 
-Les caractéristiques d'un objet (might, mots-clés, coût…) ne sont jamais stockées « calculées » dans l'état. Elles sont dérivées à la lecture par `characteristics(state, objectId)`, qui part des valeurs imprimées et applique les effets continus dans l'ordre des couches (473–480). Le résultat peut être mis en cache par version d'état, mais la source de vérité reste la liste des effets.
+An object's characteristics (might, keywords, cost…) are never stored "computed" in the state. They are derived on read by `characteristics(state, objectId)`, which starts from the printed values and applies the continuous effects in layer order (473–480). The result may be cached per state version, but the source of truth remains the list of effects.
 
-## Choix des joueurs
+## Player choices
 
-Quand la règle demande un choix (cibles, ordre de déclencheurs simultanés, mode, paiement, mulligan), le moteur s'arrête et expose une `Decision` via `pendingDecision`. L'action suivante doit répondre à cette décision. Il n'y a jamais de callback ou de promesse dans le moteur : tout choix est une action.
+When the rules require a choice (targets, order of simultaneous triggers, mode, payment, mulligan), the engine stops and exposes a `Decision` through `pendingDecision`. The next action must answer that decision. There is never a callback or a promise in the engine: every choice is an action.
 
-L'ordre des déclencheurs simultanés suit l'ordre du tour, en commençant par le joueur actif (303.2.a). Quand un même joueur en a plusieurs, il choisit l'ordre (décision).
+The order of simultaneous triggers follows turn order, starting with the active player (303.2.a). When one player has several, they choose the order (a decision).
 
-## Erreurs
+## Errors
 
-| Erreur | Signification | Traitement |
+| Error | Meaning | Handling |
 | --- | --- | --- |
-| `IllegalActionError` | Action refusée par les règles | Normal, renvoyée au client avec une raison |
-| `EngineInvariantError` | État impossible (borne dépassée, carte dupliquée, objet introuvable) | Bug : log en erreur, métrique, capture de l'état et du journal pour reproduction |
-| `NotImplementedError` | Carte ou mécanique pas encore codée | Propose le mode manuel au joueur, métrique par carte |
+| `IllegalActionError` | Action refused by the rules | Normal, sent back to the client with a reason |
+| `EngineInvariantError` | Impossible state (bound exceeded, duplicated card, missing object) | Bug: error log, metric, capture of the state and the log for reproduction |
+| `NotImplementedError` | Card or mechanic not coded yet | Offers manual mode to the player, metric per card |
 
 ## Performance
 
-Le moteur sera appelé des millions de fois par les simulations et l'IA. Budgets indicatifs, mesurés par des benchmarks (`vitest bench`) en CI :
+The engine will be called millions of times by simulations and the AI. Indicative budgets, measured by benchmarks (`vitest bench`) in CI:
 
-- `legalActions` : moins de 0,2 ms en milieu de partie.
-- `apply` : moins de 0,2 ms pour une action simple.
-- Une partie complète aléatoire : moins de 20 ms.
+- `legalActions`: under 0.2 ms in mid-game.
+- `apply`: under 0.2 ms for a simple action.
+- A full random game: under 20 ms.
 
-Une régression de plus de 20 % sur un benchmark fait échouer la CI.
+A regression of more than 20% on a benchmark fails the CI.
 
-## Versions des règles
+## Rules versions
 
-Le moteur porte la version des Core Rules qu'il implémente (`rulesVersion`). Quand Riot publie une nouvelle version :
+The engine carries the version of the Core Rules it implements (`rulesVersion`). When Riot publishes a new version:
 
-1. on ajoute le nouveau PDF dans `docs/rules/` ;
-2. le script d'indexation (voir `06-testing.md`) compare les textes et liste les règles modifiées ;
-3. les tests de ces règles sont marqués « à revérifier » jusqu'à relecture ;
-4. le moteur passe à la nouvelle version une fois tout revérifié.
+1. the new PDF is added to `docs/rules/`;
+2. the indexing script (see `06-testing.md`) compares the texts and lists the changed rules;
+3. the tests of those rules are marked "to re-check" until they are reviewed;
+4. the engine moves to the new version once everything has been re-checked.
 
-Les replays enregistrent la version des règles. Rejouer un ancien replay utilise la version de l'époque si elle est encore disponible ; sinon, l'écart est signalé.
+Replays record the rules version. Replaying an old replay uses the version of its time if it is still available; otherwise, the gap is reported.

@@ -1,24 +1,24 @@
 # CLAUDE.md — apps/site
 
-Le site vitrine, statique (Astro).
+The static website (Astro).
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `ui`.
-- **Interdites** : —.
+- **Allowed**: `ui`.
+- **Forbidden**: —
 
-## API publique
+## Public API
 
 —
 
-## Points d'attention
+## Points of attention
 
-- La mention de Riot sur toutes les pages (pied de page).
-- Son coupé par défaut.
+- Riot's notice on every page (footer).
+- Sound off by default.
 
-## À lire
+## Read
 
 - `docs/10-clients.md`
 - `docs/00-vision.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

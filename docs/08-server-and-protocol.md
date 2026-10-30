@@ -1,59 +1,59 @@
-# 08 — Serveur et protocole (`apps/server`, `@foilengine/protocol`)
+# 08 — Server and protocol (`apps/server`, `@foilengine/protocol`)
 
-## Rôle du serveur
+## Role of the server
 
-Le serveur **fait autorité**. Il détient l'état complet de chaque partie, valide chaque action avec le moteur, persiste le journal et envoie à chaque client ce qu'il a le droit de voir. Le client n'est qu'un écran et une manette.
+The server is **authoritative**. It holds the full state of every game, validates every action with the engine, persists the log and sends each client what it is allowed to see. The client is only a screen and a controller.
 
-Responsabilités :
-- comptes et sessions ;
-- salons (privés, solo, avec code d'invitation) et matchmaking (constructed, sealed, BO1, BO3) ;
-- déroulé des parties : timers, déconnexions, reprise, abandon ;
-- spectateurs, avec un délai configurable et sans information cachée ;
-- IA côté serveur pour les parties contre l'IA classées ou analysées ;
-- API HTTP : decks, collection, historique, replays, résultats de simulations ;
-- santé et métriques (voir `07-observability.md`).
+Responsibilities:
+- accounts and sessions;
+- rooms (private, solo, with an invitation code) and matchmaking (constructed, sealed, BO1, BO3);
+- game flow: timers, disconnections, resumption, concession;
+- spectators, with a configurable delay and no hidden information;
+- server-side AI for ranked or analyzed games against the AI;
+- HTTP API: decks, collection, history, replays, simulation results;
+- health and metrics (see `07-observability.md`).
 
-## Protocole
+## Protocol
 
-- Transport : **WebSocket** pour les parties, **HTTP JSON** pour le reste.
-- Tous les messages sont définis dans `@foilengine/protocol` avec des **schémas Zod**, validés à l'entrée **et** à la sortie du serveur.
-- Chaque message a un `type`, un `v` (version du protocole) et un `id` (corrélation).
-- Le protocole est versionné. Un client trop ancien reçoit `PROTOCOL_UNSUPPORTED` et un message lui demandant de recharger.
+- Transport: **WebSocket** for games, **HTTP JSON** for the rest.
+- All messages are defined in `@foilengine/protocol` with **Zod schemas**, validated on the way into **and** out of the server.
+- Every message has a `type`, a `v` (protocol version) and an `id` (correlation).
+- The protocol is versioned. A client that is too old receives `PROTOCOL_UNSUPPORTED` and a message asking it to reload.
 
-Messages de partie (forme indicative) :
+Game messages (indicative shape):
 
-| Sens | Message | Contenu |
+| Direction | Message | Content |
 | --- | --- | --- |
-| client → serveur | `game.join` | `gameId`, `seat` ou spectateur |
-| client → serveur | `game.intent` | une `Action` du moteur, plus `expectedSeq` (numéro du dernier événement vu) |
-| client → serveur | `game.rewind.request` / `game.forward.request` | demande de retour en arrière |
-| client → serveur | `game.emote`, `game.chat` | |
-| serveur → client | `game.snapshot` | la vue du joueur et le numéro de séquence (à la connexion et à la reprise) |
-| serveur → client | `game.events` | les événements filtrés pour ce joueur, depuis un numéro de séquence |
-| serveur → client | `game.decision` | ce qu'on attend du joueur, avec les actions légales |
-| serveur → client | `game.rejected` | action refusée, avec la raison du moteur |
-| serveur → client | `game.ended` | résultat, lien vers le replay |
+| client → server | `game.join` | `gameId`, `seat` or spectator |
+| client → server | `game.intent` | an engine `Action`, plus `expectedSeq` (number of the last event seen) |
+| client → server | `game.rewind.request` / `game.forward.request` | rewind request |
+| client → server | `game.emote`, `game.chat` | |
+| server → client | `game.snapshot` | the player's view and the sequence number (on connection and on resumption) |
+| server → client | `game.events` | the events filtered for this player, from a sequence number |
+| server → client | `game.decision` | what is expected from the player, with the legal actions |
+| server → client | `game.rejected` | action refused, with the engine's reason |
+| server → client | `game.ended` | result, link to the replay |
 
-## Garanties
+## Guarantees
 
-- **Ordre** : les événements portent un numéro de séquence croissant. Un client qui voit un trou demande `game.resync` et reçoit un snapshot.
-- **Idempotence** : un `game.intent` rejoué avec le même `id` n'est appliqué qu'une fois.
-- **Concurrence** : une seule action est traitée à la fois par partie (file par partie). `expectedSeq` permet de rejeter une action envoyée sur un état périmé.
-- **Information cachée** : le serveur n'envoie que `viewFor` et les événements filtrés. Un test d'intégration vérifie, pour chaque type de message sortant, qu'aucune carte cachée au destinataire n'y figure.
-- **Reprise** : le journal de chaque partie en cours est persisté au fil de l'eau. Après un redémarrage du serveur, les parties sont reconstruites en rejouant leur journal.
+- **Order**: events carry an increasing sequence number. A client that sees a gap sends `game.resync` and receives a snapshot.
+- **Idempotence**: a `game.intent` replayed with the same `id` is applied only once.
+- **Concurrency**: only one action is processed at a time per game (one queue per game). `expectedSeq` makes it possible to reject an action sent on a stale state.
+- **Hidden information**: the server only sends `viewFor` and the filtered events. An integration test checks, for every type of outgoing message, that no card hidden from the recipient appears in it.
+- **Resumption**: the log of every running game is persisted as it goes. After a server restart, games are rebuilt by replaying their log.
 
-## Rewind et forward
+## Rewind and forward
 
-Inspirés de Rift Atlas : le rewind annule la dernière action du demandeur et tout ce qui en dépend. Comme l'état est déterministe et journalisé, un rewind consiste à rejouer le journal jusqu'au point voulu. En partie entre humains, un rewind qui annule des actions de l'adversaire demande son accord. Le forward rétablit la ligne annulée pendant un court délai. Tout est enregistré dans le journal.
+Inspired by Rift Atlas: rewind undoes the requester's last action and everything that depends on it. Since the state is deterministic and logged, a rewind consists of replaying the log up to the desired point. In a game between humans, a rewind that undoes the opponent's actions requires their consent. Forward restores the undone line for a short time. Everything is recorded in the log.
 
-## Sécurité
+## Security
 
-- Limitation de débit par connexion et par compte (messages par seconde, salons créés).
-- Validation stricte des entrées (Zod), taille maximale des messages.
-- Jamais de logique de règles dans le client : une action illégale est toujours refusée par le serveur, et comptée dans `foil_engine_illegal_actions_total`.
-- Les endpoints d'administration (`/health/details`, console) exigent un rôle admin.
-- Signalement de joueurs (triche, comportement), comme sur Rift Atlas.
+- Rate limiting per connection and per account (messages per second, rooms created).
+- Strict input validation (Zod), maximum message size.
+- Never any rules logic in the client: an illegal action is always refused by the server, and counted in `foil_engine_illegal_actions_total`.
+- Administration endpoints (`/health/details`, console) require an admin role.
+- Player reporting (cheating, behavior), as on Rift Atlas.
 
-## Authentification
+## Authentication
 
-À décider dans l'ADR 0011. Proposition : connexion par Discord (OAuth), parce que la communauté Riftbound y est, plus un compte invité pour jouer sans inscription. Sessions côté serveur dans Postgres.
+To be decided in ADR 0011. Proposal: sign-in with Discord (OAuth), because the Riftbound community is there, plus a guest account to play without signing up. Server-side sessions in Postgres.

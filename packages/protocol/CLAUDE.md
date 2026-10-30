@@ -1,23 +1,23 @@
 # CLAUDE.md — packages/protocol
 
-Messages client-serveur et leurs schémas Zod, versionnés.
+Client-server messages and their Zod schemas, versioned.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `types`, Zod.
-- **Interdites** : toute logique métier.
+- **Allowed**: `types`, Zod.
+- **Forbidden**: any domain logic.
 
-## API publique
+## Public API
 
-Les schémas et types de chaque message, `PROTOCOL_VERSION`.
+The schemas and types of every message, `PROTOCOL_VERSION`.
 
-## Points d'attention
+## Points of attention
 
-- Tout changement incompatible incrémente `PROTOCOL_VERSION`.
-- Chaque message a `type`, `v` et `id`.
+- Every breaking change increments `PROTOCOL_VERSION`.
+- Every message has `type`, `v` and `id`.
 
-## À lire
+## Read
 
 - `docs/08-server-and-protocol.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

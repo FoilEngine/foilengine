@@ -1,24 +1,24 @@
 # CLAUDE.md — packages/ui
 
-Le design system : tokens, composants, moteur de son, motion.
+The design system: tokens, components, sound engine, motion.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : React, rien de métier.
-- **Interdites** : éditer les tokens à la main (ils sont générés depuis le repo `brand`).
+- **Allowed**: React, nothing domain-related.
+- **Forbidden**: editing the tokens by hand (they are generated from the `brand` repo).
 
-## API publique
+## Public API
 
-Tokens CSS et TS, composants, `Sound`, primitives de motion.
+CSS and TS tokens, components, `Sound`, motion primitives.
 
-## Points d'attention
+## Points of attention
 
-- La source de vérité est `FoilEngine/brand` (`04-design-system/`). Relire ses règles avant de créer un composant.
-- Respecter `prefers-reduced-motion` ; le son a son propre interrupteur et ses niveaux.
+- The source of truth is `FoilEngine/brand` (`04-design-system/`). Re-read its rules before creating a component.
+- Respect `prefers-reduced-motion`; sound has its own switch and levels.
 
-## À lire
+## Read
 
 - `docs/10-clients.md`
-- repo brand : 04-design-system/README.md, motion.md, sound.md, cartes.md
+- brand repo: 04-design-system/README.md, motion.md, sound.md, cartes.md
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

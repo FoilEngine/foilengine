@@ -1,26 +1,26 @@
 # CLAUDE.md — packages/testkit
 
-Outils de test : `board()`, `scenario()`, cartes de test, fuzzer, invariants, replays de référence, indexation des Core Rules, rapports de couverture.
+Test tools: `board()`, `scenario()`, test cards, fuzzer, invariants, reference replays, Core Rules indexing, coverage reports.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `types`, `rules`, `cards`, `log`, fast-check.
-- **Interdites** : être importé par du code de production (ni `server`, ni `console`). Seuls `spec` (les scénarios) et `cli` l'importent.
+- **Allowed**: `types`, `rules`, `cards`, `log`, fast-check.
+- **Forbidden**: being imported by production code (neither `server` nor `console`). Only `spec` (the scenarios) and `cli` import it.
 
-## API publique
+## Public API
 
 `board`, `scenario`, `fuzz`, `INVARIANTS`, `goldenReplays`, `indexCoreRules`, `ruleCoverage`, `cardCoverage`.
 
-## Points d'attention
+## Points of attention
 
-- Le harnais vit ici, les scénarios dans `@foilengine/spec` : `rules` et `cards` ne dépendent jamais de `testkit`.
-- `board()` passe par les mêmes validations que `createGame` : jamais d'état impossible.
-- Les replays de référence (`golden/*.foilreplay`) sont des fichiers de données : le serveur les lit au démarrage pour son auto-test sans importer ce package.
-- Une violation d'invariant produit un fichier de reproduction dans `repros/`.
-- Le rapport de couverture sort en JSON (console, CI) et en Markdown (PR).
+- The harness lives here, the scenarios in `@foilengine/spec`: `rules` and `cards` never depend on `testkit`.
+- `board()` goes through the same validations as `createGame`: never an impossible state.
+- The reference replays (`golden/*.foilreplay`) are data files: the server reads them at startup for its self-test without importing this package.
+- An invariant violation produces a reproduction file in `repros/`.
+- The coverage report comes out in JSON (console, CI) and in Markdown (PR).
 
-## À lire
+## Read
 
 - `docs/06-testing.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

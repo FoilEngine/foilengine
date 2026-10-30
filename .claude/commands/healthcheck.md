@@ -1,14 +1,14 @@
 ---
-description: Vérifie la santé de l'environnement et résume
+description: Checks the health of the environment and summarizes it
 argument-hint: [local|staging|prod]
 ---
 
-Vérifie la santé de l'environnement `$ARGUMENTS` (local par défaut), en suivant `docs/07-observability.md`.
+Check the health of the `$ARGUMENTS` environment (local by default), following `docs/07-observability.md`.
 
-1. Lance `pnpm health` (ou `foil health --env $ARGUMENTS --json`).
-2. Pour chaque vérification en `warn` ou `fail`, donne la cause probable et va voir plus loin : logs récents du service concerné (Loki), métriques associées (Prometheus), dernières erreurs (GlitchTip), alertes actives (Alertmanager).
-3. Si le parcours synthétique échoue, indique à quelle étape.
-4. Si l'auto-test du moteur échoue, identifie le replay de référence qui diverge et la première action en cause.
-5. Résume en trois parties : ce qui va bien, ce qui ne va pas, ce qu'il faut faire, avec le runbook correspondant du repo `infra` quand il existe.
+1. Run `pnpm health` (or `foil health --env $ARGUMENTS --json`).
+2. For each check in `warn` or `fail`, give the likely cause and dig further: recent logs of the service (Loki), related metrics (Prometheus), latest errors (GlitchTip), active alerts (Alertmanager).
+3. If the synthetic journey fails, say at which step.
+4. If the engine self-test fails, identify the reference replay that diverges and the first action at fault.
+5. Summarize in three parts: what is fine, what is wrong, what to do, with the matching runbook from the `infra` repo when there is one.
 
-Ne modifie rien en production. Propose les actions, ne les exécute pas.
+Change nothing in production. Propose the actions, do not run them.

@@ -1,14 +1,14 @@
 ---
-description: Implémente une carte de bout en bout (données, effet, tests, statut)
-argument-hint: <riftbound_id ou nom de la carte>
+description: Implements a card end to end (data, effect, tests, status)
+argument-hint: <riftbound_id or card name>
 ---
 
-Implémente la carte $ARGUMENTS en suivant `docs/04-cards-and-effects.md`.
+Implement the card $ARGUMENTS following `docs/04-cards-and-effects.md`.
 
-1. Trouve la carte dans le snapshot `codex` en vigueur : texte en vigueur (errata compris), type, coût, domaines, might, mots-clés. Affiche ces informations avant de commencer.
-2. Identifie les règles et mots-clés concernés et relis-les dans `docs/rules/`. Cherche les rulings et FAQ officiels sur cette carte.
-3. Écris les scénarios d'abord (`card <id>: …`), avec les cas limites : cible devenue illégale, carte qui quitte le plateau pendant la résolution, interaction avec un remplacement, choix multiples.
-4. Implémente avec le DSL de `@foilengine/cards`. Si le DSL ne suffit pas, écris une implémentation sur mesure en n'utilisant que l'API d'effets, et justifie-la en commentaire.
-5. Mets à jour le statut de la carte (`complete`, ou `partial` avec des notes précises) et ses `sources`.
-6. Lance les tests de la carte, puis un fuzzing court avec la carte incluse dans les decks aléatoires.
-7. Résume : statut, tests ajoutés, éventuelles questions de règles ouvertes.
+1. Find the card in the `codex` snapshot in force: text in force (errata included), type, cost, domains, might, keywords. Show this information before starting.
+2. Identify the relevant rules and keywords and re-read them in `docs/rules/`. Look for the official rulings and FAQ on this card. Card text (with errata) wins over the Core Rules.
+3. Write the scenarios first (`card <id>: …`, in `packages/spec/test/cards/<set>/`), with the edge cases: target that became illegal, card leaving the board during resolution, interaction with a replacement, multiple choices.
+4. Implement with the `@foilengine/cards` DSL. If the DSL is not enough, write a custom implementation that only uses the effect API, and justify it in a comment.
+5. Update the card's status (`complete`, or `partial` with precise notes) and its `sources`.
+6. Run the card's tests, then a short fuzzing run with the card included in the random decks.
+7. Summarize: status, tests added, any open rule questions.

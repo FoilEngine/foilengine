@@ -1,27 +1,27 @@
 # CLAUDE.md — apps/server
 
-Serveur de parties : salons, matchmaking, comptes, API, WebSocket, santé, métriques. Seul détenteur de l'état complet.
+Game server: rooms, matchmaking, accounts, API, WebSocket, health, metrics. The only holder of the full state.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : tous les packages sauf `ui` et `testkit`.
-- **Interdites** : envoyer l'état complet à un client ; implémenter une règle.
+- **Allowed**: all packages except `ui` and `testkit`.
+- **Forbidden**: sending the full state to a client; implementing a rule.
 
-## API publique
+## Public API
 
-Routes HTTP, messages WebSocket du `protocol`, `/healthz`, `/readyz`, `/health/details`, `/metrics`.
+HTTP routes, the `protocol` WebSocket messages, `/healthz`, `/readyz`, `/health/details`, `/metrics`.
 
-## Points d'attention
+## Points of attention
 
-- Une action à la fois par partie ; `expectedSeq` pour rejeter les actions périmées.
-- Persister le journal au fil de l'eau ; reconstruire les parties en cours au démarrage.
-- L'auto-test du moteur au démarrage conditionne `/readyz`. Il rejoue les replays de référence, lus comme fichiers de données (`.foilreplay`), avec `rules` et `log` : jamais en important `testkit`.
-- Exécuter un scénario pour le lanceur de la console sans `testkit` reste une question ouverte (ADR 0017).
-- Configuration validée par Zod au démarrage ; `.env.example` à jour.
+- One action at a time per game; `expectedSeq` to reject stale actions.
+- Persist the log as it goes; rebuild running games at startup.
+- The engine self-test at startup gates `/readyz`. It replays the reference replays, read as data files (`.foilreplay`), with `rules` and `log`: never by importing `testkit`.
+- Running a scenario for the console's scenario runner without `testkit` is still an open question (ADR 0017).
+- Configuration validated by Zod at startup; `.env.example` kept up to date.
 
-## À lire
+## Read
 
 - `docs/08-server-and-protocol.md`
 - `docs/07-observability.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

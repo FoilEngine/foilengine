@@ -1,5 +1,5 @@
 // Allowed dependencies between workspace packages.
-// Source of truth: docs/01-architecture.md ("Règles de dépendance") and ADR 0017.
+// Source of truth: docs/01-architecture.md ("Dependency rules") and ADR 0017.
 // Changing this matrix is an architecture change: update the doc in the same PR.
 
 export type WorkspaceKind = 'package' | 'app';

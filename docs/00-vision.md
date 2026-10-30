@@ -1,40 +1,40 @@
-# 00 — Vision et périmètre
+# 00 — Vision and scope
 
-## Ce qu'est Foil Engine
+## What Foil Engine is
 
-Un simulateur de Riftbound qui **connaît les règles**. Les simulateurs existants (Rift Atlas, TCG Arena, Tabletop Simulator) sont des tables manuelles : les joueurs déplacent les cartes et appliquent les règles eux-mêmes. Foil Engine, lui, sait quels coups sont légaux, résout la chaîne et les déclencheurs, et détecte la victoire. Ça rend possible ce qu'aucun autre outil ne fait :
+A Riftbound simulator that **knows the rules**. Existing simulators (Rift Atlas, TCG Arena, Tabletop Simulator) are manual tables: players move cards and apply the rules themselves. Foil Engine knows which moves are legal, resolves the chain and the triggers, and detects victory. That makes possible what no other tool does:
 
-1. **Une IA adversaire** qui joue des parties complètes et explique ses coups (évaluation chiffrée).
-2. **Des simulations en masse** : des milliers de parties entre deux decks pour mesurer un matchup, avec un intervalle de confiance.
-3. **Le point faible** : l'IA identifie les cartes ou les coups qui coûtent le plus à un deck.
-4. **Des replays exacts**, du rewind et de la notation de partie, parce que tout est déterministe et journalisé.
-5. **Des puzzles** générés à partir de positions réelles.
+1. **An AI opponent** that plays full games and explains its moves (scored evaluation).
+2. **Mass simulations**: thousands of games between two decks to measure a matchup, with a confidence interval.
+3. **The weak spot**: the AI identifies the cards or moves that cost a deck the most.
+4. **Exact replays**, rewind and game notation, because everything is deterministic and logged.
+5. **Puzzles** generated from real positions.
 
-## Les publics
+## Audiences
 
-- **Les joueurs compétitifs** : tester un deck contre l'IA ou contre des listes du méta, mesurer les matchups.
-- **Les joueurs occasionnels** : jouer en ligne avec un arbitre qui empêche les erreurs de règles.
-- **Les collectionneurs et les joueurs de sealed** : ouvrir des boosters fidèles aux taux réels et construire un deck depuis un pool.
+- **Competitive players**: test a deck against the AI or against meta lists, measure matchups.
+- **Casual players**: play online with a referee that prevents rules mistakes.
+- **Collectors and sealed players**: open boosters faithful to the real rates and build a deck from a pool.
 
-## Ce qu'il faut atteindre pour être au niveau du marché
+## What it takes to match the market
 
-La référence actuelle est Rift Atlas. Ses fonctions de base deviennent le minimum attendu : matchmaking rapide et salons privés (1v1, free-for-all, 2v2), import de deck (liste ou code), mode solo, spectateurs, sealed, rewind et forward, paiement automatique des coûts, contrôles de showdown, conquête, jetons, compteurs, emotes, replays.
+The current reference is Rift Atlas. Its basic features become the expected minimum: quick matchmaking and private rooms (1v1, free-for-all, 2v2), deck import (list or code), solo mode, spectators, sealed, rewind and forward, automatic cost payment, showdown controls, conquer, tokens, counters, emotes, replays.
 
-## Hors périmètre (pour l'instant)
+## Out of scope (for now)
 
-- Les runes alternatives, les jetons et les runes comme objets de collection (ils restent gérés comme objets de jeu).
-- La monétisation, sous quelque forme que ce soit (voir contraintes légales).
-- Une application mobile native. Le client web doit en revanche fonctionner au tactile.
+- Alternate runes, tokens and runes as collectibles (they are still handled as game objects).
+- Monetization, in any form (see legal constraints).
+- A native mobile app. The web client must, however, work with touch.
 
-## Contraintes légales (non négociables)
+## Legal constraints (non-negotiable)
 
-Foil Engine est un projet de fan régi par la politique « Legal Jibber Jabber » de Riot Games :
+Foil Engine is a fan project governed by Riot Games' "Legal Jibber Jabber" policy:
 
-- **Gratuit** : aucun paywall, abonnement, contenu payant, financement participatif, ni entité commerciale.
-- **Mention obligatoire**, visible sur le site et dans l'application : « Foil was created under Riot Games' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project. »
-- **Pas de logo ni de marque Riot dans l'identité de Foil** (nom, logo, communication). Les cartes officielles s'affichent telles quelles, dos compris.
-- Riot peut demander l'arrêt du projet à tout moment : l'architecture ne doit rien rendre irréversible côté données des utilisateurs (export des decks et des replays).
+- **Free**: no paywall, subscription, paid content, crowdfunding or commercial entity.
+- **Mandatory notice**, visible on the website and in the application: "Foil was created under Riot Games' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project."
+- **No Riot logo or trademark in Foil's identity** (name, logo, communication). Official cards are displayed as they are, backs included.
+- Riot may ask for the project to stop at any time: the architecture must make nothing irreversible for user data (export of decks and replays).
 
-## Identité
+## Identity
 
-L'identité visuelle et sonore est dans le repo `FoilEngine/brand` (logos, tokens, sons, motion). Le nom est « Foil », et « Engine » est le descripteur. Les règles de marque sont dans `brand/04-design-system/README.md`.
+The visual and sound identity lives in the `FoilEngine/brand` repo (logos, tokens, sounds, motion). The name is "Foil", and "Engine" is the descriptor. The brand rules are in `brand/04-design-system/README.md`.

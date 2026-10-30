@@ -1,22 +1,22 @@
 # CLAUDE.md — apps/console
 
-La console d'administration et de monitoring.
+The administration and monitoring console.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `ui`, `protocol`, `types`, `log`.
-- **Interdites** : être accessible sans rôle admin ; importer `testkit` ou `rules`. Rapports de couverture, replays et lanceur de scénarios passent par l'API du serveur.
+- **Allowed**: `ui`, `protocol`, `types`, `log`.
+- **Forbidden**: being reachable without an admin role; importing `testkit` or `rules`. Coverage reports, replays and the scenario runner go through the server API.
 
-## API publique
+## Public API
 
 —
 
-## Points d'attention
+## Points of attention
 
-- Pages : santé, parties en cours, replays, règles (couverture et lanceur de scénarios), cartes, simulations, erreurs, métriques.
+- Pages: health, running games, replays, rules (coverage and scenario runner), cards, simulations, errors, metrics.
 
-## À lire
+## Read
 
 - `docs/07-observability.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.
