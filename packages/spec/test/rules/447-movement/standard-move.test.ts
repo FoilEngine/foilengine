@@ -119,4 +119,15 @@ describe('144 Standard Move, 447–455 Movement', () => {
       t.expectIllegal(move(A, units, battlefield(t.state, 1)), 'invalid-move');
     },
   });
+
+  scenario('rule 144.1.c: no Standard Move during a Showdown', {
+    rules: ['144.1.c'],
+    setup: turnThree,
+    check: (t) => {
+      const [first, second] = unitsInBase(t.state, A) as [ObjectId, ObjectId];
+      t.act(move(A, [first], battlefield(t.state, 0)));
+      t.expectDecision({ kind: 'Focus', player: A });
+      t.expectIllegal(move(A, [second], battlefield(t.state, 1)), 'wrong-action');
+    },
+  });
 });
