@@ -72,7 +72,7 @@ The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 n
 
 ```ts
 type GameState = {
-  version: 1;                       // STATE_VERSION, incremented on every shape change
+  version: 2;                       // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
   rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
@@ -80,15 +80,15 @@ type GameState = {
   eventSeq: number;                 // sequence number of the last event
   cards: Record<CardId, CardDefinition>;   // definitions of this game's cards: a state is self-contained
   objects: Record<ObjectId, GameObject>;   // every object, by id
-  players: PlayerState[];           // seating order; zones are lists of ObjectIds
+  players: PlayerState[];           // seating order; points, turnsTaken, zones (lists of ObjectIds)
   turnOrder: PlayerId[];            // looping queue (115.1.c)
   battlefields: BattlefieldState[];
-  stage: GameStage;                 // M1: mulligan or started; M2: the turn structure
+  stage: GameStage;                 // mulligan | turn (turnPlayer, turnNumber, phase) | ended
   winner: PlayerId | null;
 };
 ```
 
-Arriving later: the turn and its phases, priority and focus (312–313), the rune pool (165–167), the chain, showdowns and combat, continuous effects (475+), control and statuses of objects.
+Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Arriving later: focus (313), the rune pool (165–167), the chain, showdowns and combat, continuous effects (475+), control and the other statuses of objects.
 
 ## The turn
 
