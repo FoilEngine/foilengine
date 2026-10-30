@@ -2,6 +2,11 @@ name: CI
 
 on:
   pull_request:
+    # `edited` re-runs the checks when the PR title changes, so fixing a title that
+    # commitlint rejected is enough. Both jobs run on every edit on purpose: skipping
+    # `verify` would publish a "skipped" result that counts as passing for branch
+    # protection, even if the previous run on the same commit had failed.
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main]
 
