@@ -1,169 +1,146 @@
-import {
-  apply,
-  IllegalActionError,
-  isLegal,
-  legalActions,
-  pendingDecision,
-} from '@foilengine/rules';
-import type { GameState, PlayerId } from '@foilengine/types';
+import { apply, legalActions } from '@foilengine/rules';
+import { board, scenario } from '@foilengine/testkit';
+import type { CardId, ObjectId, PlayerId } from '@foilengine/types';
 import { describe, expect, it } from 'vitest';
-import { cardsOf, eventsOfType, player, start, take } from '../../support.ts';
 
-const first = (state: GameState) => state.turnOrder[0] as PlayerId;
-const second = (state: GameState) => state.turnOrder[1] as PlayerId;
-const hand = (state: GameState, id: PlayerId) => player(state, id).zones.hand;
+const v = (n: number) => `Vanilla ${n}`;
+const id = (n: number) => `test:vanilla-${n}` as CardId;
+const A = 'A' as PlayerId;
+const B = 'B' as PlayerId;
+
+/** A goes first, with Vanilla 1–4 in hand and Vanilla 5, 6 on top of their deck. */
+const stacked = () =>
+  board()
+    .firstPlayer('A')
+    .player('A', { hand: [v(1), v(2), v(3), v(4)], mainDeckTop: [v(5), v(6)] });
 
 describe('117 Mulligan', () => {
-  it('rule 117: players perform their Mulligan in turn order', () => {
-    const { state } = start();
-    const refused = isLegal(state, { type: 'Mulligan', player: second(state), setAside: [] });
-    expect(refused).toMatchObject({
-      ok: false,
-      reason: { code: 'not-your-decision', rule: '117' },
-    });
-
-    const after = apply(state, { type: 'Mulligan', player: first(state), setAside: [] }).state;
-    expect(pendingDecision(after)).toMatchObject({ kind: 'Mulligan', player: second(state) });
+  scenario('rule 117: players perform their Mulligan in turn order', {
+    rules: ['117'],
+    setup: board().firstPlayer('B'),
+    check: (t) => {
+      t.expectDecision({ kind: 'Mulligan', player: B, max: 2, rule: '117.1' });
+      t.actIllegal(t.mulligan('A', []), 'not-your-decision');
+      t.act(t.mulligan('B', []));
+      t.expectDecision({ kind: 'Mulligan', player: A });
+    },
   });
 
-  it('rule 117.1: a player may set aside up to two cards', () => {
-    const { state } = start();
-    const [a, b, c] = take(hand(state, first(state)), 3);
-    expect(isLegal(state, { type: 'Mulligan', player: first(state), setAside: [a, b] })).toEqual({
-      ok: true,
-    });
-    expect(
-      isLegal(state, { type: 'Mulligan', player: first(state), setAside: [a, b, c] }),
-    ).toMatchObject({
-      ok: false,
-      reason: { code: 'too-many-cards', rule: '117.1' },
-    });
+  scenario('rule 117.1: a player may set aside up to two cards', {
+    rules: ['117.1'],
+    setup: stacked(),
+    check: (t) => {
+      t.expectLegal(t.mulligan('A', [v(1), v(2)]));
+      t.expectIllegal(t.mulligan('A', [v(1), v(2), v(3)]), 'too-many-cards');
+    },
   });
 
-  it('rule 117.1: the cards set aside must come from the hand, each once', () => {
-    const { state } = start();
-    const [a] = take(hand(state, first(state)), 1);
-    const [notInHand] = take(player(state, first(state)).zones.mainDeck, 1);
-    expect(
-      isLegal(state, { type: 'Mulligan', player: first(state), setAside: [notInHand] }),
-    ).toMatchObject({
-      ok: false,
-      reason: { code: 'card-not-in-hand' },
-    });
-    expect(
-      isLegal(state, { type: 'Mulligan', player: first(state), setAside: [a, a] }),
-    ).toMatchObject({
-      ok: false,
-      reason: { code: 'duplicate-card' },
-    });
+  scenario('rule 117.1: the cards set aside come from the hand, each once', {
+    rules: ['117.1'],
+    setup: stacked(),
+    check: (t) => {
+      const deckCard = t.player('A').zones.mainDeck[0] as ObjectId;
+      t.expectIllegal({ type: 'Mulligan', player: A, setAside: [deckCard] }, 'card-not-in-hand');
+      const [first] = t.player('A').zones.hand as ObjectId[];
+      t.expectIllegal(
+        { type: 'Mulligan', player: A, setAside: [first as ObjectId, first as ObjectId] },
+        'duplicate-card',
+      );
+    },
   });
 
-  it('rule 117.1: keeping the hand is setting aside no card', () => {
-    const { state } = start();
-    const before = hand(state, first(state));
-    const { state: after, events } = apply(state, {
-      type: 'Mulligan',
-      player: first(state),
-      setAside: [],
-    });
-    expect(hand(after, first(state))).toEqual(before);
-    expect(events.map((e) => e.type)).toEqual(['MulliganTaken']);
-    expect(events[0]).toMatchObject({ rule: '117', count: 0 });
+  scenario('rule 117.1: keeping the hand is setting aside no card', {
+    rules: ['117.1'],
+    setup: stacked(),
+    act: (t) => t.act(t.mulligan('A', [])),
+    check: (t) => {
+      t.expectEvents(['MulliganTaken']);
+      t.expect(t.events[0]).toMatchObject({ rule: '117', count: 0 });
+      t.expect(t.hand('A')).toEqual([id(1), id(2), id(3), id(4)]);
+    },
   });
 
-  it('rule 117.2: the player draws as many cards as they set aside', () => {
-    const { state } = start();
-    const [a, b] = take(hand(state, first(state)), 2);
-    const { state: after, events } = apply(state, {
-      type: 'Mulligan',
-      player: first(state),
-      setAside: [a, b],
-    });
-    expect(hand(after, first(state))).toHaveLength(4);
-    expect(hand(after, first(state))).not.toContain(a);
-    const draws = eventsOfType(events, 'CardDrawn');
-    expect(draws).toHaveLength(2);
-    expect(draws.every((e) => e.rule === '117.2')).toBe(true);
-    // The new cards are the two top cards of the deck before the mulligan.
-    expect(cardsOf(after, hand(after, first(state)).slice(2))).toEqual(
-      cardsOf(state, player(state, first(state)).zones.mainDeck.slice(0, 2)),
-    );
+  scenario('rule 117.2: the player draws as many cards as they set aside', {
+    rules: ['117.2'],
+    setup: stacked(),
+    act: (t) => t.act(t.mulligan('A', [v(1), v(3)])),
+    check: (t) => {
+      t.expect(t.hand('A')).toEqual([id(2), id(4), id(5), id(6)]);
+      const draws = t.events.filter((e) => e.type === 'CardDrawn');
+      t.expect(draws.map((e) => e.rule)).toEqual(['117.2', '117.2']);
+    },
   });
 
-  it('rule 117.3: the cards set aside are recycled to the bottom of the Main Deck', () => {
-    const { state } = start();
-    const [a, b] = take(hand(state, first(state)), 2);
-    const { state: after, events } = apply(state, {
-      type: 'Mulligan',
-      player: first(state),
-      setAside: [a, b],
-    });
-    const deck = player(after, first(state)).zones.mainDeck;
-    expect(deck).toHaveLength(35);
-    expect(cardsOf(after, deck.slice(-2)).sort()).toEqual(cardsOf(state, [a, b]).sort());
-    const recycled = eventsOfType(events, 'CardRecycled');
-    expect(recycled.map((e) => e.rule)).toEqual(['117.3', '117.3']);
-    expect(recycled.every((e) => e.from === 'hand' && e.to === 'mainDeck')).toBe(true);
+  scenario('rule 117.3: the cards set aside are recycled to the bottom of the Main Deck', {
+    rules: ['117.3', '417.1.a'],
+    setup: stacked(),
+    act: (t) => t.act(t.mulligan('A', [v(1), v(3)])),
+    check: (t) => {
+      t.expectEvents(['MulliganTaken', 'CardDrawn', 'CardDrawn', 'CardRecycled', 'CardRecycled']);
+      t.expect(t.mainDeck('A')).toHaveLength(35);
+      t.expect([...t.mainDeck('A').slice(-2)].sort()).toEqual([id(1), id(3)]);
+      const recycled = t.events.filter((e) => e.type === 'CardRecycled');
+      t.expect(
+        recycled.every((e) => e.rule === '117.3' && e.from === 'hand' && e.to === 'mainDeck'),
+      ).toBe(true);
+    },
   });
 
   it('rule 417.5: two cards recycled together go to the bottom in a random order', () => {
-    const orders = new Set<string>();
+    const bottoms = new Set<string>();
     for (let i = 0; i < 30; i++) {
-      const { state } = start(undefined, `recycle-${i}`);
-      const [a, b] = take(hand(state, first(state)), 2);
-      const { state: after } = apply(state, {
-        type: 'Mulligan',
-        player: first(state),
-        setAside: [a, b],
+      const state = stacked().seed(`recycle-${i}`).build();
+      const hand = state.players.find((p) => p.id === A)?.zones.hand ?? [];
+      const setAside = [hand[0], hand[2]] as ObjectId[];
+      const after = apply(state, { type: 'Mulligan', player: A, setAside }).state;
+      const deck = after.players.find((p) => p.id === A)?.zones.mainDeck ?? [];
+      bottoms.add(
+        deck
+          .slice(-2)
+          .map((o) => after.objects[o]?.card)
+          .join(','),
+      );
+    }
+    expect(bottoms).toEqual(new Set([`${id(1)},${id(3)}`, `${id(3)},${id(1)}`]));
+  });
+
+  scenario('rule 124: a recycled card becomes a new object; its identity stays private (108.7.c)', {
+    rules: ['124', '108.7.c'],
+    setup: stacked(),
+    check: (t) => {
+      const [first] = t.player('A').zones.hand as ObjectId[];
+      t.act({ type: 'Mulligan', player: A, setAside: [first as ObjectId] });
+      const recycled = t.events.find((e) => e.type === 'CardRecycled');
+      t.expect(recycled).toMatchObject({
+        previousObject: first,
+        visibility: { kind: 'private', to: [A] },
       });
-      const bottom = player(after, first(state)).zones.mainDeck.slice(-2);
-      const previous = bottom.map((id) => after.objects[id]?.previousObjectId);
-      orders.add(previous[0] === a ? 'kept' : 'swapped');
-    }
-    expect(orders).toEqual(new Set(['kept', 'swapped']));
+      t.expect(recycled?.type === 'CardRecycled' && recycled.object).not.toBe(first);
+      t.expect(t.state.objects[first as ObjectId]).toBeUndefined();
+    },
   });
 
-  it('rule 124: a recycled card becomes a new object; its identity stays private (108.7.c)', () => {
-    const { state } = start();
-    const [a] = take(hand(state, first(state)), 1);
-    const { state: after, events } = apply(state, {
-      type: 'Mulligan',
-      player: first(state),
-      setAside: [a],
-    });
-    const [recycled] = eventsOfType(events, 'CardRecycled');
-    expect(recycled?.previousObject).toBe(a);
-    expect(recycled?.object).not.toBe(a);
-    expect(after.objects[a]).toBeUndefined();
-    expect(recycled?.visibility).toEqual({ kind: 'private', to: [first(state)] });
+  scenario('rule 117.1: the legal mulligans are every choice of up to two cards of the hand', {
+    rules: ['117.1'],
+    setup: stacked(),
+    check: (t) => {
+      // 1 (keep) + 4 (one card) + 6 (two cards) for a hand of 4.
+      t.expect(legalActions(t.state, A)).toHaveLength(11);
+      for (const action of legalActions(t.state, A)) t.expectLegal(action);
+      t.expect(legalActions(t.state, B)).toEqual([]);
+    },
   });
 
-  it('rule 117.1: the legal mulligans are every choice of up to two cards of the hand', () => {
-    const { state } = start();
-    const actions = legalActions(state, first(state));
-    // 1 (keep) + 4 (one card) + 6 (two cards) for a hand of 4.
-    expect(actions).toHaveLength(11);
-    expect(actions.every((action) => isLegal(state, action).ok)).toBe(true);
-    expect(legalActions(state, second(state))).toEqual([]);
-  });
-
-  it('refuses an illegal mulligan without changing anything', () => {
-    const { state } = start();
-    const copy = JSON.parse(JSON.stringify(state));
-    expect(() => apply(state, { type: 'Mulligan', player: second(state), setAside: [] })).toThrow(
-      IllegalActionError,
-    );
-    expect(state).toEqual(copy);
-  });
-
-  it('refuses any action once setup is complete', () => {
-    let { state } = start();
-    for (const id of [first(state), second(state)]) {
-      state = apply(state, { type: 'Mulligan', player: id, setAside: [] }).state;
-    }
-    expect(isLegal(state, { type: 'Mulligan', player: first(state), setAside: [] })).toMatchObject({
-      ok: false,
-      reason: { code: 'no-pending-decision' },
-    });
-  });
+  scenario(
+    'rule 118: after the last mulligan, no decision is pending until the turn structure (M2)',
+    {
+      rules: ['118'],
+      setup: stacked(),
+      act: (t) => t.act(t.mulligan('A', []), t.mulligan('B', [])),
+      check: (t) => {
+        t.expectDecision(null);
+        t.expectIllegal(t.mulligan('A', []), 'no-pending-decision');
+      },
+    },
+  );
 });

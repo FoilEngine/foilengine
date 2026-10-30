@@ -55,12 +55,3 @@ export function keepAll(state: GameState): { state: GameState; events: GameEvent
 export function eventsOfType<T extends GameEvent['type']>(events: readonly GameEvent[], type: T) {
   return events.filter((event): event is Extract<GameEvent, { type: T }> => event.type === type);
 }
-
-/** The first `n` ids of a zone, failing the test if the zone is too small. */
-export function take(ids: readonly ObjectId[], n: 1): [ObjectId];
-export function take(ids: readonly ObjectId[], n: 2): [ObjectId, ObjectId];
-export function take(ids: readonly ObjectId[], n: 3): [ObjectId, ObjectId, ObjectId];
-export function take(ids: readonly ObjectId[], n: number): ObjectId[] {
-  if (ids.length < n) throw new Error(`Expected at least ${n} objects, got ${ids.length}`);
-  return ids.slice(0, n);
-}

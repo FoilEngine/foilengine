@@ -11,6 +11,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@foilengine/types": "workspace:*"
+    "@foilengine/rules": "workspace:*",
+    "@foilengine/types": "workspace:*",
+    "vitest": "5.0.5"
   }
 }
