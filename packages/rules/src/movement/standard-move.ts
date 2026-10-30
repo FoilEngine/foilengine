@@ -14,8 +14,8 @@ import {
   type Draft,
   draftOf,
   emit,
+  findObject,
   locationOf,
-  objectOf,
   playerOf,
   playersAt,
   stateOf,
@@ -35,7 +35,7 @@ function standardMove(draft: Draft, state: GameState, action: StandardMove): Ill
 
   const origins = [];
   for (const unit of units) {
-    const object = draft.objects[unit];
+    const object = findObject(draft, unit);
     if (
       object === undefined ||
       (state.cards[object.card] as CardDefinition | undefined)?.category !== 'unit'
@@ -139,12 +139,17 @@ export function movableUnits(
   state: GameState,
   playerId: string,
 ): { base: ObjectId[]; battlefields: ObjectId[] } {
-  const draft = draftOf(state);
-  const ready = (id: ObjectId) =>
-    !objectOf(draft, id).exhausted &&
-    state.cards[objectOf(draft, id).card]?.category === 'unit' &&
-    controllerOf(draft, id) === playerId;
-  const base = draft.players.find((p) => p.id === playerId)?.zones.base.filter(ready) ?? [];
-  const battlefields = draft.battlefields.flatMap((b) => b.units.filter(ready));
+  // M2 has no control change: a unit is controlled by its owner (see controllerOf).
+  const ready = (id: ObjectId) => {
+    const object = state.objects[id];
+    return (
+      object !== undefined &&
+      !object.exhausted &&
+      state.cards[object.card]?.category === 'unit' &&
+      object.owner === playerId
+    );
+  };
+  const base = state.players.find((p) => p.id === playerId)?.zones.base.filter(ready) ?? [];
+  const battlefields = state.battlefields.flatMap((b) => b.units.filter(ready));
   return { base, battlefields };
 }
