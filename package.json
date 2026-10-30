@@ -12,7 +12,7 @@
     "lint": "biome ci .",
     "format": "biome check --write .",
     "typecheck": "turbo run typecheck && tsc -p tsconfig.json --noEmit",
-    "test": "turbo run test && vitest run --project repo",
+    "test": "turbo run test && vitest run",
     "check:deps": "node scripts/check-deps.ts",
     "prepare": "lefthook install"
   },
