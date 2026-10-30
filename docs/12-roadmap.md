@@ -31,8 +31,8 @@ The order is driven by dependencies: the engine first, tested, then everything t
 The goal: a real game end to end, with vanilla units, runes and battlefields without abilities.
 
 - [ ] The turn: start of turn (Awaken, Beginning with scoring, Channel, Draw and Burn Out), main phase, end of turn (315–317).
-- [ ] The rune pool, energy and power, payment and automatic payment (160–168).
-- [ ] Playing a unit (349–359, without abilities).
+- [x] The rune pool, energy and power, payment and automatic payment (160–168).
+- [x] Playing a unit (349–359, without abilities).
 - [ ] Standard move (144, 447+).
 - [ ] Fixed-point cleanups (318–324).
 - [ ] Showdowns without spells (341–348) and combat (461–468).

@@ -72,7 +72,7 @@ The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 n
 
 ```ts
 type GameState = {
-  version: 2;                       // STATE_VERSION, incremented on every shape change
+  version: 3;                       // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
   rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
@@ -80,7 +80,7 @@ type GameState = {
   eventSeq: number;                 // sequence number of the last event
   cards: Record<CardId, CardDefinition>;   // definitions of this game's cards: a state is self-contained
   objects: Record<ObjectId, GameObject>;   // every object, by id
-  players: PlayerState[];           // seating order; points, turnsTaken, zones (lists of ObjectIds)
+  players: PlayerState[];           // seating order; points, turnsTaken, runePool, zones (lists of ObjectIds)
   turnOrder: PlayerId[];            // looping queue (115.1.c)
   battlefields: BattlefieldState[];
   stage: GameStage;                 // mulligan | turn (turnPlayer, turnNumber, phase) | ended
@@ -88,7 +88,7 @@ type GameState = {
 };
 ```
 
-Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Arriving later: focus (313), the rune pool (165–167), the chain, showdowns and combat, continuous effects (475+), control and the other statuses of objects.
+Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Arriving later: focus (313), the chain, showdowns and combat, continuous effects (475+), control and the other statuses of objects.
 
 ## The turn
 
@@ -165,8 +165,10 @@ Deck construction (101–103) is validated in two places. `createGame` checks th
 ## Resources (160–168)
 
 - A rune produces **energy** (for numeric costs, domainless) by exhausting, or **power** of its domain (for domain costs) by being recycled (163, 164.2).
-- Resources go through the **rune pool**, which empties at the start of each main phase and at the end of each turn (167). Unspent resources are lost.
-- Automatic payment (as on Rift Atlas) is a `rules` function that proposes a set of runes to exhaust or recycle. The player can always pay by hand. It is a help, not a rule.
+- Resources go through the **rune pool** (`runePool`: Energy, and Power per domain plus `any` for [A], the Power of any domain of 135.2.e.5 and 163.2.b), which empties at the start of each main phase and at the end of each turn (167). Unspent resources are lost.
+- A card's cost (131) is `{ energy, power }`, where `power` lists symbols: a domain, or `any` for [A]. A domain symbol is paid with Power of that domain or of any domain; [A] with any Power.
+- In `PlayCard`, the `payment` lists rune uses in order: `exhaust` (164.2.a, +1 Energy) or `recycle` (164.2.b, +1 Power of the rune's domain, the rune goes to the bottom of the Rune Deck). The same rune may be exhausted, then recycled. The pool then pays the cost; what is left stays in the pool.
+- Automatic payment (as on Rift Atlas) is `autoPayment`, a `rules` function that proposes rune uses: it recycles only for Power and exhausts a rune before recycling it when Energy is still needed. The player can always pay by hand. It is a help, not a rule; `legalActions` offers one `PlayCard` per affordable unit, paid this way.
 
 ## Victory (193–196)
 

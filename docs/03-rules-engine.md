@@ -59,6 +59,8 @@ Each folder matches a section of the Core Rules. A file that implements a rule h
 
 Phases without a player decision run on their own (305): after the last mulligan, `apply` runs the First Player's Start of Turn (315.1 to 315.4) and stops when they get Priority in their Main Phase (312.2.a); `EndTurn` (316.9) runs the Ending Phase (317) and the next player's Start of Turn. A cleanup runs after each phase transition (319.2) and after objects enter the board (319.6). For now it only performs its first step, the victory check (323.1): the other steps act on combat, damage, battlefield control and showdowns, which arrive later in M2. Burn Out (432) is part of drawing: repeated Burn Outs within one draw win at once (432.3.c.1).
 
+Playing a unit (349–359) is one action in M2: the chain arrives with M3. `PlayCard` follows the steps of the play process in order: the card must be in the hand or, for the Chosen Champion, the Champion Zone (108.3.d); the location must be the base or a battlefield the player controls (355.2.a; no battlefield has a controller yet); runes add resources (357.1.a); the pool pays the printed cost (356, 357); if any step fails, nothing happens (358.5); the unit enters the board exhausted (359.2.c) as a new object (124).
+
 ## Atomic game actions
 
 Every state change goes through an **atomic game action** (draw, recycle, exhaust, ready, channel, kill, heal, add, move, recall, banish, deal, score…). Each one:
