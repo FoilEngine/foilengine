@@ -4,6 +4,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   canonicalJson,
+  digestOf,
   filterEventsFor,
   hash128,
   parseReplay,
@@ -25,6 +26,21 @@ describe('stateHash', () => {
     if (!created.ok) throw new Error('setup refused');
     expect(stateHash({ ...created.state })).toBe(stateHash(created.state));
     expect(stateHash(JSON.parse(JSON.stringify(created.state)))).toBe(stateHash(created.state));
+  });
+
+  it('does not depend on the cache: a fresh copy has the same fingerprint, a changed copy another', () => {
+    const { states } = playRecorded('cache', 12);
+    const state = states.at(-1) as (typeof states)[number];
+    const copy = JSON.parse(JSON.stringify(state));
+    expect(stateHash(copy)).toBe(stateHash(state));
+    const [player, ...others] = copy.players;
+    expect(stateHash({ ...copy, players: [{ ...player, points: 99 }, ...others] })).not.toBe(
+      stateHash(state),
+    );
+    expect(digestOf({ b: [1, 'x'], a: null })).toBe(
+      digestOf({ a: null, b: [1, 'x'], c: undefined }),
+    );
+    expect(digestOf(['1'])).not.toBe(digestOf([1]));
   });
 
   it('changes when the state changes', () => {

@@ -14,8 +14,7 @@ import type {
   Seed,
   SetupProblem,
 } from '@foilengine/types';
-import { hash128 } from './hash.ts';
-import { canonicalJson } from './state-hash.ts';
+import { canonicalJson, digestOf } from './state-hash.ts';
 
 /** Incremented on every incompatible change of the format; old replays must stay readable. */
 export const REPLAY_FORMAT = 1;
@@ -32,7 +31,7 @@ export type Replay = {
 
 /** The fingerprint of one step: the state it led to and the events it produced, in order. */
 export function stepHash(state: GameState, events: readonly GameEvent[]): string {
-  return hash128(canonicalJson({ events, state }));
+  return digestOf({ events, state }).slice(1);
 }
 
 /** Starts the replay of a game just created, from what createGame returned. */

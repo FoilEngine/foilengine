@@ -16,4 +16,4 @@ export {
   startReplay,
   stepHash,
 } from './replay.ts';
-export { canonicalJson, stateHash } from './state-hash.ts';
+export { canonicalJson, digestOf, stateHash } from './state-hash.ts';
