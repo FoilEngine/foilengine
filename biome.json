@@ -1,0 +1,201 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true,
+    "defaultBranch": "main"
+  },
+  "files": {
+    "includes": ["**", "!**/*.md", "!docs"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        "noConsole": "error",
+        "noExplicitAny": "error"
+      },
+      "style": {
+        "useImportType": "error",
+        "useNodejsImportProtocol": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["scripts/**", "apps/cli/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/*/src/**", "apps/*/src/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUndeclaredDependencies": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/types/src/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noNodejsModules": "error"
+          },
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**", "!./**", "!../**"],
+                    "message": "@foilengine/types depends on nothing (docs/01-architecture.md)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/rules/src/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noNodejsModules": "error"
+          },
+          "nursery": {
+            "noJsRestrictedProperties": {
+              "level": "error",
+              "options": {
+                "entries": [
+                  {
+                    "object": "Math",
+                    "property": "random",
+                    "message": "The rules engine is deterministic: use the seeded RNG stored in the game state (ADR 0003)."
+                  }
+                ]
+              }
+            }
+          },
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "Date": "The rules engine has no clock (ADR 0003).",
+                  "performance": "The rules engine has no clock (ADR 0003).",
+                  "setTimeout": "The rules engine has no timers (ADR 0003).",
+                  "setInterval": "The rules engine has no timers (ADR 0003).",
+                  "setImmediate": "The rules engine has no timers (ADR 0003).",
+                  "queueMicrotask": "The rules engine is synchronous (ADR 0003).",
+                  "console": "The rules engine does no I/O: return events instead (ADR 0003).",
+                  "process": "The rules engine does no I/O (ADR 0003).",
+                  "fetch": "The rules engine does no I/O (ADR 0003).",
+                  "crypto": "The rules engine uses the seeded RNG only (ADR 0003).",
+                  "require": "The rules engine depends only on @foilengine/types (ADR 0003).",
+                  "globalThis": "The rules engine has no global state (ADR 0003).",
+                  "window": "The rules engine has no global state (ADR 0003).",
+                  "self": "The rules engine has no global state (ADR 0003)."
+                }
+              }
+            },
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**", "!@foilengine/types", "!./**", "!../**"],
+                    "message": "@foilengine/rules depends only on @foilengine/types (ADR 0003)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/cards/src/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@foilengine/rules",
+                      "@foilengine/rules/**",
+                      "!@foilengine/rules/effects"
+                    ],
+                    "message": "@foilengine/cards may only use the effect API: import from @foilengine/rules/effects."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/play/src/**", "!apps/play/src/offline/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@foilengine/rules",
+                      "@foilengine/rules/**",
+                      "@foilengine/cards",
+                      "@foilengine/cards/**",
+                      "@foilengine/mind",
+                      "@foilengine/mind/**"
+                    ],
+                    "message": "The client decides nothing: rules, cards and mind are only allowed in apps/play/src/offline/ (offline Web Worker)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
