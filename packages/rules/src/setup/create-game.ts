@@ -38,7 +38,8 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     rng: createRng(seed),
     nextObjectId: 1,
     eventSeq: 0,
-    objects: {},
+    baseObjects: {},
+    changedObjects: new Map(),
     players: setup.players.map((player) => ({
       id: player.id,
       points: 0,
@@ -159,7 +160,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     nextObjectId: draft.nextObjectId,
     eventSeq: draft.eventSeq,
     cards: setup.cards,
-    objects: draft.objects,
+    objects: {},
     players: [],
     turnOrder,
     battlefields: [],

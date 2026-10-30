@@ -91,6 +91,11 @@ function checkDecision(decision: Decision, kind: Decision['kind'], player: Playe
   return { ok: true };
 }
 
+const noDecision = (): Legality => ({
+  ok: false,
+  reason: { code: 'no-pending-decision', message: 'Nothing can be done right now', rule: null },
+});
+
 const fromReason = (reason: IllegalReason | null): Legality =>
   reason === null ? { ok: true } : { ok: false, reason };
 
@@ -98,12 +103,7 @@ export function isLegal(state: GameState, action: Action): Legality {
   // 650: conceding needs no decision: a player may concede at any time.
   if (action.type === 'Concede') return fromReason(checkConcede(state, action));
   const decision = pendingDecision(state);
-  if (decision === null) {
-    return {
-      ok: false,
-      reason: { code: 'no-pending-decision', message: 'Nothing can be done right now', rule: null },
-    };
-  }
+  if (decision === null) return noDecision();
   switch (action.type) {
     case 'Mulligan':
       return fromReason(checkMulligan(state, action));
@@ -167,15 +167,22 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
  * The given state is never modified. An illegal action throws `IllegalActionError` and changes nothing.
  */
 export function apply(state: GameState, action: Action): { state: GameState; events: GameEvent[] } {
+  // Playing a card and moving are checked while they are applied: checking them first with
+  // isLegal would play them twice. Only the decision is checked beforehand.
+  if (action.type === 'PlayCard' || action.type === 'StandardMove') {
+    const decision = pendingDecision(state);
+    const turn =
+      decision === null ? noDecision() : checkDecision(decision, 'Priority', action.player);
+    if (!turn.ok) throw new IllegalActionError(turn.reason);
+    return action.type === 'PlayCard'
+      ? applyPlayCard(state, action)
+      : applyStandardMove(state, action);
+  }
   const legality = isLegal(state, action);
   if (!legality.ok) throw new IllegalActionError(legality.reason);
   switch (action.type) {
     case 'Mulligan':
       return applyMulligan(state, action);
-    case 'PlayCard':
-      return applyPlayCard(state, action);
-    case 'StandardMove':
-      return applyStandardMove(state, action);
     case 'EndTurn':
     case 'PassFocus':
     case 'AssignCombatDamage':

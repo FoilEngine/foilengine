@@ -40,7 +40,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [x] The 1v1 mode (487), with its first-turn process: the player going second channels an extra rune during their first Channel Phase (487.7, see Q-001).
 - [ ] `log`: log format, serialization, replay, state fingerprint.
 - [ ] Fuzzer and invariants (`06-testing.md`), 10,000 games without a violation.
-- [ ] Engine benchmarks and budgets in CI.
+- [x] Engine benchmarks and budgets in CI.
 
 **Accepted when**: 10,000 random games run to the end without an invariant violation, every rule of the sections above is `covered`, and the replay of every game is deterministic.
 

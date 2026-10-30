@@ -36,7 +36,11 @@
       "preset": "recommended",
       "suspicious": {
         "noConsole": "error",
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noUndeclaredEnvVars": {
+          "level": "warn",
+          "options": { "allowedEnvVars": ["GITHUB_STEP_SUMMARY"] }
+        }
       },
       "style": {
         "useImportType": "error",

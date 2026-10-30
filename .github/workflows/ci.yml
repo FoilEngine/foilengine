@@ -61,6 +61,50 @@ jobs:
       - name: Rule coverage
         run: pnpm test:rules
 
+  bench:
+    name: Engine benchmarks
+    # Budgets (docs/03-rules-engine.md) are asserted by the benchmarks themselves. On a pull
+    # request, the base branch is benchmarked on the same runner first, and a benchmark more
+    # than 20% slower than on the base fails the job.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Benchmark the base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git worktree add "$RUNNER_TEMP/base" "$BASE_SHA"
+          cd "$RUNNER_TEMP/base"
+          if [ -f packages/spec/vitest.bench.config.ts ]; then
+            pnpm install --frozen-lockfile
+            # The base may miss a budget: its results are still a reference.
+            pnpm bench --reporter=default --reporter=json --outputFile.json="$RUNNER_TEMP/base.json" || true
+          else
+            echo "The base branch has no benchmarks yet."
+          fi
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Benchmark and check the budgets
+        run: pnpm bench --reporter=default --reporter=json --outputFile.json="$RUNNER_TEMP/head.json"
+
+      - name: Compare with the base branch
+        if: github.event_name == 'pull_request'
+        run: node scripts/compare-bench.ts "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/head.json"
+
   commitlint:
     name: Conventional Commits
     if: github.event_name == 'pull_request'

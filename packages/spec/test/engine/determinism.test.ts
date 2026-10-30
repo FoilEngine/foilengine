@@ -48,11 +48,11 @@ describe('determinism', () => {
           expect(JSON.stringify(run())).toBe(JSON.stringify(run()));
         },
       ),
-      // Each run plays two full games: 20 runs keep the test under a few seconds until the
-      // engine meets its performance budgets (M2 benchmarks).
-      { numRuns: 20 },
+      // Each run plays and serializes two full games, every state included: 50 runs take
+      // about 3 seconds locally, and the timeout leaves room for slower CI runners.
+      { numRuns: 50 },
     );
-  }, 20_000);
+  }, 15_000);
 
   it('events are numbered 1, 2, 3… without gaps', () => {
     const { events } = playSetup('numbering', () => 5);

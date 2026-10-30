@@ -61,6 +61,7 @@ pnpm format             # biome: applies formatting and safe fixes
 pnpm check:deps         # dependency rules between packages (docs/01-architecture.md)
 pnpm foil <command>     # the foil CLI (apps/cli), e.g. `pnpm foil rules index`
 pnpm test:rules         # rule coverage report (pnpm test:rules --pin to pin newly covered rules)
+pnpm bench              # engine benchmarks and their budgets (docs/03-rules-engine.md)
 ```
 
 Prerequisites: Node 24 LTS (`.nvmrc`); the pnpm version is pinned by `packageManager`.

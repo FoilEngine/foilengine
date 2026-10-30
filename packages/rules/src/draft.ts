@@ -1,6 +1,8 @@
 // A mutable working copy used while one engine call builds the next state.
 // The state received as an argument is never modified (ADR 0004): `draftOf` copies
 // what the call may change, and `stateOf` builds the next state from the draft.
+// Objects are not copied: the draft records the objects it changes on top of the state's, so
+// that checking a candidate action (legalActions) does not copy every object of the game.
 
 import type {
   CombatState,
@@ -49,7 +51,10 @@ export type Draft = {
   rng: RngState;
   nextObjectId: number;
   eventSeq: number;
-  objects: Record<ObjectId, GameObject>;
+  /** The objects of the state the draft starts from, never modified. */
+  readonly baseObjects: GameState['objects'];
+  /** Objects created or changed by the draft; `null` for a removed one. Read through `objectOf`. */
+  readonly changedObjects: Map<ObjectId, GameObject | null>;
   players: DraftPlayer[];
   battlefields: DraftBattlefield[];
   showdown: ShowdownState | null;
@@ -66,7 +71,8 @@ export function draftOf(state: GameState): Draft {
     rng: state.rng,
     nextObjectId: state.nextObjectId,
     eventSeq: state.eventSeq,
-    objects: { ...state.objects },
+    baseObjects: state.objects,
+    changedObjects: new Map(),
     players: state.players.map((player) => ({
       id: player.id,
       points: player.points,
@@ -104,7 +110,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
     rng: draft.rng,
     nextObjectId: draft.nextObjectId,
     eventSeq: draft.eventSeq,
-    objects: draft.objects,
+    objects: objectsOf(draft),
     players: draft.players.map(
       (player): PlayerState => ({
         id: player.id,
@@ -122,6 +128,25 @@ export function stateOf(base: GameState, draft: Draft): GameState {
     stage: draft.stage,
     winner: draft.winner,
   };
+}
+
+/** The objects after the draft's changes. Ids are never reused, so key order is stable. */
+function objectsOf(draft: Draft): GameState['objects'] {
+  const changed = draft.changedObjects;
+  if (changed.size === 0) return draft.baseObjects;
+  // One pass without `delete`, which would make V8 store the copy as a slow dictionary.
+  const objects: Record<ObjectId, GameObject> = {};
+  const base = draft.baseObjects;
+  // for…in is the fastest copy of a large record in V8; the state is plain JSON (no prototype).
+  for (const key in base) {
+    const id = key as ObjectId;
+    const next = changed.has(id) ? changed.get(id) : base[id];
+    if (next != null) objects[id] = next;
+  }
+  for (const [id, object] of changed) {
+    if (object !== null && !(id in base)) objects[id] = object;
+  }
+  return objects;
 }
 
 export function emptyZones(): MutableZones {
@@ -158,7 +183,7 @@ export function createObject(
     damage: 0,
   };
   draft.nextObjectId += 1;
-  draft.objects[object.id] = object;
+  draft.changedObjects.set(object.id, object);
   return object;
 }
 
@@ -168,7 +193,7 @@ export function createObject(
  */
 export function renewObject(draft: Draft, id: ObjectId): GameObject {
   const old = objectOf(draft, id);
-  delete draft.objects[id];
+  draft.changedObjects.set(id, null);
   return createObject(draft, old.card, old.owner, old.id);
 }
 
@@ -177,11 +202,17 @@ export function updateObject(
   id: ObjectId,
   changes: Partial<Omit<GameObject, 'id'>>,
 ): void {
-  draft.objects[id] = { ...objectOf(draft, id), ...changes };
+  draft.changedObjects.set(id, { ...objectOf(draft, id), ...changes });
+}
+
+/** The object with this id in the draft, if it exists. */
+export function findObject(draft: Draft, id: ObjectId): GameObject | undefined {
+  const changed = draft.changedObjects.get(id);
+  return changed === undefined ? draft.baseObjects[id] : (changed ?? undefined);
 }
 
 export function objectOf(draft: Draft, id: ObjectId): GameObject {
-  const object = draft.objects[id];
+  const object = findObject(draft, id);
   if (object === undefined) throw new EngineInvariantError(`Unknown object ${id}`);
   return object;
 }
