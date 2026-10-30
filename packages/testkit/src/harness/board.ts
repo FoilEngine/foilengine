@@ -26,6 +26,8 @@ export type PlayerLayout = {
   readonly hand?: readonly CardRef[];
   /** Cards on top of the Main Deck, top first; the rest keeps its shuffled order. */
   readonly mainDeckTop?: readonly CardRef[];
+  /** Runes on top of the Rune Deck, top first: the first ones channeled (315.3.b). */
+  readonly runeDeckTop?: readonly CardRef[];
 };
 
 export class BoardError extends Error {
@@ -151,6 +153,22 @@ function withLayout(state: GameState, playerId: PlayerId, layout: PlayerLayout):
   slots.forEach((id, index) => {
     const object = objects[id] as GameObject;
     objects[id] = { ...object, card: order[index] as CardId };
+  });
+
+  // The Rune Deck: the requested runes on top, the rest in its current order.
+  const runeSlots = player.zones.runeDeck;
+  const runePool: CardId[] = runeSlots.map((id) => state.objects[id]?.card as CardId);
+  const runeTop = (layout.runeDeckTop ?? []).map((ref) => {
+    const card = resolveCard(state.cards, ref);
+    const index = runePool.indexOf(card);
+    if (index === -1) throw new BoardError(`${playerId} has no more "${ref}" in their Rune Deck`);
+    runePool.splice(index, 1);
+    return card;
+  });
+  const runeOrder = [...runeTop, ...runePool];
+  runeSlots.forEach((id, index) => {
+    const object = objects[id] as GameObject;
+    objects[id] = { ...object, card: runeOrder[index] as CardId };
   });
   return { ...state, objects };
 }

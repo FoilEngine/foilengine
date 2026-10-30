@@ -8,6 +8,7 @@ import { cleanup } from '../cleanup/cleanup.ts';
 import { type Draft, emit, objectOf, playerOf, renewObject, updateObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { DUEL_SECOND_PLAYER_EXTRA_RUNES } from '../modes/duel.ts';
+import { asResources, emptyPool, isEmptyPool } from '../resources/rune-pool.ts';
 
 /** 315.3.b: the Turn Player channels 2 runes. */
 export const RUNES_PER_CHANNEL = 2;
@@ -84,9 +85,10 @@ export function startTurn(draft: Draft, playerId: PlayerId, turnNumber: number):
   cleanup(draft);
   if (draft.winner !== null) return;
 
-  // 316 Main Phase: the Rune Pool empties (316.3, with the rune pool), start-of-phase effects
+  // 316 Main Phase: every Rune Pool empties (316.3, 167), then start-of-phase effects
   // (316.4, M3). The Turn Player now has Priority in a Neutral Open State (312.2.a).
   enterPhase(draft, playerId, turnNumber, 'main');
+  emptyRunePools(draft, '316.3');
   cleanup(draft);
 }
 
@@ -97,9 +99,10 @@ export function endTurn(draft: Draft): void {
   const { turnPlayer, turnNumber } = stage;
 
   // 317 Ending Phase: the Ending Step (317.1, effects in M3), then the Expiration Step (317.2):
-  // an Ending Special Cleanup that heals units, expires "this turn" effects and empties the
-  // Rune Pool. None of these exist yet; the normal cleanup still runs.
+  // an Ending Special Cleanup that heals units (no damage yet), expires "this turn" effects
+  // (none yet) and empties every Rune Pool (317.2.d, 167).
   enterPhase(draft, turnPlayer, turnNumber, 'ending');
+  emptyRunePools(draft, '317.2.d');
   cleanup(draft);
   if (draft.winner !== null) return;
   emit(draft, {
@@ -115,6 +118,22 @@ export function endTurn(draft: Draft): void {
   const next = draft.turnOrder[(index + 1) % draft.turnOrder.length];
   if (next === undefined) throw new EngineInvariantError('Empty turn order');
   startTurn(draft, next, turnNumber + 1);
+}
+
+/** Every player's Rune Pool empties; unspent resources are lost (167, 167.1). */
+function emptyRunePools(draft: Draft, rule: '316.3' | '317.2.d'): void {
+  for (const player of draft.players) {
+    if (isEmptyPool(player.runePool)) continue;
+    const lost = asResources(player.runePool);
+    player.runePool = emptyPool();
+    emit(draft, {
+      type: 'RunePoolEmptied',
+      rule,
+      visibility: { kind: 'public' },
+      player: player.id,
+      lost,
+    });
+  }
 }
 
 /** Channels up to `count` runes from the top of the Rune Deck to the base, ready (431.1, 431.2.a). */

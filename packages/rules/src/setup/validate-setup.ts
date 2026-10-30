@@ -90,6 +90,21 @@ function validateDeck(setup: GameSetup, { id, deck }: PlayerSetup): SetupProblem
   expectCategory(deck.runeDeck, ['rune'], 'The Rune Deck', '133.5');
   expectCategory(deck.battlefields, ['battlefield'], 'The battlefields', '133.6');
 
+  // What the engine needs to play the cards: a cost for Main Deck cards (131.1), a might for
+  // units (143), a single domain for runes (164.2.b.1).
+  const incomplete = [...new Set([...deck.mainDeck, ...deck.runeDeck])].filter((card) => {
+    const definition = setup.cards[card];
+    if (definition === undefined) return false;
+    if (definition.category === 'rune') return definition.domains.length > 1;
+    return (
+      definition.cost === undefined ||
+      (definition.category === 'unit' && definition.might === undefined)
+    );
+  });
+  if (incomplete.length > 0) {
+    problem('incomplete-card', `Missing cost, might or domain: ${incomplete.join(', ')}`, '131.1');
+  }
+
   const champion = setup.cards[deck.champion];
   if (
     champion === undefined ||

@@ -5,6 +5,7 @@ import type {
   CardCategory,
   CardDefinition,
   CardId,
+  Cost,
   DeckList,
   Domain,
   GameSetup,
@@ -16,7 +17,14 @@ import type {
 const card = (
   id: string,
   category: CardCategory,
-  options: { supertypes?: Supertype[]; tags?: string[]; domains?: Domain[]; name?: string } = {},
+  options: {
+    supertypes?: Supertype[];
+    tags?: string[];
+    domains?: Domain[];
+    name?: string;
+    cost?: Cost;
+    might?: number;
+  } = {},
 ): CardDefinition => ({
   id: id as CardId,
   name: options.name ?? id,
@@ -24,12 +32,21 @@ const card = (
   supertypes: options.supertypes ?? [],
   tags: options.tags ?? [],
   domains: options.domains ?? ['fury'],
+  ...(options.cost === undefined ? {} : { cost: options.cost }),
+  ...(options.might === undefined ? {} : { might: options.might }),
   text: '',
 });
 
-/** A vanilla unit per index, so that a 40-card deck has distinct, traceable cards. */
+/**
+ * A vanilla unit per index, so that a 40-card deck has distinct, traceable cards.
+ * Energy cost 1 to 4 in turn; every fifth one also costs one Fury Power. Might 1 to 5 in turn.
+ */
 const vanilla = (index: number) =>
-  card(`test:vanilla-${index}`, 'unit', { name: `Vanilla ${index}` });
+  card(`test:vanilla-${index}`, 'unit', {
+    name: `Vanilla ${index}`,
+    cost: { energy: 1 + ((index - 1) % 4), power: index % 5 === 0 ? ['fury'] : [] },
+    might: 1 + ((index - 1) % 5),
+  });
 
 export const TEST_CARDS = {
   legend: card('test:legend', 'legend', { tags: ['Tester'], name: 'Test Legend' }),
@@ -37,14 +54,31 @@ export const TEST_CARDS = {
     supertypes: ['champion'],
     tags: ['Tester'],
     name: 'Test Champion',
+    cost: { energy: 3, power: ['fury'] },
+    might: 4,
   }),
   rune: card('test:rune-fury', 'rune', { name: 'Fury Rune' }),
+  calmRune: card('test:rune-calm', 'rune', { name: 'Calm Rune', domains: ['calm'] }),
+  /** Costs one Calm Power: needs a Calm rune. */
+  calmUnit: card('test:calm-unit', 'unit', {
+    name: 'Calm Unit',
+    domains: ['calm'],
+    cost: { energy: 1, power: ['calm'] },
+    might: 2,
+  }),
+  /** Costs [A], one Power of any domain (135.2.e.5.a). */
+  anyUnit: card('test:any-unit', 'unit', {
+    name: 'Any Unit',
+    domains: [],
+    cost: { energy: 0, power: ['any'] },
+    might: 1,
+  }),
   battlefields: [1, 2, 3].map((i) =>
     card(`test:battlefield-${i}`, 'battlefield', { name: `Battlefield ${i}` }),
   ),
   vanillas: Array.from({ length: 39 }, (_, i) => vanilla(i + 1)),
-  gear: card('test:gear', 'gear'),
-  spell: card('test:spell', 'spell'),
+  gear: card('test:gear', 'gear', { cost: { energy: 1, power: [] } }),
+  spell: card('test:spell', 'spell', { cost: { energy: 1, power: [] } }),
 } as const;
 
 /** Every test card, keyed by id. */
@@ -53,6 +87,9 @@ export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = O
     TEST_CARDS.legend,
     TEST_CARDS.champion,
     TEST_CARDS.rune,
+    TEST_CARDS.calmRune,
+    TEST_CARDS.calmUnit,
+    TEST_CARDS.anyUnit,
     ...TEST_CARDS.battlefields,
     ...TEST_CARDS.vanillas,
     TEST_CARDS.gear,
