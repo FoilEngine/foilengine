@@ -4,7 +4,7 @@
 import type { Decision } from './decisions.ts';
 import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
-import type { GameStage, RunePool, ShowdownState } from './state.ts';
+import type { CombatState, GameStage, RunePool, ShowdownState } from './state.ts';
 
 /** An object whose face the viewer may see. */
 export type VisibleObject = {
@@ -12,6 +12,7 @@ export type VisibleObject = {
   readonly card: CardId;
   readonly owner: PlayerId;
   readonly exhausted: boolean;
+  readonly damage: number;
 };
 
 /** A zone whose cards the viewer may not see: only its size is public (108.4.d, 108.7.e). */
@@ -40,6 +41,7 @@ export type BattlefieldView = {
   readonly controller: PlayerId | null;
   readonly contestedBy: PlayerId | null;
   readonly showdownStaged: boolean;
+  readonly combatStaged: boolean;
   readonly units: readonly VisibleObject[];
 };
 
@@ -70,6 +72,7 @@ export type PlayerView = {
   readonly turnOrder: readonly PlayerId[];
   readonly battlefields: readonly BattlefieldView[];
   readonly showdown: ShowdownState | null;
+  readonly combat: CombatState | null;
   readonly stage: GameStage;
   /** The decision the viewer must make now, if any. */
   readonly decision: Decision | null;

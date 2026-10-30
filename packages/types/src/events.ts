@@ -203,6 +203,57 @@ export type BattlefieldScored = EventBase & {
   readonly method: 'conquer' | 'hold';
 };
 
+/** A Combat began at a battlefield, with its Attacker and Defender (466.2.c). */
+export type CombatStarted = EventBase & {
+  readonly type: 'CombatStarted';
+  readonly battlefield: ObjectId;
+  readonly attacker: PlayerId;
+  readonly defender: PlayerId;
+};
+
+/** A player assigned their combat damage (467.2.c). */
+export type DamageAssigned = EventBase & {
+  readonly type: 'DamageAssigned';
+  readonly player: PlayerId;
+  readonly assignment: readonly { readonly unit: ObjectId; readonly amount: number }[];
+};
+
+/** Damage was dealt to units, at the same time (418, 467.2.d). */
+export type DamageDealt = EventBase & {
+  readonly type: 'DamageDealt';
+  readonly damage: readonly { readonly unit: ObjectId; readonly amount: number }[];
+};
+
+/** A unit was killed: it went from the board to its owner's trash as a new object (429, 124). */
+export type UnitKilled = EventBase & {
+  readonly type: 'UnitKilled';
+  readonly player: PlayerId;
+  readonly unit: ObjectId;
+  /** The new object in the trash. */
+  readonly object: ObjectId;
+  readonly card: CardId;
+};
+
+/** Units were healed: their damage was cleared (419). */
+export type UnitsHealed = EventBase & {
+  readonly type: 'UnitsHealed';
+  readonly units: readonly ObjectId[];
+};
+
+/** Units were recalled to their base, which is not a Move (456–460). */
+export type UnitsRecalled = EventBase & {
+  readonly type: 'UnitsRecalled';
+  readonly player: PlayerId;
+  readonly units: readonly ObjectId[];
+};
+
+/** A Combat ended (468.7); `winner` is the player who won it (468.3.a), or null for No Result. */
+export type CombatEnded = EventBase & {
+  readonly type: 'CombatEnded';
+  readonly battlefield: ObjectId;
+  readonly winner: PlayerId | null;
+};
+
 /** A turn began (301, 315). */
 export type TurnStarted = EventBase & {
   readonly type: 'TurnStarted';
@@ -292,7 +343,14 @@ export type GameEvent =
   | ShowdownEnded
   | ControlEstablished
   | ControlLost
-  | BattlefieldScored;
+  | BattlefieldScored
+  | CombatStarted
+  | DamageAssigned
+  | DamageDealt
+  | UnitKilled
+  | UnitsHealed
+  | UnitsRecalled
+  | CombatEnded;
 
 export type GameEventType = GameEvent['type'];
 
@@ -330,6 +388,13 @@ export const PRIVATE_EVENT_FIELDS = {
   ControlEstablished: [],
   ControlLost: [],
   BattlefieldScored: [],
+  CombatStarted: [],
+  DamageAssigned: [],
+  DamageDealt: [],
+  UnitKilled: [],
+  UnitsHealed: [],
+  UnitsRecalled: [],
+  CombatEnded: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */

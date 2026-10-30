@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -24,6 +24,8 @@ export type GameObject = {
   readonly previousObjectId: ObjectId | null;
   /** Exhausted (415) or ready (416). Only meaningful on the board; a new object starts ready. */
   readonly exhausted: boolean;
+  /** Damage marked on a unit (142); a new object has none. */
+  readonly damage: number;
 };
 
 export type PlayerZones = { readonly [Z in PlayerZoneId]: readonly ObjectId[] };
@@ -60,8 +62,30 @@ export type BattlefieldState = {
   readonly contestedBy: PlayerId | null;
   /** A Showdown is Staged here (323.7), waiting for a Neutral Open State to begin (323.11). */
   readonly showdownStaged: boolean;
+  /** A Combat is Staged here (323.8, 463): units of opposing players are present. */
+  readonly combatStaged: boolean;
   /** Units present at this battlefield. Facedown cards (107.3) arrive later. */
   readonly units: readonly ObjectId[];
+};
+
+/** Combat damage assigned by one player to one unit (467.2.c). */
+export type DamageAssignment = {
+  readonly unit: ObjectId;
+  readonly amount: number;
+};
+
+/** A Combat in progress (461–468). Its first step is a Combat Showdown, held in `showdown`. */
+export type CombatState = {
+  readonly battlefield: ObjectId;
+  /** The player whose units applied Contested (466.2.c.1). */
+  readonly attacker: PlayerId;
+  /** The other player with units there (466.2.c.2). */
+  readonly defender: PlayerId;
+  /** Step 1, the Combat Showdown (466), or step 2, the Combat Damage Step (467). */
+  readonly step: 'showdown' | 'damage';
+  /** Damage assigned in the Combat Damage Step; null until the player has assigned it. */
+  readonly attackerAssignment: readonly DamageAssignment[] | null;
+  readonly defenderAssignment: readonly DamageAssignment[] | null;
 };
 
 /** A Showdown in progress (341–348). The turn is then in a Showdown State (343.1). */
@@ -107,8 +131,10 @@ export type GameState = {
   /** Looping queue of turns, starting with the First Player (115.1.c). */
   readonly turnOrder: readonly PlayerId[];
   readonly battlefields: readonly BattlefieldState[];
-  /** The Showdown in progress, if any. M2 has no Combat yet. */
+  /** The Showdown in progress, if any; during a Combat it is the Combat Showdown. */
   readonly showdown: ShowdownState | null;
+  /** The Combat in progress, if any (461). */
+  readonly combat: CombatState | null;
   readonly stage: GameStage;
   readonly winner: PlayerId | null;
 };
