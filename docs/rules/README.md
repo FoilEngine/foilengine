@@ -33,7 +33,18 @@ Previous versions stay in `archive/`: they are used to replay old replays and to
 
 ## Index
 
-`foil rules index` reads the PDF and produces `index/<version>.json`: one entry per rule with its number, its title, its text and a fingerprint of the text. It is the basis of the rule coverage report (see `docs/06-testing.md`).
+`pnpm foil rules index` reads the most recent `core-rules-<date>.pdf` and writes `index/<version>.json` (`--check` only verifies that the committed file is up to date). The parser lives in `@foilengine/testkit` (`indexCoreRules`); the PDF is read by `apps/cli` with `unpdf`. It is the basis of the rule coverage report (see `docs/06-testing.md`).
+
+Each entry has:
+
+- `number`: the exact number as printed, without the trailing dot (`103`, `103.2.b.1`);
+- `parent`: the enclosing rule (`103.2.b` for `103.2.b.1`), or `null`;
+- `text`: the full text, continuation lines and examples included, whitespace collapsed;
+- `fingerprint`: the first 16 hex characters of the SHA-256 of `text`, to detect rules whose text changed between two versions.
+
+The PDF has no separate title field: a heading such as `104. Setup` is a rule whose text is the heading, so the index has no `title`. A rule is identified by its number; two rules can share a fingerprint when their texts are identical (`Battlefields` appears under several numbers).
+
+The parser refuses an extraction that looks wrong: no "Last Updated" date, numbers that do not increase, or a sub-rule without its parent. The file name date must match the PDF's "Last Updated" date.
 
 ## New version of the Core Rules
 

@@ -55,7 +55,7 @@ The parts of the harness:
 
 ## Rule coverage
 
-1. **Indexing the Core Rules**: a script (`foil rules index`) extracts the list of rules (number, title, text) from the PDF and writes it to `docs/rules/index/<version>.json`, with a fingerprint of each rule's text.
+1. **Indexing the Core Rules**: `pnpm foil rules index` extracts the list of rules from the PDF and writes it to `docs/rules/index/<version>.json`: for each rule its number, its parent rule, its full text and a fingerprint of that text (format in `docs/rules/README.md`). The index is committed, and a CLI test regenerates it from the PDF and fails if the committed file is out of date.
 2. **Collection**: each scenario declares its `rules`. The engine, for its part, marks in the events the rule that produced them.
 3. **Report** (`pnpm test:rules`): for each rule, its status:
 

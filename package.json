@@ -15,7 +15,8 @@
     "typecheck": "turbo run typecheck && tsc -p tsconfig.json --noEmit",
     "test": "turbo run test && vitest run",
     "check:deps": "node scripts/check-deps.ts",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "foil": "node apps/cli/src/main.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
