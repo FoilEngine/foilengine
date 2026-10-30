@@ -62,6 +62,7 @@ pnpm check:deps         # dependency rules between packages (docs/01-architectur
 pnpm foil <command>     # the foil CLI (apps/cli), e.g. `pnpm foil rules index`
 pnpm test:rules         # rule coverage report (pnpm test:rules --pin to pin newly covered rules)
 pnpm bench              # engine benchmarks and their budgets (docs/03-rules-engine.md)
+pnpm fuzz               # random games with invariant checks (--games <n>, --seed <n>; docs/06-testing.md)
 ```
 
 Prerequisites: Node 24 LTS (`.nvmrc`); the pnpm version is pinned by `packageManager`.
@@ -70,7 +71,6 @@ Scripts not created yet, with the milestone they arrive in (`docs/12-roadmap.md`
 
 | Script | Role | Milestone |
 | --- | --- | --- |
-| `pnpm fuzz` | random games with invariant checks | M2 |
 | `pnpm cards:coverage` | card coverage report (`docs/04-cards-and-effects.md`) | M4 |
 | `pnpm infra:up`, `pnpm infra:obs` | local dependencies and observability stack (`infra/README.md`) | M5 |
 | `pnpm dev:obs` | the application with the local observability stack | M5 |

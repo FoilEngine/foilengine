@@ -81,7 +81,7 @@ The report is written to `reports/rule-coverage.json` (every rule, for the conso
 
 `pnpm test:rules` fails (and so does the CI) on failing scenarios, stale rules, regressions, unpinned rules, and rule numbers that do not exist in the current version. Rules with no effect on the engine are listed in `docs/rules/not-applicable.json`, each with its reason; the list starts empty, and a rule is added to it only after review. Open questions are read from `docs/rules/questions.md` (entries whose status is `open`).
 
-In M1, the games played for `exercised` stop after setup; the M2 fuzzer will play them to the end.
+The games played for `exercised` are fuzzer games (`uniform` policy), played to the end.
 
 The same mechanism produces **card coverage** (statuses from `04-cards-and-effects.md`) and **keyword coverage**.
 
@@ -101,6 +101,12 @@ The fuzzer plays full games with a random policy (and policies biased towards ra
 - The game ends in fewer than N actions (anti-loop bound).
 
 A violation produces a **reproduction file** (seed, decks, log up to the faulty action) in `testkit/repros/`, which `/investigate-replay` knows how to use. The fuzzer automatically shrinks the reproduction when it can.
+
+**In the code.** `fuzz()`, `playFuzzGame()` and `INVARIANTS` are in `packages/testkit/src/fuzz/`. A game is a *fuzz case*: a game seed, a policy (`uniform`, which never concedes; `concede`, which treats Concede like any action; `full-mulligan`) and a list of choices, one per action, the later ones derived from the seed. fast-check generates the cases and, on a violation, shrinks the list of choices: the reproduction is a shorter, simpler game. At every step (the creation, then each action), every invariant is checked; at the end, the game is serialized, parsed and replayed, and every step fingerprint must match (`@foilengine/log`).
+
+Invariants implemented in M2: `objects-accounted` (no duplicated id, every referenced object exists, no object nowhere), `card-count`, `points`, `decision-while-ongoing`, `legal-actions` (the deciding player can answer, the others can only concede, every offered action passes `isLegal`), `json`, `event-sequence`, `no-leak` (the view, and the events shown to a player, name no object of an opponent's hand or main deck; the view names no object of any deck), `bounded` (1,000 actions) and `determinism`. Tokens, effects that lower points and the chain arrive with M3: their invariants arrive with them.
+
+`pnpm fuzz [--games <n>] [--seed <n>]` runs the fuzzer (1,000 games by default) and writes the reproduction files of a violation to `packages/testkit/repros/` (see its README). The tests run a short fuzz (15 games); the `Nightly` workflow runs 10,000 games with a new seed every night and keeps the reproduction files as an artifact. A game takes about 100 ms with every invariant checked.
 
 ## Reference replays
 
