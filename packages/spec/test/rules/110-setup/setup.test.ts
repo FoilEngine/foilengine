@@ -129,10 +129,12 @@ describe('110 Setup Process', () => {
   it('rule 118: once both players have taken their mulligan, the First Player takes their turn', () => {
     const { state } = start();
     const after = keepAll(state);
-    expect(after.state.stage).toEqual({ kind: 'started', turnPlayer: state.turnOrder[0] });
-    expect(pendingDecision(after.state)).toBeNull();
-    expect(after.events.at(-1)).toMatchObject({
-      type: 'SetupCompleted',
+    expect(after.state.stage).toMatchObject({
+      kind: 'turn',
+      turnPlayer: state.turnOrder[0],
+      turnNumber: 1,
+    });
+    expect(eventsOfType(after.events, 'SetupCompleted')[0]).toMatchObject({
       rule: '118',
       firstPlayer: state.turnOrder[0],
     });
