@@ -33,11 +33,11 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [ ] The turn: start of turn (Awaken, Beginning with scoring, Channel, Draw and Burn Out), main phase, end of turn (315–317).
 - [ ] The rune pool, energy and power, payment and automatic payment (160–168).
 - [ ] Playing a unit (349–359, without abilities).
-- [ ] Standard move (144, 445+).
+- [ ] Standard move (144, 447+).
 - [ ] Fixed-point cleanups (318–324).
-- [ ] Showdowns without spells (341–348) and combat (459–466).
-- [ ] Hold and conquer, the last-point rule (467–472), victory (193–196), conceding (649).
-- [ ] The 1v1 mode (modes section), with its first-turn specifics (second player: 3 runes on the first turn, see Q-001).
+- [ ] Showdowns without spells (341–348) and combat (461–468).
+- [ ] Hold and conquer, the final point (469–474), victory (193–196), conceding (649–652).
+- [ ] The 1v1 mode (487), with its first-turn process: the player going second channels an extra rune during their first Channel Phase (487.7, see Q-001).
 - [ ] `log`: log format, serialization, replay, state fingerprint.
 - [ ] Fuzzer and invariants (`06-testing.md`), 10,000 games without a violation.
 - [ ] Engine benchmarks and budgets in CI.
@@ -49,7 +49,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [ ] The chain and the HOT FEPR process (325–340), with one name per step in the code.
 - [ ] Spells (153–159), Action and Reaction timing (806, 813), showdowns with spells.
 - [ ] Passive, replacement, activated and triggered abilities (360+), the order of simultaneous triggers.
-- [ ] Layers (473–480) and `characteristics()`.
+- [ ] Layers (475–482) and `characteristics()`.
 - [ ] Gear and attachment (147–152, 716).
 - [ ] Tokens (179–187).
 - [ ] The `cards` DSL and one module per keyword of section 800.

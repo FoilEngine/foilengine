@@ -35,10 +35,10 @@ The DSL building blocks follow the sections of the Core Rules:
 | Building block | Sections |
 | --- | --- |
 | Triggers (`on.played`, `on.attack`, `on.defend`, `on.conquer`, `on.hold`, `on.dies`, start or end of turn…) | triggered abilities (360+) |
-| Passive abilities and continuous effects | 360+, layers 473+ |
+| Passive abilities and continuous effects | 360+, layers 475+ |
 | Replacement effects | 360+ |
 | Activated abilities, costs, timing (Action, Reaction) | 360+, 806, 813 |
-| Atomic actions (`deal`, `draw`, `move`, `ready`, `exhaust`, `kill`, `heal`, `buff`, `recycle`, `banish`, `recall`, `channel`, `add`, `score`, `createToken`…) | 407–444, 700+ |
+| Atomic actions (`deal`, `draw`, `move`, `ready`, `exhaust`, `kill`, `heal`, `buff`, `recycle`, `banish`, `recall`, `channel`, `add`, `score`, `createToken`…) | 408–446, 700+ |
 | Targeting and selectors | playing a card (349+), untargetable (756) |
 | Keywords | 800+ (one module per keyword) |
 

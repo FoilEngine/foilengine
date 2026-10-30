@@ -25,8 +25,8 @@ A scenario describes a starting state, actions, and what is expected. It always 
 The harness lives in `@foilengine/testkit`; the scenarios live in `@foilengine/spec`, which depends on `rules`, `cards` and `testkit` and which nothing depends on: `packages/spec/test/rules/<section>/` for rules, `packages/spec/test/cards/<set>/` for cards. That way `rules` and `cards` never depend on `testkit` (no cycle). A package's unit tests (RNG, cost computation…) stay in its own `test/`.
 
 ```ts
-scenario('rule 315.3: turn player channels 2 runes at Channel step', {
-  rules: ['315.3'],
+scenario('rule 315.3.b: turn player channels 2 runes at Channel step', {
+  rules: ['315.3.b'],
   setup: board()
     .player('A', { runeDeck: 10 })
     .player('B')
@@ -38,8 +38,8 @@ scenario('rule 315.3: turn player channels 2 runes at Channel step', {
   },
 });
 
-scenario('rule 315.3.b: channel only what remains when the rune deck is short', {
-  rules: ['315.3.b'],
+scenario('rule 315.3.b.1: channel only what remains when the rune deck is short', {
+  rules: ['315.3.b.1'],
   setup: board().player('A', { runeDeck: 1 }).activePlayer('A').atStep('start.channel'),
   then: (t) => t.expectEvents(['RuneChanneled']),
 });
