@@ -36,70 +36,59 @@ From section 400 on, CR-2026-10-09 shifted the numbers by one to three compared 
 
 ## Game objects and identity
 
-- Every game object has an **`ObjectId`**, unique within the game, assigned by a counter in the state (deterministic).
-- **Rule 124: a zone change creates a new object.** A card going from the hand to the board, or from the board to the trash, gets a new `ObjectId`. We keep the **`CardRef`** (which printed card it is) and the history (`previousObjectId`) separately, for effects that must follow it.
-- A card has an **owner** (`owner`, never changes) and, on the board, a **controller** (`controller`, can change, section 188).
-- **Tokens** are not cards (185): they have a `TokenDef` instead of a `CardRef`, and cease to exist when they leave the board.
+- Every game object has an **`ObjectId`**, unique within the game, assigned by a counter in the state (deterministic): `o1`, `o2`…
+- **Rule 124: a change to or from a Non-Board Zone creates a new object.** Drawing (main deck → hand), recycling (hand → deck), playing a card (hand → chain), a unit dying (board → trash): each gives a new `ObjectId`. The object keeps its `card` (the `CardId` of its definition) and its `previousObjectId`, for effects that must follow it.
+- A card has an **owner** (`owner`, the player who brought it into the game, 127.1, never changes) and, on the board, a **controller** (`controller`, can change, section 188; arrives with M2).
+- **Tokens** are not cards (185): they will have a token definition instead of a `CardId`, and cease to exist when they leave the board (186).
 
 ## Zones
 
-Per-player zones (sections 104–108):
+Each player has these zones (107–108). Privacy is the default privacy of the cards there (128.2.a): **secret** (no one sees the face, 128.3), **private** (only the owner, or the controller on the board, 128.4), **public** (everyone, 128.5).
 
-| Zone | Visibility | Ordered | Notes |
-| --- | --- | --- | --- |
-| `mainDeck` | Hidden from everyone | Yes | Drawn from the top |
-| `runeDeck` | Hidden from everyone | Yes | 12 runes (161.2.a); recycled runes return here |
-| `hand` | Visible to the owner | No | |
-| `base` | Public | No | Units, gear, runes in play |
-| `legendZone` | Public | — | The Champion Legend (111) |
-| `championZone` | Public | — | The Chosen Champion before it is played (112) |
-| `trash` | Public | Yes | |
-| `banishment` | Public | No | |
+| Zone | Board? | Privacy | Ordered | Rules |
+| --- | --- | --- | --- | --- |
+| `base` | Board | Public | No | 107.1 |
+| `legendZone` | Board | Public | — | 107.4; the Champion Legend never leaves it (107.4.d) |
+| `championZone` | Non-Board | Public | — | 108.3; the Chosen Champion before it is played |
+| `mainDeck` | Non-Board | Secret | Yes, top first | 108.4; its size is public (108.4.d) |
+| `runeDeck` | Non-Board | Secret | Yes, top first | 108.5; 12 runes (103.4.a) |
+| `hand` | Non-Board | Private | No | 108.7; its size is public (108.7.e) |
+| `trash` | Non-Board | Public | No | 108.2 |
+| `banishment` | Non-Board | Public | No | 108.6 |
 
 Shared zones:
 
-| Zone | Notes |
-| --- | --- |
-| `battlefields[]` | Each battlefield has an optional controller, units from each player, statuses (Contested, etc.). Their number depends on the mode (172). |
-| `chain` | Temporary zone that only exists while a card is being played or an ability activated (328). Items are `pending` or `finalized` (329). |
+| Zone | Board? | Rules | Notes |
+| --- | --- | --- | --- |
+| Battlefield Zone (`battlefields`) | Board | 107.2 | Each battlefield is a location (107.2.b). Their number depends on the mode (172; 2 in 1v1, 487.4). |
+| Facedown Zones | Board | 107.3 | One per battlefield, one card by default (107.3.b). A public zone holding private cards (107.3.f). Arrives with M2 or M3. |
+| Chain | Non-Board | 108.1, 327 | Exists only while a card or ability is being played (328). Public (108.1.b). Arrives with M3. |
 
-Objects on a board are public information (109). Face-down cards (Hidden, 811; facedown zones, 107.3) are the exception, to be modeled explicitly.
+The zone privacy table is `PLAYER_ZONE_PRIVACY` in `@foilengine/types`.
 
-## Game state (high-level shape)
+## Game state
+
+The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 needs and grow with each milestone. The state is pure JSON, written as `type` aliases so that a test checks it against `Json`.
 
 ```ts
-interface GameState {
-  version: number;              // state schema version
-  rulesVersion: string;         // e.g. "CR-2026-10-09"
-  mode: ModeId;                 // e.g. "duel-1v1"
-  rng: RngState;                // seed and counter, serializable
-  nextObjectId: number;
-  players: Record<PlayerId, PlayerState>;
-  turnOrder: PlayerId[];        // circular queue (115.1.c)
-  turn: TurnState;              // active player, phase, step, turn number
+type GameState = {
+  version: 1;                       // STATE_VERSION, incremented on every shape change
+  rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
+  mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
+  rng: RngState;                    // seeded PRNG state, serializable
+  nextObjectId: number;             // counter for ObjectIds
+  eventSeq: number;                 // sequence number of the last event
+  cards: Record<CardId, CardDefinition>;   // definitions of this game's cards: a state is self-contained
+  objects: Record<ObjectId, GameObject>;   // every object, by id
+  players: PlayerState[];           // seating order; zones are lists of ObjectIds
+  turnOrder: PlayerId[];            // looping queue (115.1.c)
   battlefields: BattlefieldState[];
-  chain: ChainItem[];
-  priority: PlayerId | null;    // 312
-  focus: PlayerId | null;       // 313
-  showdown: ShowdownState | null;
-  combat: CombatState | null;
-  pendingCleanup: boolean;      // 319
-  continuousEffects: ContinuousEffect[]; // applied by layers (475+)
+  stage: GameStage;                 // M1: mulligan or started; M2: the turn structure
   winner: PlayerId | null;
-  log: { eventSeq: number };
-}
-
-interface PlayerState {
-  id: PlayerId;
-  points: number;               // never goes below 0 (194.4)
-  zones: PlayerZones;
-  runePool: { energy: number; power: Partial<Record<Domain | 'universal', number>> }; // 165–167
-  scoredThisTurn: BattlefieldId[]; // for the once-per-turn conquer rule
-  // ...
-}
+};
 ```
 
-The exact names are fixed in `@foilengine/types`. Any change to the shape of the state increments `version` and must stay replayable (see `log`).
+Arriving later: the turn and its phases, priority and focus (312–313), the rune pool (165–167), the chain, showdowns and combat, continuous effects (475+), control and statuses of objects.
 
 ## The turn
 
@@ -164,14 +153,14 @@ This loop must be explicit in the code, with one name per step, because that is 
 ## Setup (104–118)
 
 1. Each player puts their Champion Legend in their legend zone (111) and their Chosen Champion in their champion zone (112).
-2. Battlefields are set aside, then placed according to the mode (113).
+2. Battlefields are set aside, then placed according to the mode (113.1). In 1v1, each player randomly selects one of their three battlefields with the state's RNG; the other two are not used (487.4.a, 487.5).
 3. Each player shuffles their main deck and rune deck separately (114): with the state's RNG.
 4. Turn order is drawn at random (115), with the state's RNG.
 5. Each player draws 4 cards (116).
 6. Mulligan, in turn order: each player sets aside up to 2 cards, draws as many, then recycles the cards set aside (117.1–117.3).
 7. The first player starts their turn (118).
 
-Deck construction (101) is validated by `codex`/`rules` before the game is created: number of cards, legend, champion, 12 runes, battlefields, domains.
+Deck construction (101–103) is validated in two places. `createGame` checks the structure it needs to set up a game (M1): one legend, one Chosen Champion that is in the main deck, 12 runes, the number of battlefields required by the mode, and only known cards. `codex` checks the deckbuilding rules (M4): 40 cards minimum, Domain Identity (103.2.b), Champion Tag (103.3.a.2), 3 copies maximum (103.3.b), Signature cards (103.3.d), format legality.
 
 ## Resources (160–168)
 
@@ -189,9 +178,9 @@ Deck construction (101) is validated by `codex`/`rules` before the game is creat
 
 ## Actions
 
-An `Action` is a **player's intent**, serializable, with no reference to JavaScript objects. Families:
+An `Action` is a **player's intent**, serializable, with no reference to JavaScript objects. It names the acting player. M1 has only the first one; the others arrive with their milestone:
 
-- `Mulligan { cards }`
+- `Mulligan { player, setAside }`: set aside up to two cards, or none to keep the hand (117.1)
 - `PlayCard { card, choices, payment }` (choice of targets, modes, additional costs, 349–359)
 - `ActivateAbility { source, ability, choices, payment }`
 - `StandardMove { units, destination }` (144, 447+)
@@ -204,12 +193,18 @@ An `Action` is a **player's intent**, serializable, with no reference to JavaScr
 
 ## Events
 
-A `GameEvent` describes **what happened**, in the exact order, with a sequence number. Examples: `CardDrawn`, `RuneChanneled`, `CardPlayed`, `ChainItemAdded`, `ChainItemFinalized`, `ChainItemResolved`, `UnitMoved`, `DamageDealt`, `UnitKilled`, `ShowdownStarted`, `FocusPassed`, `BattlefieldConquered`, `BattlefieldHeld`, `PointsScored`, `TurnStarted`, `PhaseChanged`, `CleanupRan`, `GameWon`.
+A `GameEvent` describes **what happened**, in the exact order, with a sequence number (`seq`). Each event carries the **rule that produced it** (`rule: "117"`) when relevant: that is what enables rule coverage in production, and debugging.
 
-Each event carries the **rule that produced it** (`rule: "315.3"`) when relevant. That is what enables rule coverage in production, and debugging.
+M1 events: `GameCreated` (110), `CardPlaced` (111, 112), `BattlefieldSelected` (113, 487.5), `DeckShuffled` (114), `TurnOrderDetermined` (115), `CardDrawn` (116, 117.2), `MulliganTaken` and `CardRecycled` (117), `SetupCompleted` (118). Later ones include `RuneChanneled`, `CardPlayed`, `ChainItemAdded`, `UnitMoved`, `DamageDealt`, `ShowdownStarted`, `BattlefieldConquered`, `PointsScored`, `GameWon`.
 
-Events have a **visibility**: public, or restricted to some players (a drawn card is only visible to its owner; the others see "a card was drawn"). Filtering is done by `log`, not by hand in the server.
+### Visibility
+
+Every event has a `visibility`: `public`, or `private` to a list of players. For the other players, the fields listed in `PRIVATE_EVENT_FIELDS` are removed and the event is marked `redacted`: an opponent sees that a card was drawn, not which one. The private fields include the **object ids** of private cards, not only their `CardId`: an id would let a player follow a card they cannot see (for example, link the card drawn on turn 3 to the one played on turn 5). One event per fact, redacted on the way out, rather than a private and a public twin.
+
+Filtering is done by `log` and `viewFor`, never by hand in the server.
 
 ## Per-player views
 
-`viewFor(state, player)` returns what that player is allowed to see: their hand, their decks reduced to their size, the opponent's hand reduced to its size, public objects, the chain, the pending choices that concern them. It is used by the server, by the AI (which must not cheat) and by the tests.
+`viewFor(state, player)` returns a `PlayerView`: what that player is allowed to see. Their own hand as objects; the opponents' hands and every deck (their own included, 108.4.e) as a size only (`HiddenZone`); the public zones; the battlefields; the stage; and the decision that player must make, if any. The view carries no card definitions, so it cannot reveal a deck list.
+
+The type makes leaks impossible to express: an opponent's hand is `{ size: number }`, with no room for cards. A runtime test of `viewFor` checks the rest (M1). The view is used by the server, by the AI (which must not cheat) and by the tests.
