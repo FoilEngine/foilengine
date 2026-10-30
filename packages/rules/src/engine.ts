@@ -1,4 +1,4 @@
-// The public engine API (docs/03-rules-engine.md). M1: setup and mulligan only.
+// The public engine API (docs/03-rules-engine.md).
 
 import {
   type Action,
@@ -9,6 +9,7 @@ import {
   type IllegalReason,
   type PlayerId,
 } from '@foilengine/types';
+import { draftOf, stateOf } from './draft.ts';
 import { IllegalActionError } from './errors.ts';
 import {
   applyMulligan,
@@ -16,17 +17,40 @@ import {
   mulliganActions,
   mulliganDecision,
 } from './setup/mulligan.ts';
+import { endTurn } from './turn/turn.ts';
+
+export type Outcome =
+  | { readonly kind: 'ongoing' }
+  | { readonly kind: 'won'; readonly winner: PlayerId };
 
 /** What the engine waits for now, if anything. */
 export function pendingDecision(state: GameState): Decision | null {
-  return mulliganDecision(state);
+  const stage = state.stage;
+  switch (stage.kind) {
+    case 'mulligan':
+      return mulliganDecision(state);
+    case 'turn':
+      // 312.2.a: the Turn Player has Priority in their Main Phase, in a Neutral Open State.
+      return stage.phase === 'main'
+        ? { kind: 'Priority', player: stage.turnPlayer, rule: '312.2.a' }
+        : null;
+    case 'ended':
+      return null;
+    default:
+      return assertNever(stage);
+  }
+}
+
+export function outcome(state: GameState): Outcome {
+  return state.winner === null ? { kind: 'ongoing' } : { kind: 'won', winner: state.winner };
 }
 
 export function isLegal(
   state: GameState,
   action: Action,
 ): { ok: true } | { ok: false; reason: IllegalReason } {
-  if (pendingDecision(state) === null) {
+  const decision = pendingDecision(state);
+  if (decision === null) {
     return {
       ok: false,
       reason: { code: 'no-pending-decision', message: 'Nothing can be done right now', rule: null },
@@ -37,8 +61,31 @@ export function isLegal(
       const reason = checkMulligan(state, action);
       return reason === null ? { ok: true } : { ok: false, reason };
     }
+    case 'EndTurn': {
+      if (decision.kind !== 'Priority') {
+        return {
+          ok: false,
+          reason: {
+            code: 'wrong-action',
+            message: `Waiting for a ${decision.kind} decision`,
+            rule: null,
+          },
+        };
+      }
+      if (action.player !== decision.player) {
+        return {
+          ok: false,
+          reason: {
+            code: 'not-your-decision',
+            message: `${decision.player} has Priority`,
+            rule: '312.1',
+          },
+        };
+      }
+      return { ok: true };
+    }
     default:
-      return assertNever(action.type);
+      return assertNever(action);
   }
 }
 
@@ -49,8 +96,11 @@ export function legalActions(state: GameState, player: PlayerId): Action[] {
   switch (decision.kind) {
     case 'Mulligan':
       return mulliganActions(state);
+    case 'Priority':
+      // Discretionary Actions arrive with M2 (play a unit, move); ending the turn is always possible (316.9).
+      return [{ type: 'EndTurn', player }];
     default:
-      return assertNever(decision.kind);
+      return assertNever(decision);
   }
 }
 
@@ -64,7 +114,12 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
   switch (action.type) {
     case 'Mulligan':
       return applyMulligan(state, action);
+    case 'EndTurn': {
+      const draft = draftOf(state);
+      endTurn(draft);
+      return { state: stateOf(state, draft), events: draft.events };
+    }
     default:
-      return assertNever(action.type);
+      return assertNever(action);
   }
 }

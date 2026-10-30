@@ -70,7 +70,7 @@ describe('board()', () => {
 
   it('can go past the mulligans', () => {
     const state = board().firstPlayer('A').afterMulligans().build();
-    expect(state.stage).toEqual({ kind: 'started', turnPlayer: 'A' });
+    expect(state.stage).toEqual({ kind: 'turn', turnPlayer: 'A', turnNumber: 1, phase: 'main' });
   });
 
   it('refuses what the deck cannot provide', () => {

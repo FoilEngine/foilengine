@@ -62,7 +62,7 @@ export class BoardBuilder {
     return this;
   }
 
-  /** Every player keeps their hand: the game is past setup, the First Player's turn begins (118). */
+  /** Every player keeps their hand: the First Player's first turn runs up to their Main Phase (118, 315, 316). */
   afterMulligans(): this {
     this.#mulligans = 'kept';
     return this;
@@ -81,7 +81,7 @@ export class BoardBuilder {
     if (this.#mulligans === 'kept') {
       for (
         let decision = pendingDecision(state);
-        decision !== null;
+        decision?.kind === 'Mulligan';
         decision = pendingDecision(state)
       ) {
         state = apply(state, { type: 'Mulligan', player: decision.player, setAside: [] }).state;

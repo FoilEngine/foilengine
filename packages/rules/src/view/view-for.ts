@@ -63,7 +63,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
 }
 
 function show(object: GameObject): VisibleObject {
-  return { id: object.id, card: object.card, owner: object.owner };
+  return { id: object.id, card: object.card, owner: object.owner, exhausted: object.exhausted };
 }
 
 function objectOf(state: GameState, id: ObjectId): GameObject {

@@ -3,19 +3,16 @@
 // `codex` (docs/02-game-model.md, Setup); here we check what setup needs to run.
 
 import type { CardCategory, CardId, GameSetup, PlayerSetup, SetupProblem } from '@foilengine/types';
+import { DUEL_BATTLEFIELDS_PER_DECK, DUEL_PLAYERS } from '../modes/duel.ts';
 import { RULES_VERSION } from '../version.ts';
 
 /** The modes M1 can set up. */
 export const SUPPORTED_MODES = ['1v1-duel'] as const;
 
-/** 487.1: two players in 1v1. */
-const DUEL_PLAYERS = 2;
 /** 103.3: a Main Deck of at least 40 cards. */
 const MAIN_DECK_MIN = 40;
 /** 103.4.a: 12 runes. */
 const RUNE_DECK_SIZE = 12;
-/** 487.4.a: each player provides three battlefields in 1v1. */
-const DUEL_BATTLEFIELDS = 3;
 /** 133.4: Main Deck cards are permanents (units, gear) and spells. */
 const MAIN_DECK_CATEGORIES: readonly CardCategory[] = ['unit', 'gear', 'spell'];
 
@@ -122,10 +119,10 @@ function validateDeck(setup: GameSetup, { id, deck }: PlayerSetup): SetupProblem
       '103.4.a',
     );
   }
-  if (deck.battlefields.length !== DUEL_BATTLEFIELDS) {
+  if (deck.battlefields.length !== DUEL_BATTLEFIELDS_PER_DECK) {
     problem(
       'wrong-battlefield-count',
-      `1v1 needs ${DUEL_BATTLEFIELDS} battlefields, got ${deck.battlefields.length}`,
+      `1v1 needs ${DUEL_BATTLEFIELDS_PER_DECK} battlefields, got ${deck.battlefields.length}`,
       '487.4.a',
     );
   }
