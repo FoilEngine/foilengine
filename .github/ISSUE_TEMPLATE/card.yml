@@ -1,0 +1,29 @@
+name: Card to implement or fix
+description: A card that is missing, partial or implemented incorrectly
+labels: ["cards"]
+body:
+  - type: input
+    id: card
+    attributes:
+      label: Card
+      description: riftbound_id or exact name.
+      placeholder: "ogn-011-298"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Request type
+      options:
+        - Not implemented
+        - Partially implemented
+        - Incorrect behavior
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What is missing or wrong, with the card text and, if possible, a replay.
+    validations:
+      required: true

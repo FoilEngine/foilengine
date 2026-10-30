@@ -1,0 +1,44 @@
+name: Rule applied incorrectly
+description: The engine does not follow a Core Rules rule
+labels: ["rules", "bug"]
+body:
+  - type: input
+    id: rule
+    attributes:
+      label: Rule number
+      description: The exact number in the Core Rules (e.g. 323.5).
+      placeholder: "323.5"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Core Rules version
+      placeholder: "CR-1.4"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the rule says
+      description: Quote the relevant passage.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What the engine does
+    validations:
+      required: true
+  - type: input
+    id: replay
+    attributes:
+      label: Replay
+      description: Game ID or attached .foilreplay file. Required to reproduce.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Additional sources
+      description: Official FAQ, ruling, discussion.
