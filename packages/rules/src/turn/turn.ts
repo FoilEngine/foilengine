@@ -5,10 +5,19 @@
 import type { PlayerId, TurnPhase } from '@foilengine/types';
 import { drawCards } from '../actions/draw.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
-import { type Draft, emit, objectOf, playerOf, renewObject, updateObject } from '../draft.ts';
+import {
+  controllerOf,
+  type Draft,
+  emit,
+  objectOf,
+  playerOf,
+  renewObject,
+  updateObject,
+} from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { DUEL_SECOND_PLAYER_EXTRA_RUNES } from '../modes/duel.ts';
 import { asResources, emptyPool, isEmptyPool } from '../resources/rune-pool.ts';
+import { score } from '../scoring/score.ts';
 
 /** 315.3.b: the Turn Player channels 2 runes. */
 export const RUNES_PER_CHANNEL = 2;
@@ -37,6 +46,8 @@ function enterPhase(draft: Draft, player: PlayerId, turnNumber: number, phase: T
 export function startTurn(draft: Draft, playerId: PlayerId, turnNumber: number): void {
   const player = playerOf(draft, playerId);
   player.turnsTaken += 1;
+  // 472: a player Scores each battlefield once per turn; a new turn starts a new count.
+  for (const p of draft.players) p.scoredThisTurn = [];
   emit(draft, {
     type: 'TurnStarted',
     rule: '315',
@@ -46,9 +57,15 @@ export function startTurn(draft: Draft, playerId: PlayerId, turnNumber: number):
   });
 
   // 315.1 Awaken: the Turn Player readies all game objects they control (315.1.b, 416.3.a).
-  // Permanents and runes they control are in their base (107.1.c); units at battlefields arrive later.
+  // Permanents and runes they control are in their base (107.1.c), and their units at battlefields.
   enterPhase(draft, playerId, turnNumber, 'awaken');
-  const exhausted = player.zones.base.filter((id) => objectOf(draft, id).exhausted);
+  const controlled = [
+    ...player.zones.base,
+    ...draft.battlefields.flatMap((b) =>
+      b.units.filter((unit) => controllerOf(draft, unit) === playerId),
+    ),
+  ];
+  const exhausted = controlled.filter((id) => objectOf(draft, id).exhausted);
   for (const id of exhausted) updateObject(draft, id, { exhausted: false });
   if (exhausted.length > 0) {
     emit(draft, {
@@ -63,8 +80,12 @@ export function startTurn(draft: Draft, playerId: PlayerId, turnNumber: number):
   if (draft.winner !== null) return;
 
   // 315.2 Beginning: start-of-phase effects (M3), then the scoring step where the
-  // Turn Player holds the battlefields they control (315.2.b, arrives with control).
+  // Turn Player Holds all battlefields they control (315.2.b.2, 471.2).
   enterPhase(draft, playerId, turnNumber, 'beginning');
+  for (const battlefield of draft.battlefields) {
+    if (battlefield.controller === playerId) score(draft, playerId, battlefield.object, 'hold');
+    if (draft.winner !== null) return;
+  }
   cleanup(draft);
   if (draft.winner !== null) return;
 

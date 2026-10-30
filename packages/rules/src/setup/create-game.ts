@@ -43,14 +43,16 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
       points: 0,
       turnsTaken: 0,
       runePool: emptyPool(),
+      scoredThisTurn: [],
       zones: emptyZones(),
     })),
+    battlefields: [],
+    showdown: null,
     turnOrder: [],
     stage: { kind: 'mulligan', pending: [] },
     winner: null,
     events: [],
   };
-  const battlefields: { object: ObjectId }[] = [];
 
   // 110: Setup Process.
   emit(draft, {
@@ -83,7 +85,13 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     draft.rng = pick.rng;
     const card = deck.battlefields[pick.value] as CardId;
     const battlefield = createObject(draft, card, id, null);
-    battlefields.push({ object: battlefield.id });
+    draft.battlefields.push({
+      object: battlefield.id,
+      controller: null,
+      contestedBy: null,
+      showdownStaged: false,
+      units: [],
+    });
     emit(draft, {
       type: 'BattlefieldSelected',
       rule: '487.5',
@@ -151,7 +159,8 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     objects: draft.objects,
     players: [],
     turnOrder,
-    battlefields,
+    battlefields: [],
+    showdown: null,
     stage: draft.stage,
     winner: null,
   };

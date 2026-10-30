@@ -7,10 +7,12 @@ import {
   type GameEvent,
   type GameState,
   type IllegalReason,
+  type ObjectId,
   type PlayerId,
 } from '@foilengine/types';
 import { draftOf, stateOf } from './draft.ts';
 import { IllegalActionError } from './errors.ts';
+import { applyStandardMove, checkStandardMove, movableUnits } from './movement/standard-move.ts';
 import { applyPlayCard, checkPlayCard } from './play/play-card.ts';
 import { autoPayment } from './resources/payment.ts';
 import {
@@ -19,6 +21,7 @@ import {
   mulliganActions,
   mulliganDecision,
 } from './setup/mulligan.ts';
+import { passFocus } from './showdown/showdown.ts';
 import { endTurn } from './turn/turn.ts';
 
 export type Outcome =
@@ -34,10 +37,18 @@ export function pendingDecision(state: GameState): Decision | null {
     case 'mulligan':
       return mulliganDecision(state);
     case 'turn':
+      if (stage.phase !== 'main') return null;
+      // 313.2, 347: in a Showdown, the player with Focus acts, and has Priority.
+      if (state.showdown !== null) {
+        return {
+          kind: 'Focus',
+          player: state.showdown.focus,
+          battlefield: state.showdown.battlefield,
+          rule: '347',
+        };
+      }
       // 312.2.a: the Turn Player has Priority in their Main Phase, in a Neutral Open State.
-      return stage.phase === 'main'
-        ? { kind: 'Priority', player: stage.turnPlayer, rule: '312.2.a' }
-        : null;
+      return { kind: 'Priority', player: stage.turnPlayer, rule: '312.2.a' };
     case 'ended':
       return null;
     default:
@@ -49,9 +60,9 @@ export function outcome(state: GameState): Outcome {
   return state.winner === null ? { kind: 'ongoing' } : { kind: 'won', winner: state.winner };
 }
 
-/** Discretionary Actions need Priority (312.1): the decision must be this player's Priority. */
-function checkPriority(decision: Decision, player: PlayerId): Legality {
-  if (decision.kind !== 'Priority') {
+/** The action must answer the pending decision, and be made by the player it waits for. */
+function checkDecision(decision: Decision, kind: Decision['kind'], player: PlayerId): Legality {
+  if (decision.kind !== kind) {
     return {
       ok: false,
       reason: {
@@ -62,17 +73,17 @@ function checkPriority(decision: Decision, player: PlayerId): Legality {
     };
   }
   if (player !== decision.player) {
+    const rule = kind === 'Focus' ? '313.4' : '312.1';
     return {
       ok: false,
-      reason: {
-        code: 'not-your-decision',
-        message: `${decision.player} has Priority`,
-        rule: '312.1',
-      },
+      reason: { code: 'not-your-decision', message: `${decision.player} must act`, rule },
     };
   }
   return { ok: true };
 }
+
+const fromReason = (reason: IllegalReason | null): Legality =>
+  reason === null ? { ok: true } : { ok: false, reason };
 
 export function isLegal(state: GameState, action: Action): Legality {
   const decision = pendingDecision(state);
@@ -83,18 +94,22 @@ export function isLegal(state: GameState, action: Action): Legality {
     };
   }
   switch (action.type) {
-    case 'Mulligan': {
-      const reason = checkMulligan(state, action);
-      return reason === null ? { ok: true } : { ok: false, reason };
-    }
+    case 'Mulligan':
+      return fromReason(checkMulligan(state, action));
     case 'EndTurn':
-      return checkPriority(decision, action.player);
+      return checkDecision(decision, 'Priority', action.player);
     case 'PlayCard': {
-      const priority = checkPriority(decision, action.player);
-      if (!priority.ok) return priority;
-      const reason = checkPlayCard(state, action);
-      return reason === null ? { ok: true } : { ok: false, reason };
+      const turn = checkDecision(decision, 'Priority', action.player);
+      return turn.ok ? fromReason(checkPlayCard(state, action)) : turn;
     }
+    case 'StandardMove': {
+      // 144.1: during the Main Phase, not in a Closed State, nor during a Showdown or Combat:
+      // the Priority decision exists only in a Neutral Open Main Phase.
+      const turn = checkDecision(decision, 'Priority', action.player);
+      return turn.ok ? fromReason(checkStandardMove(state, action)) : turn;
+    }
+    case 'PassFocus':
+      return checkDecision(decision, 'Focus', action.player);
     default:
       return assertNever(action);
   }
@@ -108,7 +123,14 @@ export function legalActions(state: GameState, player: PlayerId): Action[] {
     case 'Mulligan':
       return mulliganActions(state);
     case 'Priority':
-      return [...playableUnits(state, player), { type: 'EndTurn', player }];
+      return [
+        ...playableUnits(state, player),
+        ...standardMoves(state, player),
+        { type: 'EndTurn', player },
+      ];
+    case 'Focus':
+      // M2 has no spell or ability to play during a Showdown: the player can only pass (347.2).
+      return [{ type: 'PassFocus', player }];
     default:
       return assertNever(decision);
   }
@@ -126,9 +148,13 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
       return applyMulligan(state, action);
     case 'PlayCard':
       return applyPlayCard(state, action);
-    case 'EndTurn': {
+    case 'StandardMove':
+      return applyStandardMove(state, action);
+    case 'EndTurn':
+    case 'PassFocus': {
       const draft = draftOf(state);
-      endTurn(draft);
+      if (action.type === 'EndTurn') endTurn(draft);
+      else passFocus(draft);
       return { state: stateOf(state, draft), events: draft.events };
     }
     default:
@@ -137,13 +163,19 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
 }
 
 /**
- * One PlayCard per unit the player can afford, paid with `autoPayment` and played to their base.
+ * One PlayCard per unit the player can afford and each valid location, paid with `autoPayment`.
  * Other payments of the same card are legal too (`isLegal` accepts any valid payment);
- * listing them all would explode, so legalActions offers one per card.
+ * listing them all would explode, so legalActions offers one per card and location.
  */
 function playableUnits(state: GameState, player: PlayerId): Action[] {
   const zones = state.players.find((p) => p.id === player)?.zones;
   if (zones === undefined) return [];
+  const locations = [
+    { kind: 'base' as const },
+    ...state.battlefields
+      .filter((b) => b.controller === player)
+      .map((b) => ({ kind: 'battlefield' as const, battlefield: b.object })),
+  ];
   const actions: Action[] = [];
   for (const card of [...zones.hand, ...zones.championZone]) {
     const object = state.objects[card];
@@ -151,8 +183,38 @@ function playableUnits(state: GameState, player: PlayerId): Action[] {
     if (definition?.category !== 'unit' || definition.cost === undefined) continue;
     const payment = autoPayment(state, player, definition.cost);
     if (payment === null) continue;
-    const action: Action = { type: 'PlayCard', player, card, location: { kind: 'base' }, payment };
-    if (checkPlayCard(state, action) === null) actions.push(action);
+    for (const location of locations) {
+      const action: Action = { type: 'PlayCard', player, card, location, payment };
+      if (checkPlayCard(state, action) === null) actions.push(action);
+    }
   }
   return actions;
+}
+
+/**
+ * Standard Moves offered by legalActions: each ready unit alone, and all of them together, to each
+ * destination they can reach. Any other legal group of units is accepted by `isLegal` too.
+ */
+function standardMoves(state: GameState, player: PlayerId): Action[] {
+  const { base, battlefields } = movableUnits(state, player);
+  const groups = (units: ObjectId[]) =>
+    units.length > 1 ? [...units.map((u) => [u]), units] : units.map((u) => [u]);
+  const candidates: Action[] = [
+    ...state.battlefields.flatMap((b) =>
+      groups(base).map(
+        (units): Action => ({
+          type: 'StandardMove',
+          player,
+          units,
+          destination: { kind: 'battlefield', battlefield: b.object },
+        }),
+      ),
+    ),
+    ...groups(battlefields).map(
+      (units): Action => ({ type: 'StandardMove', player, units, destination: { kind: 'base' } }),
+    ),
+  ];
+  return candidates.filter(
+    (action) => action.type === 'StandardMove' && checkStandardMove(state, action) === null,
+  );
 }

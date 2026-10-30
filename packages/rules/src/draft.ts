@@ -12,6 +12,7 @@ import type {
   PlayerState,
   PlayerZoneId,
   RngState,
+  ShowdownState,
 } from '@foilengine/types';
 import { EngineInvariantError } from './errors.ts';
 import { copyPool } from './resources/rune-pool.ts';
@@ -28,7 +29,16 @@ export type DraftPlayer = {
   points: number;
   turnsTaken: number;
   runePool: ReturnType<typeof copyPool>;
+  scoredThisTurn: ObjectId[];
   zones: MutableZones;
+};
+
+export type DraftBattlefield = {
+  object: ObjectId;
+  controller: PlayerId | null;
+  contestedBy: PlayerId | null;
+  showdownStaged: boolean;
+  units: ObjectId[];
 };
 
 export type Draft = {
@@ -37,6 +47,8 @@ export type Draft = {
   eventSeq: number;
   objects: Record<ObjectId, GameObject>;
   players: DraftPlayer[];
+  battlefields: DraftBattlefield[];
+  showdown: ShowdownState | null;
   turnOrder: readonly PlayerId[];
   stage: GameStage;
   winner: PlayerId | null;
@@ -54,6 +66,7 @@ export function draftOf(state: GameState): Draft {
       points: player.points,
       turnsTaken: player.turnsTaken,
       runePool: copyPool(player.runePool),
+      scoredThisTurn: [...player.scoredThisTurn],
       zones: {
         base: [...player.zones.base],
         legendZone: [...player.zones.legendZone],
@@ -65,6 +78,11 @@ export function draftOf(state: GameState): Draft {
         banishment: [...player.zones.banishment],
       },
     })),
+    battlefields: state.battlefields.map((battlefield) => ({
+      ...battlefield,
+      units: [...battlefield.units],
+    })),
+    showdown: state.showdown,
     turnOrder: state.turnOrder,
     stage: state.stage,
     winner: state.winner,
@@ -86,9 +104,12 @@ export function stateOf(base: GameState, draft: Draft): GameState {
         points: player.points,
         turnsTaken: player.turnsTaken,
         runePool: player.runePool,
+        scoredThisTurn: player.scoredThisTurn,
         zones: player.zones,
       }),
     ),
+    battlefields: draft.battlefields.map((battlefield) => ({ ...battlefield })),
+    showdown: draft.showdown,
     turnOrder: draft.turnOrder,
     stage: draft.stage,
     winner: draft.winner,
@@ -164,4 +185,38 @@ export function playerOf(draft: Draft, id: PlayerId): DraftPlayer {
 
 export function opponentsOf(draft: Draft, id: PlayerId): DraftPlayer[] {
   return draft.players.filter((p) => p.id !== id);
+}
+
+export function battlefieldOf(draft: Draft, id: ObjectId): DraftBattlefield {
+  const battlefield = draft.battlefields.find((b) => b.object === id);
+  if (battlefield === undefined) throw new EngineInvariantError(`Unknown battlefield ${id}`);
+  return battlefield;
+}
+
+/**
+ * Who controls a unit. M2 has no effect that changes control, so a unit is controlled by its
+ * owner; control changes (190.3.a.2) arrive with M3.
+ */
+export function controllerOf(draft: Draft, unit: ObjectId): PlayerId {
+  return objectOf(draft, unit).owner;
+}
+
+/** The players with units at a battlefield. */
+export function playersAt(draft: Draft, battlefield: DraftBattlefield): Set<PlayerId> {
+  return new Set(battlefield.units.map((unit) => controllerOf(draft, unit)));
+}
+
+/** Where a unit is (146.1): a player's base, a battlefield, or neither. */
+export function locationOf(
+  draft: Draft,
+  unit: ObjectId,
+):
+  | { kind: 'base'; player: PlayerId }
+  | { kind: 'battlefield'; battlefield: DraftBattlefield }
+  | null {
+  for (const player of draft.players) {
+    if (player.zones.base.includes(unit)) return { kind: 'base', player: player.id };
+  }
+  const battlefield = draft.battlefields.find((b) => b.units.includes(unit));
+  return battlefield === undefined ? null : { kind: 'battlefield', battlefield };
 }
