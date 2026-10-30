@@ -1,24 +1,24 @@
 # CLAUDE.md — packages/mind
 
-L'IA : politiques, déterminisation, évaluation, explications.
+The AI: policies, determinization, evaluation, explanations.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `types`, `rules`, `cards`.
-- **Interdites** : accéder à l'état complet : une politique ne reçoit que `viewFor`.
+- **Allowed**: `types`, `rules`, `cards`.
+- **Forbidden**: accessing the full state: a policy only receives `viewFor`.
 
-## API publique
+## Public API
 
-L'interface `Policy` et les politiques `random`, `greedy`, `mcts`.
+The `Policy` interface and the `random`, `greedy`, `mcts` policies.
 
-## Points d'attention
+## Points of attention
 
-- Chaque décision est reproductible (RNG à graine fourni).
-- Respecter le budget de temps ou de simulations.
-- Toujours renvoyer une explication quand la politique le permet.
+- Every decision is reproducible (seeded RNG provided).
+- Respect the time or simulation budget.
+- Always return an explanation when the policy allows it.
 
-## À lire
+## Read
 
 - `docs/09-ai.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

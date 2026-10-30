@@ -1,33 +1,33 @@
 # CLAUDE.md — packages/rules
 
-Le moteur de règles : l'arbitre. Décide de la légalité, résout tout, détecte la victoire.
+The rules engine: the referee. Decides legality, resolves everything, detects victory.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `@foilengine/types` uniquement.
-- **Interdites** : réseau, fichiers, horloge (`Date`, `performance`), `Math.random`, variables globales mutables, `console`, toute bibliothèque d'entrée-sortie.
+- **Allowed**: `@foilengine/types` only.
+- **Forbidden**: network, files, clock (`Date`, `performance`), `Math.random`, mutable global variables, `console`, any I/O library.
 
-## API publique
+## Public API
 
-`createGame`, `legalActions`, `isLegal`, `apply`, `outcome`, `viewFor`, `pendingDecision`, `characteristics` (point d'entrée `@foilengine/rules`), et l'API d'effets utilisée par `cards` (point d'entrée `@foilengine/rules/effects`, seul accessible à `cards`).
+`createGame`, `legalActions`, `isLegal`, `apply`, `outcome`, `viewFor`, `pendingDecision`, `characteristics` (entry point `@foilengine/rules`), and the effect API used by `cards` (entry point `@foilengine/rules/effects`, the only one `cards` may reach).
 
-## Points d'attention
+## Points of attention
 
-- Toujours relire le texte exact de la règle dans `docs/rules/` avant de l'implémenter, et citer son numéro dans le test et dans un commentaire d'en-tête.
-- Les scénarios de règles vivent dans `packages/spec/test/rules/<section>/`, pas ici : `rules` ne dépend jamais de `testkit`. Les tests unitaires (RNG, etc.) restent dans `packages/rules/test/`.
-- La pureté est vérifiée par Biome (`biome.json`) et `pnpm check:deps` : pas de `Date`, timers, `console`, `globalThis`, `Math.random`, module Node, ni d'import autre que `@foilengine/types`.
-- Règle 124 : changer de zone crée un nouvel objet (nouvel `ObjectId`).
-- Toute modification d'état passe par une action de jeu atomique (`actions/`), pour que remplacements, déclencheurs et cleanups s'appliquent.
-- La boucle de la chaîne (HOT FEPR) et le cleanup à point fixe sont bornés : dépasser la borne lève `EngineInvariantError`.
-- Les caractéristiques ne sont jamais stockées calculées : `characteristics()` applique les couches à la lecture.
-- Un choix du joueur est une `Decision`, jamais un callback.
-- En cas de doute sur une règle : `docs/rules/questions.md`, pas de supposition.
+- Always re-read the exact text of the rule in `docs/rules/` before implementing it, and quote its number in the test and in a header comment. The PDF wins over our docs.
+- Rule scenarios live in `packages/spec/test/rules/<section>/`, not here: `rules` never depends on `testkit`. Unit tests (RNG, etc.) stay in `packages/rules/test/`.
+- Purity is checked by Biome (`biome.json`) and `pnpm check:deps`: no `Date`, timers, `console`, `globalThis`, `Math.random`, Node module, nor any import other than `@foilengine/types`.
+- Rule 124: changing zones creates a new object (new `ObjectId`).
+- Every state change goes through an atomic game action (`actions/`), so that replacements, triggers and cleanups apply.
+- The chain loop (HOT FEPR) and the fixed-point cleanup are bounded: exceeding the bound throws `EngineInvariantError`.
+- Characteristics are never stored computed: `characteristics()` applies the layers on read.
+- A player's choice is a `Decision`, never a callback.
+- When in doubt about a rule: `docs/rules/questions.md`, no assumption.
 
-## À lire
+## Read
 
 - `docs/02-game-model.md`
 - `docs/03-rules-engine.md`
 - `docs/06-testing.md`
 - `docs/rules/`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

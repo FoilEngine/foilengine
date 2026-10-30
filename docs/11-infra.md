@@ -1,32 +1,32 @@
 # 11 — Infrastructure
 
-## Deux repos
+## Two repos
 
-- **`foilengine/infra/`** (public) : tout ce qu'il faut pour faire tourner le projet **en local** : Docker Compose des dépendances (Postgres, Valkey) et de la stack d'observabilité, configuration de Prometheus, des alertes, des tableaux de bord Grafana. Aucun secret.
-- **`FoilEngine/infra`** (privé) : la **production** : configuration des serveurs, déploiement, secrets chiffrés, sauvegardes, runbooks. Voir le README de ce repo.
+- **`foilengine/infra/`** (public): everything needed to run the project **locally**: Docker Compose for the dependencies (Postgres, Valkey) and the observability stack, Prometheus configuration, alerts, Grafana dashboards. No secrets.
+- **`FoilEngine/infra`** (private): **production**: server configuration, deployment, encrypted secrets, backups, runbooks. See that repo's README.
 
-## Environnements
+## Environments
 
-| Environnement | Où | Données |
+| Environment | Where | Data |
 | --- | --- | --- |
-| `local` | Machine du développeur, Docker Compose | Jetables |
-| `ci` | GitHub Actions, conteneurs éphémères | Jetables |
-| `staging` | Même machine que la prod, autre stack Compose | Copie anonymisée ou jetable |
-| `prod` | Un VPS | Réelles, sauvegardées |
+| `local` | Developer's machine, Docker Compose | Disposable |
+| `ci` | GitHub Actions, ephemeral containers | Disposable |
+| `staging` | Same machine as prod, another Compose stack | Anonymized copy or disposable |
+| `prod` | One VPS | Real, backed up |
 
-## Proposition pour la production (ADR 0013)
+## Production proposal (ADR 0013)
 
-Le projet doit rester gratuit et peu coûteux à faire tourner :
+The project must stay free and cheap to run:
 
-- **Un VPS** (de l'ordre de 4 vCPU et 8 à 16 Go de RAM) chez un hébergeur européen.
-- **Docker Compose**, avec **Caddy** en reverse proxy (HTTPS automatique).
-- Services : `server`, `worker` (×N), `postgres`, `valkey`, et la stack d'observabilité (Prometheus, Alertmanager, Grafana, Loki, Tempo, GlitchTip, Uptime Kuma). Uptime Kuma peut tourner ailleurs pour vérifier vraiment depuis l'extérieur.
-- **Images** construites par la CI et publiées sur GitHub Container Registry (gratuit pour les repos publics), étiquetées par commit.
-- **Déploiement** : une GitHub Action du repo privé `infra` se connecte au serveur et met à jour la stack sur une étiquette d'image. Retour arrière = redéployer l'étiquette précédente.
-- **Migrations de base** jouées par un conteneur dédié avant le démarrage du serveur.
-- **Sauvegardes** : dump Postgres quotidien chiffré, envoyé vers un stockage objet externe, avec un test de restauration mensuel (runbook).
-- **Secrets** : chiffrés dans le repo privé (sops + age), jamais en clair, jamais dans les images.
+- **One VPS** (around 4 vCPU and 8 to 16 GB of RAM) at a European host.
+- **Docker Compose**, with **Caddy** as the reverse proxy (automatic HTTPS).
+- Services: `server`, `worker` (×N), `postgres`, `valkey`, and the observability stack (Prometheus, Alertmanager, Grafana, Loki, Tempo, GlitchTip, Uptime Kuma). Uptime Kuma can run elsewhere to really check from the outside.
+- **Images** built by the CI and published on GitHub Container Registry (free for public repos), tagged by commit.
+- **Deployment**: a GitHub Action in the private `infra` repo connects to the server and updates the stack to an image tag. Rollback = redeploy the previous tag.
+- **Database migrations** run by a dedicated container before the server starts.
+- **Backups**: daily encrypted Postgres dump, sent to external object storage, with a monthly restore test (runbook).
+- **Secrets**: encrypted in the private repo (sops + age), never in clear, never in images.
 
-## Configuration de l'application
+## Application configuration
 
-Toute la configuration passe par des variables d'environnement, validées au démarrage par un schéma Zod (le serveur refuse de démarrer si une variable manque ou est invalide). La liste complète est dans `.env.example`, tenue à jour.
+All configuration goes through environment variables, validated at startup by a Zod schema (the server refuses to start if a variable is missing or invalid). The full list is in `.env.example`, kept up to date.

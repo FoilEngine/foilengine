@@ -1,6 +1,6 @@
-# docs/rules — Les règles officielles
+# docs/rules — The official rules
 
-Ce dossier contient les documents de règles officiels de Riftbound. **Ils font foi** pour tout le moteur.
+This folder holds Riftbound's official rules documents. **They are authoritative** for the whole engine.
 
 ## Source hierarchy
 
@@ -18,35 +18,35 @@ Our docs are only a reading map. When they conflict with the PDF, the PDF is rig
 
 A Core Rules version is identified by `CR-<last update date>`, taken from the "Last Updated" line of the PDF. The current version is **`CR-2026-10-09`**. Riot's file names use release labels (`RUP5`); they are kept here as aliases only. The engine's `rulesVersion`, the rule index (`index/CR-2026-10-09.json`) and the question entries use the `CR-` identifier.
 
-## Fichiers attendus
+## Expected files
 
-À télécharger depuis le Rules Hub officiel (playriftbound.com, section Rules Hub) et à déposer ici, en gardant la version dans le nom :
+Downloaded from the official Rules Hub (playriftbound.com, Rules Hub section) and placed here, keeping the version in the name:
 
-| Fichier | Contenu |
+| File | Content |
 | --- | --- |
-| `core-rules-2026-10-09.pdf` | Core Rules en vigueur, mises à jour le 2026-10-09. Identifiant : **`CR-2026-10-09`** (alias Riot : `RUP5`, d'après le nom du fichier officiel `RiftboundCoreRulesRUP5_En_EN.pdf`) |
-| `tournament-rules-2026-08-27.pdf` | Tournament Rules en vigueur, mises à jour le 2026-08-27 (construction de deck en tournoi, formats, sideboard). Fichier officiel : `RiftboundTournamentRulesRUP5_en_EN.pdf` |
-| `faq/*.pdf` ou `faq/*.md` | FAQ officielles par set |
-| `errata/*.md` | Errata officiels, recopiés avec leur source |
+| `core-rules-2026-10-09.pdf` | Core Rules in force, updated 2026-10-09. Identifier: **`CR-2026-10-09`** (Riot alias: `RUP5`, from the official file name `RiftboundCoreRulesRUP5_En_EN.pdf`) |
+| `tournament-rules-2026-08-27.pdf` | Tournament Rules in force, updated 2026-08-27 (tournament deck construction, formats, sideboard). Official file: `RiftboundTournamentRulesRUP5_en_EN.pdf` |
+| `faq/*.pdf` or `faq/*.md` | Official FAQ per set |
+| `errata/*.md` | Official errata, copied with their source |
 
-Les versions précédentes restent dans `archive/` : elles servent à rejouer les anciens replays et à comparer les textes.
+Previous versions stay in `archive/`: they are used to replay old replays and to compare texts.
 
 ## Index
 
-`foil rules index` lit le PDF et produit `index/<version>.json` : une entrée par règle avec son numéro, son titre, son texte et une empreinte du texte. C'est la base du rapport de couverture des règles (voir `docs/06-testing.md`).
+`foil rules index` reads the PDF and produces `index/<version>.json`: one entry per rule with its number, its title, its text and a fingerprint of the text. It is the basis of the rule coverage report (see `docs/06-testing.md`).
 
-## Nouvelle version des Core Rules
+## New version of the Core Rules
 
-Utiliser `/rules-update <version>` :
-1. déposer le nouveau PDF et archiver l'ancien ;
-2. réindexer ;
-3. comparer les deux index : règles ajoutées, supprimées, renumérotées, au texte modifié ;
-4. les tests des règles modifiées passent en `stale` ;
-5. produire un résumé des changements dans `changes/<version>.md` ;
-6. relire et mettre à jour chaque test `stale`, puis passer `rulesVersion` du moteur à la nouvelle version.
+Use `/rules-update <version>`:
+1. add the new PDF and archive the old one;
+2. re-index;
+3. compare the two indexes: rules added, removed, renumbered, with changed text;
+4. the tests of the changed rules become `stale`;
+5. write a summary of the changes in `changes/<version>.md`;
+6. review and update every `stale` test, then move the engine's `rulesVersion` to the new version.
 
-Riot publie aussi des notes de patch des règles : les citer dans `changes/<version>.md`.
+Riot also publishes rules patch notes: quote them in `changes/<version>.md`.
 
-## Questions ouvertes
+## Open questions
 
-Toute règle ambiguë, contradictoire ou absente va dans `questions.md`. On ne devine jamais.
+Every ambiguous, contradictory or missing rule goes into `questions.md`. We never guess.

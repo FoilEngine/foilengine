@@ -66,6 +66,10 @@ Card text (with official errata) > Core Rules PDF > official FAQ and rulings > T
 
 Scripts named in the docs but belonging to later milestones (`test:rules`, `fuzz`, `infra:*`, `dev:obs`, `health`) are not created as stubs. `CLAUDE.md` lists the milestone each one arrives in.
 
+### 13. All documentation in English
+
+Added after M0 on the maintainer's request. All documentation is in English, including the docs that were first written in French: `docs/`, ADRs (files renamed with English slugs), `CLAUDE.md` files, Claude Code commands, READMEs. This replaces the earlier rule that existing French docs were not to be translated. ADR statuses are now Proposed, Accepted, To decide, Superseded by NNNN.
+
 ## Consequences
 
 - `pnpm install && pnpm lint && pnpm typecheck && pnpm test` is the M0 gate, locally and in CI.

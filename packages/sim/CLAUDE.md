@@ -1,23 +1,23 @@
 # CLAUDE.md — packages/sim
 
-Simulations en masse, statistiques, point faible.
+Mass simulations, statistics, weak spot.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `rules`, `cards`, `mind`, `log`.
-- **Interdites** : exécuter des jobs hors des workers en production.
+- **Allowed**: `types`, `rules`, `cards`, `mind`, `log`.
+- **Forbidden**: running jobs outside the workers in production.
 
-## API publique
+## Public API
 
-La définition d'un job, son exécution, les statistiques (Wilson), le point faible.
+The job definition, its execution, the statistics (Wilson), the weak spot.
 
-## Points d'attention
+## Points of attention
 
-- Une simulation est reproductible (même graine, mêmes résultats).
-- Exclure ou signaler les parties avec des cartes non implémentées ou du mode manuel.
+- A simulation is reproducible (same seed, same results).
+- Exclude or flag games with unimplemented cards or manual mode.
 
-## À lire
+## Read
 
 - `docs/09-ai.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

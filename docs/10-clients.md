@@ -2,38 +2,38 @@
 
 ## Design system
 
-La source de vérité de l'identité est le repo **`FoilEngine/brand`** : logos, tokens, sons, motion, et les règles d'usage (`04-design-system/`). `@foilengine/ui` en est l'implémentation :
+The source of truth for the identity is the **`FoilEngine/brand`** repo: logos, tokens, sounds, motion, and the usage rules (`04-design-system/`). `@foilengine/ui` is its implementation:
 
-- `tokens.css` et les tokens TypeScript générés depuis `brand/04-design-system/tokens.json` (script de synchronisation, jamais d'édition à la main) ;
-- les composants : Button, FoilSurface, GameCard, WeakPoint, puis les composants de table ;
-- le **moteur de son** (`brand/05-sons/foil-sound.js`, porté en TypeScript) et son catalogue de sons ;
-- les primitives de motion : courbes, durées, ressort amorti, gestes (fente, parade, riposte, touche, retour en garde, reflet foil, point faible).
+- `tokens.css` and the TypeScript tokens generated from `brand/04-design-system/tokens.json` (sync script, never edited by hand);
+- the components: Button, FoilSurface, GameCard, WeakPoint, then the table components;
+- the **sound engine** (`brand/05-sons/foil-sound.js`, ported to TypeScript) and its sound catalog;
+- the motion primitives: curves, durations, damped spring, gestures (lunge, parry, riposte, touch, return to guard, foil sheen, weak spot).
 
-Règles clés à respecter (détail dans `brand`) :
-- Thème sombre par défaut dans le simulateur, clair sur la vitrine.
-- Bodoni Moda uniquement pour le wordmark et les titres de la vitrine ; Inter Tight pour l'interface ; JetBrains Mono pour les données du moteur.
-- Le foil ne sert qu'au logo et aux moments où l'IA agit.
-- Les cartes officielles s'affichent telles quelles (recto et dos). Le design system ne touche qu'à ce qui les entoure.
-- `prefers-reduced-motion` respecté partout ; le son a son propre interrupteur et trois niveaux (Complet, Essentiel, Coupé).
+Key rules to follow (details in `brand`):
+- Dark theme by default in the simulator, light on the website.
+- Bodoni Moda only for the wordmark and the website headings; Inter Tight for the interface; JetBrains Mono for engine data.
+- Foil is only used for the logo and for the moments when the AI acts.
+- Official cards are displayed as they are (front and back). The design system only touches what surrounds them.
+- `prefers-reduced-motion` respected everywhere; sound has its own switch and three levels (Full, Essential, Off).
 
-## `apps/play` : le client de jeu
+## `apps/play`: the game client
 
-- **Stack proposée** (ADR 0012) : React, Vite, TypeScript, un store léger (Zustand), rendu de la table en DOM et CSS (et canvas seulement si les performances l'exigent).
-- **Piloté par les événements** : la table reçoit `game.events`, et chaque événement déclenche une animation et un son définis dans le design system. L'état affiché est celui du dernier `game.snapshot` plus les événements appliqués par le client à une copie de la vue (projection), jamais une règle recalculée.
-- Écrans : accueil, salon et matchmaking, import et gestion de decks, bibliothèque de cartes, deckbuilder, sealed (ouverture de boosters, construction depuis le pool), table de jeu, replays, résultats d'analyse et de simulation, paramètres (son, motion, langue).
-- La table : deux plateaux, battlefields, pool de runes, main, chaîne, journal en notation, contrôles de showdown (qui a le focus, passer), rewind et forward, paiement automatique, emotes.
-- **Tactile** dès le départ (Rift Atlas le fait) : appui long pour les actions d'une carte.
-- **Langues** : anglais d'abord, puis français et coréen (fichiers de traduction, aucune chaîne en dur).
-- Mode hors ligne contre l'IA : `rules`, `cards` et `mind` tournent dans un Web Worker.
+- **Proposed stack** (ADR 0012): React, Vite, TypeScript, a light store (Zustand), table rendered in DOM and CSS (and canvas only if performance requires it).
+- **Event-driven**: the table receives `game.events`, and each event triggers an animation and a sound defined in the design system. The displayed state is the last `game.snapshot` plus the events applied by the client to a copy of the view (projection), never a recomputed rule.
+- Screens: home, room and matchmaking, deck import and management, card library, deckbuilder, sealed (booster opening, building from the pool), game table, replays, analysis and simulation results, settings (sound, motion, language).
+- The table: two boards, battlefields, rune pool, hand, chain, log in notation, showdown controls (who has focus, pass), rewind and forward, automatic payment, emotes.
+- **Touch** from the start (Rift Atlas does it): long press for a card's actions.
+- **Languages**: English first, then French and Korean (translation files, no hard-coded strings).
+- Offline mode against the AI: `rules`, `cards` and `mind` run in a Web Worker, from `src/offline/`.
 
-## `apps/site` : la vitrine
+## `apps/site`: the website
 
-Site statique (proposition : Astro). Pages : accueil (logo animé, ce que fait Foil, captures), fonctionnalités, statut du projet (couverture des cartes et des règles, publiée depuis les rapports), mentions légales avec la mention de Riot, lien vers la page de statut (Uptime Kuma). Son coupé par défaut.
+Static site (proposal: Astro). Pages: home (animated logo, what Foil does, screenshots), features, project status (card and rule coverage, published from the reports), legal notice with Riot's notice, link to the status page (Uptime Kuma). Sound off by default.
 
 ## `apps/console`
 
-Voir `07-observability.md`. Même stack que `play`, réservée aux administrateurs.
+See `07-observability.md`. Same stack as `play`, for administrators only.
 
-## Accessibilité
+## Accessibility
 
-Contrastes vérifiés sur les deux thèmes (déjà calculés dans `brand`), navigation complète au clavier sur la table, libellés lisibles par les lecteurs d'écran pour les cartes et les zones, aucune information portée par la seule couleur (rareté, point faible, victoire et défaite).
+Contrasts checked on both themes (already computed in `brand`), full keyboard navigation on the table, labels readable by screen readers for cards and zones, no information carried by color alone (rarity, weak spot, win and loss).

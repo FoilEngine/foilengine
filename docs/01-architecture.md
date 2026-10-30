@@ -1,10 +1,10 @@
 # 01 — Architecture
 
-## Vue d'ensemble
+## Overview
 
 ```
                  ┌──────────────────────── apps ─────────────────────────┐
-                 │ play (client)   site (vitrine)   console (admin)   cli │
+                 │ play (client)   site (website)  console (admin)   cli │
                  └───────┬───────────────────────────────┬───────────┬───┘
                          │ WebSocket + HTTP (protocol)   │ HTTP      │
                  ┌───────▼───────────────────────────────▼───────────▼───┐
@@ -14,56 +14,56 @@
                     │             │             │             │
               ┌─────▼────┐  ┌─────▼────┐  ┌─────▼────┐  ┌─────▼─────┐
               │  rules   │  │   log    │  │   mind   │  │ db / queue│
-              │ (arbitre)│  │ (journal)│  │   (IA)   │  │ (Postgres,│
+              │(referee) │  │ (journal)│  │   (AI)   │  │ (Postgres,│
               └─────┬────┘  └──────────┘  └─────┬────┘  │  Valkey)  │
                     │                           │       └───────────┘
               ┌─────▼────┐                ┌─────▼────┐
               │  cards   │                │   sim    │  ← workers
-              │ (effets) │                │ (batch)  │
+              │ (effects)│                │ (batch)  │
               └─────┬────┘                └──────────┘
               ┌─────▼────┐
-              │  types   │   codex (données) → produit les définitions de cartes
+              │  types   │   codex (data) → produces the card definitions
               └──────────┘
 ```
 
-Tout est en TypeScript strict dans un monorepo pnpm + Turborepo.
+Everything is strict TypeScript in a pnpm + Turborepo monorepo.
 
 ## Packages
 
-| Package | Rôle | Dépend de |
+| Package | Role | Depends on |
 | --- | --- | --- |
-| `@foilengine/types` | Types partagés : identifiants, définitions de cartes, état, actions, événements, vues. Aucune logique. | rien |
-| `@foilengine/rules` | Le moteur de règles. API : `createGame`, `legalActions`, `apply`, `outcome`, `viewFor`. Pur et déterministe. | `types` |
-| `@foilengine/cards` | Le DSL des effets et l'implémentation de chaque carte, avec son statut. | `types`, `rules` (API d'effets uniquement, via `@foilengine/rules/effects`) |
-| `@foilengine/codex` | Import des données de cartes (Riftcodex, catalogue TCGplayer), normalisation, snapshots versionnés. | `types` |
-| `@foilengine/protocol` | Messages client-serveur, schémas Zod, versionnés. | `types` |
-| `@foilengine/log` | Format du journal d'événements, sérialisation, replays, notation, rewind. | `types`, `rules` |
-| `@foilengine/mind` | L'IA : politiques (aléatoire, heuristique, MCTS), déterminisation, évaluation. | `types`, `rules`, `cards` |
-| `@foilengine/sim` | Simulations en masse, statistiques, intervalles de confiance, point faible. | `rules`, `cards`, `mind`, `log` |
-| `@foilengine/testkit` | Le harnais de test (`board()`, `scenario()`, cartes de test), fuzzer, invariants, couverture des règles et des cartes, replays de référence. Jamais importé par du code de production. | `types`, `rules`, `cards`, `log` |
-| `@foilengine/spec` | Les scénarios de règles et de cartes (tests uniquement). Rien ne dépend de lui. | `types`, `rules`, `cards`, `testkit` |
-| `@foilengine/telemetry` | Logs, métriques, traces, healthchecks : primitives partagées. | rien de métier |
-| `@foilengine/db` | Schéma de base de données, migrations, accès. | `types` |
-| `@foilengine/ui` | Design system : tokens, composants, moteur de son, motion (source : repo `brand`). | rien de métier |
+| `@foilengine/types` | Shared types: identifiers, card definitions, state, actions, events, views. No logic. | nothing |
+| `@foilengine/rules` | The rules engine. API: `createGame`, `legalActions`, `apply`, `outcome`, `viewFor`. Pure and deterministic. | `types` |
+| `@foilengine/cards` | The effect DSL and the implementation of every card, with its status. | `types`, `rules` (effect API only, through `@foilengine/rules/effects`) |
+| `@foilengine/codex` | Card data import (Riftcodex, TCGplayer catalog), normalization, versioned snapshots. | `types` |
+| `@foilengine/protocol` | Client-server messages, Zod schemas, versioned. | `types` |
+| `@foilengine/log` | Event log format, serialization, replays, notation, rewind. | `types`, `rules` |
+| `@foilengine/mind` | The AI: policies (random, heuristic, MCTS), determinization, evaluation. | `types`, `rules`, `cards` |
+| `@foilengine/sim` | Mass simulations, statistics, confidence intervals, weak spot. | `types`, `rules`, `cards`, `mind`, `log` |
+| `@foilengine/testkit` | The test harness (`board()`, `scenario()`, test cards), fuzzer, invariants, rule and card coverage, reference replays. Never imported by production code. | `types`, `rules`, `cards`, `log` |
+| `@foilengine/spec` | Rule and card scenarios (tests only). Nothing depends on it. | `types`, `rules`, `cards`, `testkit` |
+| `@foilengine/telemetry` | Logs, metrics, traces, healthchecks: shared primitives. | nothing domain-related |
+| `@foilengine/db` | Database schema, migrations, access. | `types` |
+| `@foilengine/ui` | Design system: tokens, components, sound engine, motion (source: the `brand` repo). | nothing domain-related |
 
-| App | Rôle |
+| App | Role |
 | --- | --- |
-| `apps/server` | Serveur de parties : salons, matchmaking, authentification, API, WebSocket, endpoints de santé et de métriques. Seul détenteur de l'état complet. |
-| `apps/play` | Client de jeu : table, bibliothèque, deckbuilder, sealed, replays. |
-| `apps/site` | Site vitrine, statique. |
-| `apps/console` | Console d'administration et de monitoring (voir `07-observability.md`). |
-| `apps/cli` | Outil en ligne de commande `foil` : santé, replays, scénarios, couverture, synchronisation des données. |
+| `apps/server` | Game server: rooms, matchmaking, authentication, API, WebSocket, health and metrics endpoints. The only holder of the full state. |
+| `apps/play` | Game client: table, library, deckbuilder, sealed, replays. |
+| `apps/site` | Static website. |
+| `apps/console` | Administration and monitoring console (see `07-observability.md`). |
+| `apps/cli` | The `foil` command-line tool: health, replays, scenarios, coverage, data sync. |
 
-## Règles de dépendance
+## Dependency rules
 
-- `types` ne dépend de rien.
-- `rules` ne dépend que de `types`. Aucune bibliothèque d'entrée-sortie, aucun accès à l'horloge, aucun `Math.random`.
-- `cards` ne dépend que de `types` et de l'API d'effets exposée par `rules` au point d'entrée `@foilengine/rules/effects`.
-- `spec` héberge les scénarios de règles et de cartes ; rien ne dépend de lui. `rules` et `cards` ne dépendent jamais de `testkit` (ce serait un cycle).
-- Aucun package ne dépend d'une app.
-- Les apps clientes (`play`, `site`, `console`) ne dépendent jamais de `rules` pour décider d'une légalité. `play` peut l'importer uniquement pour le mode hors ligne contre l'IA, en tournant dans un Web Worker, et seulement depuis `apps/play/src/offline/`.
-- `testkit` n'est importé par aucun code de production : ni `server`, ni `console` (qui passe par l'API du serveur).
-- `telemetry` est la seule porte vers les logs, métriques et traces : aucun `console` ailleurs que dans `scripts/` et `apps/cli` (dont la sortie standard est l'interface).
+- `types` depends on nothing.
+- `rules` depends only on `types`. No I/O library, no clock access, no `Math.random`.
+- `cards` depends only on `types` and on the effect API exposed by `rules` at the `@foilengine/rules/effects` entry point.
+- `spec` hosts the rule and card scenarios; nothing depends on it. `rules` and `cards` never depend on `testkit` (that would be a cycle).
+- No package depends on an app.
+- Client apps (`play`, `site`, `console`) never depend on `rules` to decide legality. `play` may import it only for the offline mode against the AI, running in a Web Worker, and only from `apps/play/src/offline/`.
+- No production code imports `testkit`: neither `server` nor `console` (which goes through the server API).
+- `telemetry` is the only door to logs, metrics and traces: no `console` outside `scripts/` and `apps/cli` (whose standard output is its interface).
 
 ### How they are enforced
 
@@ -74,21 +74,21 @@ See ADR 0017. Two mechanisms, run by `pnpm lint`, `pnpm check:deps` and the CI:
 
 The tests in `scripts/test/` prove that each rule fires where it should, and only there.
 
-## Flux d'une action en ligne
+## Flow of an online action
 
-1. Le client envoie une **intention** (`protocol`) : « jouer la carte X sur la cible Y ».
-2. Le serveur la valide contre `legalActions(state)`. Une action illégale est refusée avec une raison lisible, et compte dans une métrique.
-3. Le serveur appelle `apply(state, action)`, qui renvoie `{ state, events }`.
-4. Les événements sont ajoutés au journal de la partie (`log`) et persistés.
-5. Chaque client reçoit les événements **filtrés pour lui** et sa vue `viewFor(state, player)`.
-6. Le client anime et sonorise à partir des événements, jamais à partir d'un diff d'état.
+1. The client sends an **intent** (`protocol`): "play card X on target Y".
+2. The server validates it against `legalActions(state)`. An illegal action is refused with a readable reason, and counted in a metric.
+3. The server calls `apply(state, action)`, which returns `{ state, events }`.
+4. The events are appended to the game's log (`log`) and persisted.
+5. Each client receives the events **filtered for them** and their view `viewFor(state, player)`.
+6. The client animates and plays sounds from the events, never from a state diff.
 
-## Topologie d'exécution
+## Runtime topology
 
-- Un processus `server` (HTTP + WebSocket), sans état local durable : l'état des parties en cours vit en mémoire, avec un journal persisté pour reprendre une partie après redémarrage.
-- Des **workers** pour les simulations et l'IA lourde, alimentés par une file de jobs.
-- PostgreSQL pour les données durables (comptes, decks, journaux, résultats de simulations).
-- Valkey (compatible Redis) pour les sessions, le pub/sub entre instances et la file de jobs.
-- La stack d'observabilité (voir `07-observability.md`) à côté, en Docker Compose.
+- One `server` process (HTTP + WebSocket), with no durable local state: the state of running games lives in memory, with a persisted log to resume a game after a restart.
+- **Workers** for simulations and heavy AI, fed by a job queue.
+- PostgreSQL for durable data (accounts, decks, logs, simulation results).
+- Valkey (Redis-compatible) for sessions, pub/sub between instances and the job queue.
+- The observability stack (see `07-observability.md`) alongside, in Docker Compose.
 
-Les choix de stack sont proposés dans `docs/decisions/` et doivent être validés avant implémentation.
+The stack choices are proposed in `docs/decisions/` and must be validated before implementation.

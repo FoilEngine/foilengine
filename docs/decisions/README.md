@@ -1,55 +1,55 @@
-# Décisions d'architecture (ADR)
+# Architecture decisions (ADR)
 
-Chaque décision structurante est consignée ici, une par fichier, numérotée.
+Every structural decision is recorded here, one per numbered file.
 
-## Statuts
+## Statuses
 
-- **Proposé** : en attente de validation par Alexandre. Ne pas implémenter avant.
-- **Accepté** : en vigueur.
-- **À décider** : question ouverte, aucune option retenue.
-- **Remplacé par NNNN** : obsolète, garder le fichier pour l'historique.
+- **Proposed**: waiting for Alexandre's validation. Do not implement before.
+- **Accepted**: in force.
+- **To decide**: open question, no option chosen.
+- **Superseded by NNNN**: obsolete, keep the file for history.
 
-## Créer un ADR
+## Creating an ADR
 
-Utiliser `/new-adr <titre>`, ou copier ce modèle dans `NNNN-titre-court.md` :
+Use `/new-adr <title>`, or copy this template into `NNNN-short-title.md`:
 
 ```markdown
-# ADR NNNN — Titre
+# ADR NNNN — Title
 
-**Statut** : Proposé
-**Date** : AAAA-MM-JJ
+**Status**: Proposed
+**Date**: YYYY-MM-DD
 
-## Contexte
-Le problème, les contraintes, ce qui oblige à décider.
+## Context
+The problem, the constraints, what forces a decision.
 
-## Décision
-Ce qu'on fait, précisément.
+## Decision
+What we do, precisely.
 
-## Conséquences
-Ce que ça change, ce que ça coûte, ce qu'il faudra surveiller.
+## Consequences
+What it changes, what it costs, what to watch.
 
-## Alternatives écartées
-Les autres options et pourquoi on ne les retient pas.
+## Rejected alternatives
+The other options and why we do not keep them.
 ```
 
 ## Index
 
-| N° | Titre | Statut |
+| No. | Title | Status |
 | --- | --- | --- |
-| 0001 | Monorepo pnpm et Turborepo | Accepté |
-| 0002 | TypeScript strict partout | Accepté |
-| 0003 | Moteur pur et déterministe | Accepté |
-| 0004 | État immuable et sérialisable | Proposé |
-| 0005 | Le journal d'événements est la source de vérité | Accepté |
-| 0006 | Serveur autoritaire et vues par joueur | Accepté |
-| 0007 | Les effets des cartes en DSL | Accepté |
-| 0008 | Tests de règles numérotés et couverture | Accepté |
-| 0009 | Mode manuel pour les cartes non implémentées | Accepté |
-| 0010 | Stack serveur : Node 24, Fastify, WebSocket, Zod | Proposé (Node 24 accepté par 0017) |
-| 0011 | Données : PostgreSQL, Drizzle, Valkey, BullMQ, authentification Discord | Proposé |
-| 0012 | Clients : React et Vite, Astro pour la vitrine | Proposé |
-| 0013 | Hébergement : un VPS, Docker Compose, Caddy | Proposé |
-| 0014 | Observabilité : OpenTelemetry et la stack Grafana | Proposé |
-| 0015 | Projet gratuit sous la politique Legal Jibber Jabber | Accepté |
-| 0016 | Licence du code | À décider |
-| 0017 | Toolchain, repository checks and M0 decisions | Accepté |
+| 0001 | Monorepo with pnpm and Turborepo | Accepted |
+| 0002 | Strict TypeScript everywhere | Accepted |
+| 0003 | Pure and deterministic engine | Accepted |
+| 0004 | Immutable and serializable state | Proposed |
+| 0005 | The event log is the source of truth | Accepted |
+| 0006 | Authoritative server and per-player views | Accepted |
+| 0007 | Card effects as a DSL | Accepted |
+| 0008 | Numbered rule tests and coverage | Accepted |
+| 0009 | Manual mode for unimplemented cards | Accepted |
+| 0010 | Server stack: Node 24, Fastify, WebSocket, Zod | Proposed (Node 24 accepted by 0017) |
+| 0011 | Data: PostgreSQL, Drizzle, Valkey, BullMQ, Discord authentication | Proposed |
+| 0012 | Clients: React and Vite, Astro for the website | Proposed |
+| 0013 | Hosting: one VPS, Docker Compose, Caddy | Proposed |
+| 0014 | Observability: OpenTelemetry and the Grafana stack | Proposed |
+| 0015 | Free project under the Legal Jibber Jabber policy | Accepted |
+| 0016 | Code license | To decide |
+| 0017 | Toolchain, repository checks and M0 decisions | Accepted |

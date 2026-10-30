@@ -1,50 +1,50 @@
 # Foil Engine
 
-Simulateur et IA pour Riftbound, avec un vrai moteur de règles.
+A simulator and AI for Riftbound, with a real rules engine.
 
-- **Arbitre** : le moteur sait quels coups sont légaux, résout la chaîne et les déclencheurs, et détecte la victoire.
-- **Adversaire** : une IA qui joue contre toi et explique ses coups.
-- **Analyse** : des milliers de parties simulées pour mesurer un matchup ou trouver le point faible d'un deck.
+- **Referee**: the engine knows which moves are legal, resolves the chain and the triggers, and detects victory.
+- **Opponent**: an AI that plays against you and explains its moves.
+- **Analysis**: thousands of simulated games to measure a matchup or find a deck's weak spot.
 
 ## Structure
 
 ```
 apps/
-  server/      serveur de parties (HTTP + WebSocket), API, healthchecks, métriques
-  play/        client de jeu
-  site/        site vitrine
-  console/     console d'administration et de monitoring
-  cli/         outil en ligne de commande `foil`
+  server/      game server (HTTP + WebSocket), API, healthchecks, metrics
+  play/        game client
+  site/        website
+  console/     administration and monitoring console
+  cli/         the `foil` command-line tool
 packages/
-  types/       types partagés (état, actions, événements, vues)
-  rules/       le moteur de règles, pur et déterministe
-  cards/       les effets des cartes (DSL et implémentations)
-  codex/       import et normalisation des données de cartes
-  protocol/    messages client-serveur (schémas Zod)
-  log/         journal d'événements, replays, notation
-  mind/        l'IA
-  sim/         simulations en masse et analyse
-  testkit/     harnais de scénarios, fuzzing, invariants, couverture
-  spec/        scénarios de règles et de cartes (tests uniquement)
-  telemetry/   logs, métriques, traces, healthchecks
-  db/          schéma et migrations
-  ui/          design system (tokens, composants, son, motion)
-scripts/       outillage du monorepo (vérification des dépendances)
-infra/         docker compose local, monitoring, alertes, tableaux de bord
-docs/          documentation (commencer par docs/00-vision.md)
+  types/       shared types (state, actions, events, views)
+  rules/       the rules engine, pure and deterministic
+  cards/       card effects (DSL and implementations)
+  codex/       card data import and normalization
+  protocol/    client-server messages (Zod schemas)
+  log/         event log, replays, notation
+  mind/        the AI
+  sim/         mass simulations and analysis
+  testkit/     scenario harness, fuzzing, invariants, coverage
+  spec/        rule and card scenarios (tests only)
+  telemetry/   logs, metrics, traces, healthchecks
+  db/          schema and migrations
+  ui/          design system (tokens, components, sound, motion)
+scripts/       monorepo tooling (dependency checks)
+infra/         local docker compose, monitoring, alerts, dashboards
+docs/          documentation (start with docs/00-vision.md)
 ```
 
-## Démarrer
+## Getting started
 
-Node 24 LTS (`.nvmrc`) et pnpm, dont la version est fixée par `packageManager` (Corepack ou pnpm ≥ 9.7 basculent tout seuls).
+Node 24 LTS (`.nvmrc`) and pnpm, whose version is pinned by `packageManager` (Corepack or pnpm ≥ 9.7 switch to it automatically).
 
 ```bash
 pnpm install
 pnpm lint && pnpm typecheck && pnpm test
 ```
 
-La documentation de référence est dans `docs/`. Le fichier `CLAUDE.md` donne les règles de travail.
+The reference documentation is in `docs/`. `CLAUDE.md` gives the working rules.
 
-## Mention légale
+## Legal notice
 
 Foil was created under Riot Games' "Legal Jibber Jabber" policy using assets owned by Riot Games. Riot Games does not endorse or sponsor this project.

@@ -1,16 +1,16 @@
 ---
-description: Écrit le ou les scénarios de test d'une règle des Core Rules
-argument-hint: <numéro de règle, ex. 315.3>
+description: Writes the test scenario or scenarios of a Core Rules rule
+argument-hint: <rule number, e.g. 315.3>
 ---
 
-Écris les tests de la règle $ARGUMENTS des Core Rules.
+Write the tests of rule $ARGUMENTS of the Core Rules.
 
-1. Lis le texte exact de la règle $ARGUMENTS et de ses sous-règles dans le PDF de `docs/rules/` (version en vigueur). Lis aussi les règles qu'elle référence.
-2. Vérifie dans `docs/rules/questions.md` qu'il n'y a pas de question ouverte sur cette règle.
-3. Liste les comportements à tester : le cas nominal, chaque sous-règle, les cas limites (zone vide, ressource insuffisante, objet qui change de zone, plusieurs joueurs).
-4. Écris un scénario par comportement avec le harnais de `@foilengine/testkit` (`docs/06-testing.md`), dans `packages/spec/test/rules/<section>/`. Chaque titre commence par `rule <numéro exact>:` et déclare `rules: [...]`.
-5. Utilise des cartes de test (`test:*`) plutôt que de vraies cartes, sauf si la règle concerne une carte précise.
-6. Lance les tests. S'ils échouent parce que la règle n'est pas implémentée, dis-le clairement : c'est attendu.
-7. Lance `pnpm test:rules` et indique le nouveau statut de la règle dans le rapport de couverture.
+1. Read the exact text of rule $ARGUMENTS and of its sub-rules in the PDF in `docs/rules/` (version in force). Also read the rules it references. The PDF wins over our docs.
+2. Check in `docs/rules/questions.md` that there is no open question on this rule.
+3. List the behaviors to test: the nominal case, each sub-rule, the edge cases (empty zone, insufficient resources, object changing zones, several players).
+4. Write one scenario per behavior with the `@foilengine/testkit` harness (`docs/06-testing.md`), in `packages/spec/test/rules/<section>/`. Each title starts with `rule <exact number>:` and declares `rules: [...]`.
+5. Use test cards (`test:*`) rather than real cards, unless the rule is about a specific card.
+6. Run the tests. If they fail because the rule is not implemented, say so clearly: that is expected.
+7. Run `pnpm test:rules` and give the rule's new status in the coverage report.
 
-Si le texte de la règle est ambigu, n'invente pas : ajoute une entrée dans `docs/rules/questions.md` et arrête-toi en expliquant pourquoi.
+If the rule's text is ambiguous, do not invent: add an entry to `docs/rules/questions.md` and stop, explaining why.

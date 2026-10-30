@@ -1,26 +1,26 @@
 # CLAUDE.md — packages/cards
 
-Le DSL des effets et l'implémentation de chaque carte, avec son statut.
+The effect DSL and the implementation of every card, with its status.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `types`, et l'API d'effets de `rules` via `@foilengine/rules/effects` (vérifié par Biome).
-- **Interdites** : modifier l'état autrement que par l'API d'effets ; importer les internes de `rules`.
+- **Allowed**: `types`, and the effect API of `rules` through `@foilengine/rules/effects` (checked by Biome).
+- **Forbidden**: changing the state other than through the effect API; importing the internals of `rules`.
 
-## API publique
+## Public API
 
-`defineCard`, les briques du DSL, le registre des cartes et leurs statuts.
+`defineCard`, the DSL building blocks, the card registry and their statuses.
 
-## Points d'attention
+## Points of attention
 
-- Un fichier par carte, nommé par son `riftbound_id`, regroupé par set.
-- Les tests de la carte d'abord, avec le harnais de `testkit`, nommés `card <id>: …`, dans `packages/spec/test/cards/<set>/` (`cards` ne dépend jamais de `testkit`).
-- Le texte suivi est le texte en vigueur (errata compris), lu dans le snapshot `codex`.
-- Le code sur mesure est l'exception : le justifier en commentaire, et proposer une brique de DSL au troisième cas similaire.
+- One file per card, named after its `riftbound_id`, grouped by set.
+- The card's tests first, with the `testkit` harness, named `card <id>: …`, in `packages/spec/test/cards/<set>/` (`cards` never depends on `testkit`).
+- The text followed is the text in force (errata included), read from the `codex` snapshot.
+- Custom code is the exception: justify it in a comment, and propose a DSL building block at the third similar case.
 
-## À lire
+## Read
 
 - `docs/04-cards-and-effects.md`
 - `docs/06-testing.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

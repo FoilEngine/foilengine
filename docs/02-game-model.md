@@ -1,82 +1,82 @@
-# 02 — Modèle de jeu
+# 02 — Game model
 
-Ce document décrit comment l'état d'une partie de Riftbound est représenté dans `@foilengine/types` et `@foilengine/rules`. Il a été écrit d'après les **Core Rules 1.4 (Vendetta, mises à jour le 2026-03-30)** ; la version en vigueur est **`CR-2026-10-09`**, et les numéros cités ici seront revérifiés avec `/rules-update` au début de M1. Les numéros cités ici servent de repère : **la référence reste le PDF dans `docs/rules/`**. Avant d'implémenter une règle, relis son texte exact dans le PDF et vérifie son numéro : il peut changer d'une version à l'autre.
+This document describes how the state of a Riftbound game is represented in `@foilengine/types` and `@foilengine/rules`. It was written from the **Core Rules 1.4 (Vendetta, updated 2026-03-30)**; the current version is **`CR-2026-10-09`**, and the numbers quoted here will be re-checked with `/rules-update` at the start of M1. The numbers quoted here are landmarks: **the reference remains the PDF in `docs/rules/`**. Before implementing a rule, re-read its exact text in the PDF and check its number: it can change from one version to the next.
 
-## Carte des Core Rules
+## Map of the Core Rules
 
-| Section | Contenu | Package concerné |
+| Section | Content | Package |
 | --- | --- | --- |
-| 000–056 | Règle d'or (le texte de carte prime sur les règles) et règle d'argent (terminologie, « Can't » bat « Can », faire autant que possible) | `rules`, `cards` |
-| 100–118 | Concepts, construction de deck, mise en place, mulligan | `rules` (setup), `codex` (validation de deck) |
-| 119–124 | Objets de jeu. **124 : changer de zone crée un nouvel objet** | `types`, `rules` |
-| 125–139 | Anatomie d'une carte (coût, nom, catégorie, domaine, texte, bonus de might) | `types`, `codex` |
-| 140–159 | Unités (dégâts, déplacement standard, emplacement), équipements, sorts | `rules`, `cards` |
-| 160–168 | Runes, énergie et puissance, pool de runes | `rules` |
-| 169–176 | Battlefields et legends (ni l'un ni l'autre ne sont des permanents) | `rules` |
-| 177–187 | Types multiples, jetons (les jetons ne sont pas des cartes) | `rules`, `cards` |
-| 188–192 | Contrôle | `rules` |
-| 193–196 | Victoire | `rules` |
-| 197–206 | Emplacements, coûts | `rules` |
-| 300–318 | Le tour : états, priorité et focus, phases | `rules` |
+| 000–056 | Golden rule (card text overrides the rules) and silver rule (terminology, "Can't" beats "Can", do as much as possible) | `rules`, `cards` |
+| 100–118 | Concepts, deck construction, setup, mulligan | `rules` (setup), `codex` (deck validation) |
+| 119–124 | Game objects. **124: changing zones creates a new object** | `types`, `rules` |
+| 125–139 | Card anatomy (cost, name, category, domain, text, might bonus) | `types`, `codex` |
+| 140–159 | Units (damage, standard move, location), gear, spells | `rules`, `cards` |
+| 160–168 | Runes, energy and power, rune pool | `rules` |
+| 169–176 | Battlefields and legends (neither is a permanent) | `rules` |
+| 177–187 | Multiple types, tokens (tokens are not cards) | `rules`, `cards` |
+| 188–192 | Control | `rules` |
+| 193–196 | Victory | `rules` |
+| 197–206 | Locations, costs | `rules` |
+| 300–318 | The turn: states, priority and focus, phases | `rules` |
 | 318–324 | Cleanups | `rules` |
-| 325–348 | Chaîne (processus HOT FEPR) et showdowns | `rules` |
-| 349–359 | Jouer une carte (étapes du processus de jeu, coût total) | `rules` |
-| 360–406 | Capacités (passives, remplacement, activées, déclenchées) | `rules`, `cards` |
-| 407–444 | Actions de jeu (piocher, recycler, épuiser, redresser, canaliser, tuer, soigner, ajouter, rappeler, bannir, infliger…) | `rules` |
-| 445–458 | Déplacement | `rules` |
-| 459–466 | Combat et ses étapes | `rules` |
-| 467–472 | Scoring : tenir et conquérir | `rules` |
-| 473–480 | Couches (ordre d'application des effets continus) | `rules` |
-| 481–648 | Modes de jeu (1v1, free-for-all, 2v2…) | `rules` |
-| 649 | Abandon | `rules` |
-| 700–766 | Règles additionnelles : buffs, Mighty, dégâts bonus, attachement, inactif, XP, tours additionnels, compteurs, choix, non-ciblable, nommer, ignorer des effets | `rules`, `cards` |
-| 800+ | Mots-clés (Accelerate, Action, Assault, Deflect, Ganking, Hidden, Reaction, Temporary, Equip, Quick-Draw, etc.) | `cards` |
+| 325–348 | Chain (HOT FEPR process) and showdowns | `rules` |
+| 349–359 | Playing a card (steps of the play process, total cost) | `rules` |
+| 360–406 | Abilities (passive, replacement, activated, triggered) | `rules`, `cards` |
+| 407–444 | Game actions (draw, recycle, exhaust, ready, channel, kill, heal, add, recall, banish, deal…) | `rules` |
+| 445–458 | Movement | `rules` |
+| 459–466 | Combat and its steps | `rules` |
+| 467–472 | Scoring: hold and conquer | `rules` |
+| 473–480 | Layers (application order of continuous effects) | `rules` |
+| 481–648 | Game modes (1v1, free-for-all, 2v2…) | `rules` |
+| 649 | Conceding | `rules` |
+| 700–766 | Additional rules: buffs, Mighty, bonus damage, attachment, inactive, XP, extra turns, counters, choices, untargetable, naming, ignoring effects | `rules`, `cards` |
+| 800+ | Keywords (Accelerate, Action, Assault, Deflect, Ganking, Hidden, Reaction, Temporary, Equip, Quick-Draw, etc.) | `cards` |
 
-Les numéros de 360 à 800 viennent d'un index d'une version antérieure (décembre 2025). Vérifie-les dans le PDF actuel avant de les citer.
+The numbers from 360 to 800 come from an index of an earlier version (December 2025). Check them in the current PDF before quoting them.
 
-## Objets de jeu et identité
+## Game objects and identity
 
-- Chaque objet de jeu a un **`ObjectId`** unique dans la partie, attribué par un compteur de l'état (déterministe).
-- **Règle 124 : un changement de zone crée un nouvel objet.** Une carte qui passe de la main au plateau, ou du plateau à la défausse, reçoit un nouvel `ObjectId`. On garde séparément le **`CardRef`** (quelle carte imprimée c'est) et l'historique (`previousObjectId`) pour les effets qui doivent la suivre.
-- Une carte a un **propriétaire** (`owner`, ne change jamais) et, sur le plateau, un **contrôleur** (`controller`, peut changer, section 188).
-- Les **jetons** ne sont pas des cartes (185) : ils ont un `TokenDef` au lieu d'un `CardRef`, et cessent d'exister en quittant le plateau.
+- Every game object has an **`ObjectId`**, unique within the game, assigned by a counter in the state (deterministic).
+- **Rule 124: a zone change creates a new object.** A card going from the hand to the board, or from the board to the trash, gets a new `ObjectId`. We keep the **`CardRef`** (which printed card it is) and the history (`previousObjectId`) separately, for effects that must follow it.
+- A card has an **owner** (`owner`, never changes) and, on the board, a **controller** (`controller`, can change, section 188).
+- **Tokens** are not cards (185): they have a `TokenDef` instead of a `CardRef`, and cease to exist when they leave the board.
 
 ## Zones
 
-Zones par joueur (sections 104–108) :
+Per-player zones (sections 104–108):
 
-| Zone | Visibilité | Ordonnée | Notes |
+| Zone | Visibility | Ordered | Notes |
 | --- | --- | --- | --- |
-| `mainDeck` | Cachée à tous | Oui | Pioche par le dessus |
-| `runeDeck` | Cachée à tous | Oui | 12 runes (161.2.a) ; les runes recyclées y reviennent |
-| `hand` | Visible par le propriétaire | Non | |
-| `base` | Publique | Non | Unités, équipements, runes en jeu |
-| `legendZone` | Publique | — | La Champion Legend (111) |
-| `championZone` | Publique | — | Le Chosen Champion avant d'être joué (112) |
-| `trash` | Publique | Oui | |
-| `banishment` | Publique | Non | |
+| `mainDeck` | Hidden from everyone | Yes | Drawn from the top |
+| `runeDeck` | Hidden from everyone | Yes | 12 runes (161.2.a); recycled runes return here |
+| `hand` | Visible to the owner | No | |
+| `base` | Public | No | Units, gear, runes in play |
+| `legendZone` | Public | — | The Champion Legend (111) |
+| `championZone` | Public | — | The Chosen Champion before it is played (112) |
+| `trash` | Public | Yes | |
+| `banishment` | Public | No | |
 
-Zones partagées :
+Shared zones:
 
 | Zone | Notes |
 | --- | --- |
-| `battlefields[]` | Chaque battlefield a un contrôleur éventuel, des unités de chaque joueur, des statuts (Contested, etc.). Le nombre dépend du mode (172). |
-| `chain` | Zone temporaire qui n'existe que pendant qu'une carte est jouée ou une capacité activée (328). Éléments `pending` ou `finalized` (329). |
+| `battlefields[]` | Each battlefield has an optional controller, units from each player, statuses (Contested, etc.). Their number depends on the mode (172). |
+| `chain` | Temporary zone that only exists while a card is being played or an ability activated (328). Items are `pending` or `finalized` (329). |
 
-Les objets d'un plateau sont une information publique (109). Les cartes face cachée (Hidden, 811) sont l'exception à modéliser explicitement.
+Objects on a board are public information (109). Face-down cards (Hidden, 811) are the exception, to be modeled explicitly.
 
-## État de la partie (forme de haut niveau)
+## Game state (high-level shape)
 
 ```ts
 interface GameState {
-  version: number;              // version du schéma d'état
-  rulesVersion: string;         // ex. "CR-2026-10-09"
-  mode: ModeId;                 // ex. "duel-1v1"
-  rng: RngState;                // graine et compteur, sérialisables
+  version: number;              // state schema version
+  rulesVersion: string;         // e.g. "CR-2026-10-09"
+  mode: ModeId;                 // e.g. "duel-1v1"
+  rng: RngState;                // seed and counter, serializable
   nextObjectId: number;
   players: Record<PlayerId, PlayerState>;
-  turnOrder: PlayerId[];        // file circulaire (115.1.c)
-  turn: TurnState;              // joueur actif, phase, étape, numéro de tour
+  turnOrder: PlayerId[];        // circular queue (115.1.c)
+  turn: TurnState;              // active player, phase, step, turn number
   battlefields: BattlefieldState[];
   chain: ChainItem[];
   priority: PlayerId | null;    // 312
@@ -84,130 +84,130 @@ interface GameState {
   showdown: ShowdownState | null;
   combat: CombatState | null;
   pendingCleanup: boolean;      // 319
-  continuousEffects: ContinuousEffect[]; // appliqués par couches (473+)
+  continuousEffects: ContinuousEffect[]; // applied by layers (473+)
   winner: PlayerId | null;
   log: { eventSeq: number };
 }
 
 interface PlayerState {
   id: PlayerId;
-  points: number;               // ne descend jamais sous 0 (194.4)
+  points: number;               // never goes below 0 (194.4)
   zones: PlayerZones;
   runePool: { energy: number; power: Partial<Record<Domain | 'universal', number>> }; // 165–167
-  scoredThisTurn: BattlefieldId[]; // pour la règle de conquête une fois par tour
+  scoredThisTurn: BattlefieldId[]; // for the once-per-turn conquer rule
   // ...
 }
 ```
 
-Les noms exacts sont fixés dans `@foilengine/types`. Toute modification de la forme de l'état incrémente `version` et doit rester rejouable (voir `log`).
+The exact names are fixed in `@foilengine/types`. Any change to the shape of the state increments `version` and must stay replayable (see `log`).
 
-## Le tour
+## The turn
 
-### États (307–310)
+### States (307–310)
 
-Deux axes indépendants :
-- **Neutral** ou **Showdown** (308) : un showdown ou un combat est en cours. En showdown, seules les cartes et capacités Action ou Reaction peuvent être jouées.
-- **Open** ou **Closed** (309) : une chaîne existe (Closed, seules les Reaction sont jouables) ou non (Open).
+Two independent axes:
+- **Neutral** or **Showdown** (308): a showdown or a combat is in progress. In a showdown, only Action or Reaction cards and abilities can be played.
+- **Open** or **Closed** (309): a chain exists (Closed, only Reactions can be played) or not (Open).
 
-Ce qui donne quatre états : Neutral Open, Neutral Closed, Showdown Open, Showdown Closed (310). `legalActions` dépend directement de cet état combiné.
+That gives four states: Neutral Open, Neutral Closed, Showdown Open, Showdown Closed (310). `legalActions` depends directly on this combined state.
 
-### Priorité et focus (311–313)
+### Priority and focus (311–313)
 
-- Au plus un joueur a la **priorité**, nécessaire pour les actions discrétionnaires (312.1). Certaines actions limitées ne la demandent pas (312.1.b.1).
-- Le **focus** permet d'agir pendant un showdown ouvert (313). L'obtenir donne aussi la priorité. Passer la priorité ne fait pas perdre le focus. Personne n'a le focus en état Neutral.
+- At most one player has **priority**, needed for discretionary actions (312.1). Some limited actions do not require it (312.1.b.1).
+- **Focus** lets a player act during an open showdown (313). Getting it also gives priority. Passing priority does not lose focus. Nobody has focus in the Neutral state.
 
 ### Phases (314–317)
 
-1. **Début de tour (315)**
-   - **Awaken** : le joueur actif redresse tout ce qu'il contrôle et qui peut l'être.
-   - **Beginning** : effets de début de phase, puis étape de scoring où le joueur actif **tient** les battlefields qu'il contrôle.
-   - **Channel** : il canalise 2 runes de son rune deck, ou ce qu'il reste (315.3). Exception de premier tour en 1v1 : le premier joueur canalise 2 runes, le second joueur en canalise 3 (voir Q-001 dans `docs/rules/questions.md` ; numéro de règle à confirmer dans le PDF, 115.2 ou section du mode).
-   - **Draw** : il pioche 1 carte. Deck vide : il fait un **Burn Out** (315.4.b.1), puis pioche quand même.
-2. **Phase principale (316)** : le pool de runes se vide, puis les effets de début de phase principale. Ensuite, aucune structure imposée : le joueur actif agit en état Neutral Open (316.5). Le combat a lieu quand des unités adverses sont sur le même battlefield (316.7). Un showdown accompagne chaque combat, et un showdown hors combat a lieu quand un joueur arrive sur un battlefield vide (316.8).
-3. **Fin de tour (317)** : étape de fin (effets de fin de tour), puis étape d'expiration : cleanup spécial de fin, soin des unités, expiration des effets « ce tour-ci », vidage du pool de runes. Puis le joueur suivant devient joueur actif.
+1. **Start of turn (315)**
+   - **Awaken**: the active player readies everything they control that can be readied.
+   - **Beginning**: start-of-phase effects, then the scoring step where the active player **holds** the battlefields they control.
+   - **Channel**: they channel 2 runes from their rune deck, or whatever remains (315.3). First-turn exception in 1v1: the first player channels 2 runes, the second player channels 3 (see Q-001 in `docs/rules/questions.md`; rule number to be confirmed in the PDF, 115.2 or the mode section).
+   - **Draw**: they draw 1 card. Empty deck: they **Burn Out** (315.4.b.1), then draw anyway.
+2. **Main phase (316)**: the rune pool empties, then start-of-main-phase effects. After that, no imposed structure: the active player acts in the Neutral Open state (316.5). Combat happens when opposing units are on the same battlefield (316.7). A showdown comes with every combat, and a non-combat showdown happens when a player arrives on an empty battlefield (316.8).
+3. **End of turn (317)**: end step (end-of-turn effects), then the expiration step: special end cleanup, units healed, "this turn" effects expire, the rune pool empties. Then the next player becomes the active player.
 
 ### Cleanups (318–324)
 
-Un cleanup est mis en file après la plupart des changements d'état (319). Il se répète jusqu'à ce que l'état ne change plus (322). Ses étapes, dans l'ordre (323) :
+A cleanup is queued after most state changes (319). It repeats until the state no longer changes (322). Its steps, in order (323):
 
-1. Vérifier s'il y a un gagnant.
-2. Attribuer ou retirer les rôles d'attaquant et de défenseur en combat.
-3. Gérer le plateau : mettre en file les déclencheurs des unités qui ont subi des dégâts mortels (Deathknell…), puis envoyer ces unités à la défausse de leur propriétaire.
-4. Les battlefields vides en état Open, sans showdown ni combat, perdent leur contrôleur.
-5. Rappeler les équipements non attachés et les runes mal placés, retirer les cartes Hidden des battlefields que leur propriétaire ne contrôle pas.
-6. Préparer les showdowns et combats là où le statut Contested a été appliqué.
-7. Retirer le statut Contested quand il n'a plus lieu d'être.
-8. En état Neutral Open, le joueur actif démarre le showdown ou le combat préparé.
+1. Check whether there is a winner.
+2. Assign or remove the attacker and defender roles in combat.
+3. Manage the board: queue the triggers of units that took lethal damage (Deathknell…), then send those units to their owner's trash.
+4. Empty battlefields in the Open state, with no showdown or combat, lose their controller.
+5. Recall unattached gear and misplaced runes, remove Hidden cards from battlefields their owner does not control.
+6. Prepare showdowns and combats where the Contested status was applied.
+7. Remove the Contested status where it no longer applies.
+8. In the Neutral Open state, the active player starts the prepared showdown or combat.
 
-Le cleanup est **une fonction pure qu'on appelle en boucle jusqu'à point fixe**, avec une borne d'itérations qui lève une erreur moteur (et une métrique) si elle est atteinte.
+The cleanup is **a pure function called in a loop until a fixed point**, with an iteration bound that raises an engine error (and a metric) when reached.
 
-### La chaîne et le processus HOT FEPR (327–340)
+### The chain and the HOT FEPR process (327–340)
 
-Une seule chaîne à la fois (330). Les éléments y entrent en **pending** et deviennent **finalized** une fois l'étape de vérification de légalité passée (329). Le moteur boucle sur :
+One chain at a time (330). Items enter it as **pending** and become **finalized** once the legality check step has passed (329). The engine loops over:
 
-- **HOT, Handle Outstanding Tasks** : traiter d'abord toutes les tâches en attente (334).
-- **F, Finalize** (337) : le contrôleur de l'élément pending le plus ancien le finalise. Les unités, équipements et capacités qui ajoutent des ressources se résolvent immédiatement.
-- **E, Execute** (338) : le joueur qui a la priorité peut jouer quelque chose de légal (retour à F), ou passer.
-- **P, Pass** (339) : si tout le monde passe à la suite sans rien ajouter, on va en R. Sinon, retour en E.
-- **R, Resolve** (340) : l'élément finalisé le plus récent se résout entièrement. Si la chaîne est vide, l'état redevient Open. En showdown, le focus passe au joueur suivant, sauf si la chaîne a été ouverte par une capacité déclenchée ou une capacité qui ajoute des ressources.
+- **HOT, Handle Outstanding Tasks**: handle all pending tasks first (334).
+- **F, Finalize** (337): the controller of the oldest pending item finalizes it. Units, gear and abilities that add resources resolve immediately.
+- **E, Execute** (338): the player with priority may play something legal (back to F), or pass.
+- **P, Pass** (339): if everyone passes in a row without adding anything, go to R. Otherwise, back to E.
+- **R, Resolve** (340): the most recent finalized item resolves entirely. If the chain is empty, the state becomes Open again. In a showdown, focus passes to the next player, unless the chain was opened by a triggered ability or an ability that adds resources.
 
-Cette boucle doit être explicite dans le code, avec un nom par étape, parce que c'est là que naîtront la plupart des bugs.
+This loop must be explicit in the code, with one name per step, because that is where most bugs will be born.
 
 ### Showdowns (341–348)
 
-- Un showdown commence pendant un cleanup en état Neutral Open quand le contrôle d'un battlefield est Contested (344). Le joueur qui a appliqué Contested reçoit le focus (345).
-- Le joueur qui a le focus joue une carte ou une capacité légale (ce qui ouvre une chaîne, et le focus passe quand elle se ferme) ou passe. Si tous les joueurs passent une fois à la suite, le showdown se ferme (347).
-- Un showdown de combat enchaîne sur les étapes du combat. Un showdown hors combat donne le contrôle au seul joueur restant, avec une conquête possible s'il n'a pas déjà marqué ce battlefield ce tour-ci (348).
+- A showdown starts during a cleanup in the Neutral Open state when control of a battlefield is Contested (344). The player who applied Contested gets focus (345).
+- The player with focus plays a legal card or ability (which opens a chain; focus passes when it closes) or passes. If all players pass once in a row, the showdown closes (347).
+- A combat showdown moves on to the combat steps. A non-combat showdown gives control to the only remaining player, with a possible conquer if they have not already scored that battlefield this turn (348).
 
-## Mise en place (104–118)
+## Setup (104–118)
 
-1. Chaque joueur place sa Champion Legend dans sa zone de legend (111) et son Chosen Champion dans sa zone de champion (112).
-2. Les battlefields sont mis de côté, puis placés selon le mode (113).
-3. Chaque joueur mélange son main deck et son rune deck séparément (114) : avec le RNG de l'état.
-4. L'ordre du tour est tiré au hasard (115), avec le RNG de l'état.
-5. Chacun pioche 4 cartes (116).
-6. Mulligan, dans l'ordre du tour : chacun met de côté jusqu'à 2 cartes, pioche autant, puis recycle les cartes mises de côté (117).
-7. Le premier joueur commence son tour (118).
+1. Each player puts their Champion Legend in their legend zone (111) and their Chosen Champion in their champion zone (112).
+2. Battlefields are set aside, then placed according to the mode (113).
+3. Each player shuffles their main deck and rune deck separately (114): with the state's RNG.
+4. Turn order is drawn at random (115), with the state's RNG.
+5. Each player draws 4 cards (116).
+6. Mulligan, in turn order: each player sets aside up to 2 cards, draws as many, then recycles the cards set aside (117).
+7. The first player starts their turn (118).
 
-La construction de deck (101) est validée par `codex`/`rules` avant la création de la partie : nombre de cartes, legend, champion, 12 runes, battlefields, domaines.
+Deck construction (101) is validated by `codex`/`rules` before the game is created: number of cards, legend, champion, 12 runes, battlefields, domains.
 
-## Ressources (160–168)
+## Resources (160–168)
 
-- Une rune produit de l'**énergie** (pour les coûts numériques, sans domaine) en s'épuisant, ou de la **puissance** de son domaine (pour les coûts de domaine) en étant recyclée (163–164).
-- Les ressources passent par le **pool de runes**, qui se vide au début de chaque phase principale et à la fin de chaque tour (167). Les ressources non dépensées sont perdues.
-- Le paiement automatique (comme sur Rift Atlas) est une fonction de `rules` qui propose un ensemble de runes à épuiser ou recycler. Le joueur peut toujours payer à la main. C'est une aide, pas une règle.
+- A rune produces **energy** (for numeric costs, domainless) by exhausting, or **power** of its domain (for domain costs) by being recycled (163–164).
+- Resources go through the **rune pool**, which empties at the start of each main phase and at the end of each turn (167). Unspent resources are lost.
+- Automatic payment (as on Rift Atlas) is a `rules` function that proposes a set of runes to exhaust or recycle. The player can always pay by hand. It is a help, not a rule.
 
-## Victoire (193–196)
+## Victory (193–196)
 
-- On gagne des points en **tenant** un battlefield, en le **conquérant**, par des sorts ou capacités, et par les Burn Out de l'adversaire (194.1).
-- On gagne pendant un cleanup si on a au moins le score de victoire et plus de points que tous les autres (194.2). Le score de victoire par défaut est 8, et le mode ou des effets peuvent le changer (194.3).
-- Les points ne descendent jamais sous 0 (194.4).
-- On gagne aussi si un effet le dit, ou si on est le dernier joueur restant (195).
-- La règle de conquête du dernier point (on ne gagne pas en conquérant si on n'a pas aussi marqué sur les autres battlefields ce tour-ci) est dans la section scoring (467–472) : à lire et à tester en priorité.
+- Points are scored by **holding** a battlefield, by **conquering** it, through spells or abilities, and through the opponent's Burn Outs (194.1).
+- A player wins during a cleanup if they have at least the victory score and more points than everyone else (194.2). The default victory score is 8; the mode or effects can change it (194.3).
+- Points never go below 0 (194.4).
+- A player also wins if an effect says so, or if they are the last player remaining (195).
+- The last-point conquer rule (you do not win by conquering unless you also scored the other battlefields this turn) is in the scoring section (467–472): read and test it first.
 
 ## Actions
 
-Une `Action` est une **intention d'un joueur**, sérialisable, sans référence à des objets JavaScript. Familles :
+An `Action` is a **player's intent**, serializable, with no reference to JavaScript objects. Families:
 
 - `Mulligan { cards }`
-- `PlayCard { card, choices, payment }` (choix des cibles, modes, coûts additionnels, 349–359)
+- `PlayCard { card, choices, payment }` (choice of targets, modes, additional costs, 349–359)
 - `ActivateAbility { source, ability, choices, payment }`
 - `StandardMove { units, destination }` (144, 445+)
 - `PassPriority`, `PassFocus`
 - `EndTurn`
 - `Concede` (649)
-- `ManualOverride { description, patch }` : mode manuel, toujours marqué comme tel dans le journal
+- `ManualOverride { description, patch }`: manual mode, always marked as such in the log
 
-`legalActions(state)` renvoie les actions possibles **à structure près** (par exemple `PlayCard` avec les cibles valides), et une fonction `isLegal(state, action)` vérifie une action complète avec une raison en cas de refus.
+`legalActions(state)` returns the possible actions **up to structure** (for example `PlayCard` with the valid targets), and a function `isLegal(state, action)` checks a complete action, with a reason when it refuses.
 
-## Événements
+## Events
 
-Un `GameEvent` décrit **ce qui s'est passé**, dans l'ordre exact, avec un numéro de séquence. Exemples : `CardDrawn`, `RuneChanneled`, `CardPlayed`, `ChainItemAdded`, `ChainItemFinalized`, `ChainItemResolved`, `UnitMoved`, `DamageDealt`, `UnitKilled`, `ShowdownStarted`, `FocusPassed`, `BattlefieldConquered`, `BattlefieldHeld`, `PointsScored`, `TurnStarted`, `PhaseChanged`, `CleanupRan`, `GameWon`.
+A `GameEvent` describes **what happened**, in the exact order, with a sequence number. Examples: `CardDrawn`, `RuneChanneled`, `CardPlayed`, `ChainItemAdded`, `ChainItemFinalized`, `ChainItemResolved`, `UnitMoved`, `DamageDealt`, `UnitKilled`, `ShowdownStarted`, `FocusPassed`, `BattlefieldConquered`, `BattlefieldHeld`, `PointsScored`, `TurnStarted`, `PhaseChanged`, `CleanupRan`, `GameWon`.
 
-Chaque événement porte la **règle qui l'a produit** (`rule: "315.3"`) quand c'est pertinent. C'est ce qui permet la couverture des règles en production et le débogage.
+Each event carries the **rule that produced it** (`rule: "315.3"`) when relevant. That is what enables rule coverage in production, and debugging.
 
-Les événements ont une **visibilité** : publique, ou réservée à certains joueurs (une carte piochée n'est visible que par son propriétaire, les autres voient « une carte piochée »). Le filtrage est fait par `log`, pas par le serveur à la main.
+Events have a **visibility**: public, or restricted to some players (a drawn card is only visible to its owner; the others see "a card was drawn"). Filtering is done by `log`, not by hand in the server.
 
-## Vues par joueur
+## Per-player views
 
-`viewFor(state, player)` renvoie ce que ce joueur a le droit de voir : sa main, ses decks réduits à leur taille, la main adverse réduite à sa taille, les objets publics, la chaîne, les choix en attente qui le concernent. Elle est utilisée par le serveur, par l'IA (qui ne doit pas tricher) et par les tests.
+`viewFor(state, player)` returns what that player is allowed to see: their hand, their decks reduced to their size, the opponent's hand reduced to its size, public objects, the chain, the pending choices that concern them. It is used by the server, by the AI (which must not cheat) and by the tests.

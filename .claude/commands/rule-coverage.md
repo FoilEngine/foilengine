@@ -1,12 +1,12 @@
 ---
-description: Rapport de couverture des règles des Core Rules
+description: Coverage report of the Core Rules
 ---
 
-Lance `pnpm test:rules` et résume le rapport de couverture :
+Run `pnpm test:rules` and summarize the coverage report:
 
-1. Le pourcentage de règles `covered`, `exercised`, `uncovered`, `stale`, `question` et `not-applicable`, globalement et par section (300, 318, 325, 341, 459, 467…).
-2. Les règles `stale` à revérifier en priorité.
-3. Les règles `uncovered` qui bloquent le jalon en cours de `docs/12-roadmap.md`.
-4. Les questions ouvertes de `docs/rules/questions.md`.
+1. The percentage of rules `covered`, `exercised`, `uncovered`, `stale`, `question` and `not-applicable`, overall and per section (300, 318, 325, 341, 459, 467…).
+2. The `stale` rules to re-check first.
+3. The `uncovered` rules that block the current milestone of `docs/12-roadmap.md`.
+4. The open questions in `docs/rules/questions.md`.
 
-Termine par les cinq prochaines règles à couvrir, dans l'ordre, avec la raison.
+End with the next five rules to cover, in order, with the reason.

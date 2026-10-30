@@ -1,23 +1,23 @@
 # CLAUDE.md — packages/db
 
-Schéma de base de données, migrations, accès.
+Database schema, migrations, access.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `types`, Drizzle, le driver Postgres.
-- **Interdites** : logique de jeu.
+- **Allowed**: `types`, Drizzle, the Postgres driver.
+- **Forbidden**: game logic.
 
-## API publique
+## Public API
 
-Le schéma Drizzle, les migrations, les fonctions d'accès.
+The Drizzle schema, the migrations, the access functions.
 
-## Points d'attention
+## Points of attention
 
-- Toute modification de schéma passe par une migration versionnée.
-- Les journaux de parties sont en JSONB, avec la version du format.
+- Every schema change goes through a versioned migration.
+- Game logs are stored as JSONB, with the format version.
 
-## À lire
+## Read
 
-- `docs/decisions/0011-donnees-postgresql-drizzle-valkey-auth-discord.md`
+- `docs/decisions/0011-data-postgresql-drizzle-valkey-discord-auth.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

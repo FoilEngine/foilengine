@@ -1,23 +1,23 @@
 # CLAUDE.md — apps/play
 
-Le client de jeu.
+The game client.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `ui`, `protocol`, `types` ; `rules`, `cards` et `mind` uniquement dans le Web Worker du mode hors ligne, sous `src/offline/` (vérifié par Biome).
-- **Interdites** : décider d'une légalité en ligne ; calculer un état autrement qu'en projetant les événements.
+- **Allowed**: `ui`, `protocol`, `types`; `rules`, `cards` and `mind` only in the offline-mode Web Worker, under `src/offline/` (checked by Biome).
+- **Forbidden**: deciding legality online; computing a state other than by projecting the events.
 
-## API publique
+## Public API
 
 —
 
-## Points d'attention
+## Points of attention
 
-- Piloté par les événements : chaque événement a son animation et son son.
-- Tactile, clavier et lecteurs d'écran dès le départ ; aucune chaîne en dur (traductions).
+- Event-driven: every event has its animation and its sound.
+- Touch, keyboard and screen readers from the start; no hard-coded strings (translations).
 
-## À lire
+## Read
 
 - `docs/10-clients.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

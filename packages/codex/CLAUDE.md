@@ -1,24 +1,24 @@
 # CLAUDE.md — packages/codex
 
-Import, normalisation et snapshots des données de cartes.
+Import, normalization and snapshots of the card data.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : `types`, Zod, un client HTTP (uniquement dans les scripts de synchronisation).
-- **Interdites** : être appelé par le moteur à l'exécution ; dépendre du réseau dans les tests.
+- **Allowed**: `types`, Zod, an HTTP client (only in the sync scripts).
+- **Forbidden**: being called by the engine at runtime; depending on the network in tests.
 
-## API publique
+## Public API
 
-`loadSnapshot`, `validateDeck`, les parseurs d'import de deck, la commande `codex sync`.
+`loadSnapshot`, `validateDeck`, the deck import parsers, the `codex sync` command.
 
-## Points d'attention
+## Points of attention
 
-- Séparer `CardDefinition` (la règle) et `Printing` (l'impression).
-- Les snapshots sont commités ; les tests utilisent un snapshot précis.
-- Les données saisies à la main (errata, bannissements, boosters, rulings) citent toujours leur source.
+- Keep `CardDefinition` (the rule) and `Printing` (the printing) apart.
+- Snapshots are committed; tests use a specific snapshot.
+- Data entered by hand (errata, bans, boosters, rulings) always quotes its source.
 
-## À lire
+## Read
 
 - `docs/05-codex-data.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

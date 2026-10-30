@@ -1,53 +1,52 @@
 # 13 — Conventions
 
-## Langue
+## Language
 
-- On travaille en **anglais**. Tout ce qui est produit l'est en anglais : code, identifiants, commentaires, tests, commits, branches, PR, issues, messages de log, noms de métriques, nouvelles docs (ADR, runbooks, questions de règles, rapports).
-- Les docs existantes, écrites en français, ne sont **pas** à traduire. Un nouveau fichier de doc est en anglais.
-- Interface du produit : anglais d'abord, avec des fichiers de traduction.
-- Les termes de jeu reprennent le vocabulaire officiel anglais de Riftbound (legend, battlefield, rune, might, showdown, chain, focus…). On ne les traduit pas dans le code.
+- Everything is in **English**: code, identifiers, comments, tests, commits, branches, PRs, issues, log messages, metric names, and all documentation (docs, ADRs, `CLAUDE.md` files, Claude Code commands, runbooks, rule questions, reports).
+- Product UI: English first, with translation files.
+- Game terms use Riftbound's official English vocabulary (legend, battlefield, rune, might, showdown, chain, focus…).
 
 ## TypeScript
 
-- `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`. Pas de `any` ; `unknown` puis validation.
-- Modules ES, imports explicites avec extension quand la résolution l'exige : avec `module: nodenext`, les imports relatifs portent l'extension `.ts` (`import { x } from './x.ts'`).
-- `erasableSyntaxOnly` : pas d'`enum`, de `namespace` ni de propriétés de paramètres de constructeur ; préférer les unions de littéraux et les objets `as const`. Le code tourne ainsi directement dans Node 24, sans compilation.
-- Pas de classes dans l'état de jeu : objets simples et fonctions pures. Les classes sont acceptées ailleurs (serveur, clients) quand elles simplifient.
-- Les identifiants sont des types marqués (`type ObjectId = string & { readonly __brand: 'ObjectId' }`).
-- Les unions discriminées (`type`) pour les actions, événements et messages, avec un `switch` exhaustif (`assertNever`).
-- Les erreurs attendues sont des valeurs (`{ ok: false, reason }`) ; les exceptions sont réservées aux bugs et aux cas impossibles.
-- Pas de dépendance ajoutée sans raison écrite dans la PR. Toute dépendance de `rules` ou `types` demande un ADR.
+- `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`. No `any`; `unknown` then validation.
+- ES modules, explicit imports with an extension when resolution requires it: with `module: nodenext`, relative imports carry the `.ts` extension (`import { x } from './x.ts'`).
+- `erasableSyntaxOnly`: no `enum`, `namespace` or constructor parameter properties; prefer literal unions and `as const` objects. That way the code runs directly in Node 24, without compilation.
+- No classes in the game state: plain objects and pure functions. Classes are accepted elsewhere (server, clients) when they simplify things.
+- Identifiers are branded types (`type ObjectId = string & { readonly __brand: 'ObjectId' }`).
+- Discriminated unions (`type`) for actions, events and messages, with an exhaustive `switch` (`assertNever`).
+- Expected errors are values (`{ ok: false, reason }`); exceptions are reserved for bugs and impossible cases.
+- No dependency added without a reason written in the PR. Any dependency of `rules` or `types` requires an ADR.
 
-## Nommage
+## Naming
 
-| Élément | Convention | Exemple |
+| Element | Convention | Example |
 | --- | --- | --- |
-| Fichiers | kebab-case | `hot-fepr.ts` |
+| Files | kebab-case | `hot-fepr.ts` |
 | Types, interfaces | PascalCase | `GameState` |
-| Fonctions, variables | camelCase | `legalActions` |
-| Constantes | SCREAMING_SNAKE_CASE | `DEFAULT_VICTORY_SCORE` |
-| Événements | PascalCase au passé | `RuneChanneled` |
-| Actions | PascalCase à l'impératif | `PlayCard` |
-| Messages du protocole | `domaine.action` | `game.intent` |
-| Métriques | `foil_` + snake_case | `foil_engine_apply_seconds` |
+| Functions, variables | camelCase | `legalActions` |
+| Constants | SCREAMING_SNAKE_CASE | `DEFAULT_VICTORY_SCORE` |
+| Events | PascalCase, past tense | `RuneChanneled` |
+| Actions | PascalCase, imperative | `PlayCard` |
+| Protocol messages | `domain.action` | `game.intent` |
+| Metrics | `foil_` + snake_case | `foil_engine_apply_seconds` |
 
 ## Tests
 
-- Les tests sont à côté de leur package dans `test/`, nommés `*.test.ts`. Les scénarios de règles sont dans `packages/spec/test/rules/<section>/`, ceux des cartes dans `packages/spec/test/cards/<set>/` (voir `06-testing.md`).
-- Un scénario de règle commence par `rule <numéro>:`. Un scénario de carte par `card <id>:`.
-- Pas de test qui dépend du réseau, de l'heure ou de l'ordre d'exécution.
+- Tests live next to their package in `test/`, named `*.test.ts`. Rule scenarios are in `packages/spec/test/rules/<section>/`, card scenarios in `packages/spec/test/cards/<set>/` (see `06-testing.md`).
+- A rule scenario starts with `rule <number>:`. A card scenario with `card <id>:`.
+- No test depends on the network, the time of day or the execution order.
 
 ## Git
 
-- Branche principale : `main`, protégée. Tout passe par une PR, même en solo (la CI doit être verte).
-- Branches : `feat/…`, `fix/…`, `rules/…` (implémentation de règles), `cards/…`, `docs/…`, `chore/…`.
-- Commits : **Conventional Commits** avec le package en portée : `feat(rules): implement channel step (315.3)`, `fix(server): resync on sequence gap`, `test(spec): cover mulligan (117)`.
-- Portées autorisées, vérifiées par commitlint (hook `commit-msg` et CI) : le nom d'un package ou d'une app (`types`, `rules`, `cards`, `codex`, `protocol`, `log`, `mind`, `sim`, `testkit`, `spec`, `telemetry`, `db`, `ui`, `server`, `play`, `site`, `console`, `cli`), ou `repo` (outillage du monorepo), `ci`, `deps`, `docs`. La portée est facultative. La liste est dans `commitlint.config.js`.
-- Une PR = un sujet. Le modèle de PR demande les règles touchées, les tests ajoutés et l'impact sur le protocole ou le format du journal.
-- Versionnement : les packages restent privés au monorepo. Les formats qui sortent du repo (protocole, journal, snapshot codex) ont leur propre numéro de version, incrémenté à chaque changement incompatible.
+- Main branch: `main`, protected. Everything goes through a PR, even solo (the CI must be green).
+- Branches: `feat/…`, `fix/…`, `rules/…` (rule implementation), `cards/…`, `docs/…`, `chore/…`.
+- Commits: **Conventional Commits** with the package as scope: `feat(rules): implement channel step (315.3)`, `fix(server): resync on sequence gap`, `test(spec): cover mulligan (117)`.
+- Allowed scopes, checked by commitlint (`commit-msg` hook and CI): the name of a package or app (`types`, `rules`, `cards`, `codex`, `protocol`, `log`, `mind`, `sim`, `testkit`, `spec`, `telemetry`, `db`, `ui`, `server`, `play`, `site`, `console`, `cli`), or `repo` (monorepo tooling), `ci`, `deps`, `docs`. The scope is optional. The list is in `commitlint.config.js`.
+- One PR = one topic. The PR template asks for the rules touched, the tests added and the impact on the protocol or the log format.
+- Versioning: packages stay private to the monorepo. Formats that leave the repo (protocol, log, codex snapshot) have their own version number, incremented on every breaking change.
 
 ## Documentation
 
-- Un changement de contrat (types publics, protocole, format du journal, métrique, endpoint de santé) met à jour la doc correspondante dans la même PR.
-- Une décision d'architecture passe par un ADR (`docs/decisions/`, modèle dans `README.md` du dossier).
-- Une règle ambiguë va dans `docs/rules/questions.md`, avec le numéro, la question, les sources consultées et la décision provisoire.
+- A contract change (public types, protocol, log format, metric, health endpoint) updates the corresponding doc in the same PR.
+- An architecture decision goes through an ADR (`docs/decisions/`, template in the folder's `README.md`).
+- An ambiguous rule goes into `docs/rules/questions.md`, with the number, the question, the sources consulted and the provisional decision.

@@ -1,8 +1,8 @@
-# Questions de règles ouvertes
+# Open rule questions
 
-Une entrée par question. On ne retire jamais une entrée : on la marque résolue, avec la source.
+One entry per question. An entry is never removed: it is marked resolved, with the source.
 
-## Modèle
+## Template
 
 ```markdown
 ### Q-NNN — Short title
@@ -17,12 +17,12 @@ Une entrée par question. On ne retire jamais une entrée : on la marque résolu
 
 ## Questions
 
-### Q-001 — Runes supplémentaires du second joueur au premier tour
+### Q-001 — Second player's extra runes on the first turn
 
-- **Règles** : 315.3, 115.2, section des modes de jeu
-- **Version** : CR-2026-10-09 (question ouverte sur CR-1.4)
-- **Question** : la règle 315.3 dit que le joueur actif canalise 2 runes. Les guides de jeu indiquent que le second joueur en canalise 3 à son premier tour. Vérifier dans le PDF où et comment ce bonus est défini (ajustements de premier tour en 115.2 ou section du mode 1v1), et s'il dépend du mode.
-- **Sources consultées** : Core Rules 1.4 (315.3), guides de jeu non officiels, confirmation du mainteneur.
-- **Décision** : en 1v1, le premier joueur canalise 2 runes à son premier tour, le second joueur en canalise 3. Ensuite, 2 runes par tour pour les deux. Le test doit citer le numéro exact de la règle qui définit ce bonus dans le PDF (115.2 ou section du mode) ; s'il n'est pas trouvé, le test est marqué `question` jusqu'à ce qu'il le soit.
-- **Statut** : résolue sur le comportement (2026-10-30, mainteneur). Numéro de règle à confirmer dans le PDF.
-- **À faire (CR-2026-10-09)** : le bonus du second joueur doit être retrouvé dans le nouveau PDF. Les numéros cités plus haut viennent de CR-1.4 : dans CR-2026-10-09, 315.3 est l'en-tête « Channel Phase » et c'est 431.4.a qui dit qu'un joueur canalise deux runes pendant la Channel Phase. La renumérotation se fait avec `/rules-update` au début de M1.
+- **Rules**: 315.3, 115.2, game modes section
+- **Version**: CR-2026-10-09 (question opened against CR-1.4)
+- **Question**: rule 315.3 says the active player channels 2 runes. Play guides say the second player channels 3 on their first turn. Check in the PDF where and how this bonus is defined (first-turn adjustments in 115.2 or the 1v1 mode section), and whether it depends on the mode.
+- **Sources consulted**: Core Rules 1.4 (315.3), unofficial play guides, maintainer confirmation.
+- **Decision**: in 1v1, the first player channels 2 runes on their first turn, the second player channels 3. After that, 2 runes per turn for both. The test must quote the exact number of the rule that defines this bonus in the PDF (115.2 or the mode section); if it is not found, the test is marked `question` until it is.
+- **Status**: resolved on behavior (2026-10-30, maintainer). Rule number to be confirmed in the PDF.
+- **To do (CR-2026-10-09)**: the second player's bonus must be found in the new PDF. The numbers quoted above come from CR-1.4: in CR-2026-10-09, 315.3 is the "Channel Phase" heading, and 431.4.a is the rule saying a player channels two runes during the Channel Phase. Renumbering is done with `/rules-update` at the start of M1.

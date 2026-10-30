@@ -1,23 +1,23 @@
 # CLAUDE.md — packages/telemetry
 
-Logs, métriques, traces, erreurs et healthchecks partagés.
+Shared logs, metrics, traces, errors and healthchecks.
 
-## Dépendances
+## Dependencies
 
-- **Autorisées** : Pino, prom-client, OpenTelemetry, SDK Sentry (vers GlitchTip).
-- **Interdites** : dépendre d'un package métier.
+- **Allowed**: Pino, prom-client, OpenTelemetry, Sentry SDK (to GlitchTip).
+- **Forbidden**: depending on a domain package.
 
-## API publique
+## Public API
 
-`createLogger`, `metrics` (registre et métriques déclarées), `tracer`, `captureError`, `createHealthRegistry` (checks avec seuils).
+`createLogger`, `metrics` (registry and declared metrics), `tracer`, `captureError`, `createHealthRegistry` (checks with thresholds).
 
-## Points d'attention
+## Points of attention
 
-- Toutes les métriques sont déclarées ici, avec le préfixe `foil_`, et listées dans `docs/07-observability.md`.
-- Jamais de secret, de jeton ni d'information cachée de jeu dans les logs.
+- All metrics are declared here, with the `foil_` prefix, and listed in `docs/07-observability.md`.
+- Never a secret, a token or hidden game information in the logs.
 
-## À lire
+## Read
 
 - `docs/07-observability.md`
 
-Les règles générales du projet sont dans le `CLAUDE.md` racine.
+The general project rules are in the root `CLAUDE.md`.

@@ -1,118 +1,118 @@
 # 12 — Roadmap
 
-Chaque jalon a des critères d'acceptation vérifiables. On ne passe au suivant que quand tous sont remplis. Les cases se cochent dans ce fichier au fil du travail.
+Each milestone has verifiable acceptance criteria. We only move to the next one when all of them are met. Boxes are checked in this file as the work progresses.
 
-L'ordre est dicté par les dépendances : le moteur d'abord, testé, puis tout ce qui s'appuie dessus. L'observabilité arrive tôt, parce qu'on construit dessus dès le premier serveur.
+The order is driven by dependencies: the engine first, tested, then everything that builds on it. Observability arrives early, because we build on it from the first server.
 
-## M0 — Outillage
+## M0 — Tooling
 
-- [x] Monorepo pnpm + Turborepo, TypeScript strict (`tsconfig.base.json` : `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
-- [x] Biome (lint et format), Vitest, fast-check.
-- [x] CI GitHub Actions : install, lint, typecheck, test, sur chaque PR et sur `main`.
-- [x] Vérification des règles de dépendance entre packages (`01-architecture.md`) en CI.
-- [x] Conventional Commits vérifiés (commitlint) et modèles d'issues et de PR.
-- [x] Les PDF des Core Rules et des Tournament Rules dans `docs/rules/`.
+- [x] pnpm + Turborepo monorepo, strict TypeScript (`tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`).
+- [x] Biome (lint and format), Vitest, fast-check.
+- [x] GitHub Actions CI: install, lint, typecheck, test, on every PR and on `main`.
+- [x] Check of the dependency rules between packages (`01-architecture.md`) in CI.
+- [x] Conventional Commits checked (commitlint), and issue and PR templates.
+- [x] The Core Rules and Tournament Rules PDFs in `docs/rules/`.
 
-**Accepté quand** : `pnpm install && pnpm lint && pnpm typecheck && pnpm test` passe en local et en CI sur un repo sans code métier.
+**Accepted when**: `pnpm install && pnpm lint && pnpm typecheck && pnpm test` passes locally and in CI on a repo with no domain code.
 
-## M1 — Modèle et squelette du moteur
+## M1 — Model and engine skeleton
 
-- [ ] `types` : identifiants, `CardDefinition`, état, zones, actions, événements, vues, décisions.
-- [ ] `rules` : RNG à graine sérialisable (xoshiro128** ou PCG) et ses tests.
-- [ ] `rules` : `createGame` avec la mise en place complète (104–118), mulligan compris.
-- [ ] `rules` : `viewFor` et le test de non-fuite.
-- [ ] `testkit` : `board()`, `scenario()`, cartes de test, et l'indexation des Core Rules (`foil rules index`).
-- [ ] `testkit` : rapport de couverture des règles (même vide).
+- [ ] `types`: identifiers, `CardDefinition`, state, zones, actions, events, views, decisions.
+- [ ] `rules`: serializable seeded RNG (xoshiro128** or PCG) and its tests.
+- [ ] `rules`: `createGame` with the complete setup (104–118), mulligan included.
+- [ ] `rules`: `viewFor` and the no-leak test.
+- [ ] `testkit`: `board()`, `scenario()`, test cards, and Core Rules indexing (`foil rules index`).
+- [ ] `testkit`: rule coverage report (even empty).
 
-**Accepté quand** : une partie se crée de façon déterministe à partir d'une graine, le mulligan est testé avec ses numéros de règles, et le rapport de couverture liste toutes les règles du PDF.
+**Accepted when**: a game is created deterministically from a seed, the mulligan is tested with its rule numbers, and the coverage report lists every rule of the PDF.
 
-## M2 — Un jeu complet, cartes sans capacités
+## M2 — A complete game, cards without abilities
 
-Le but : une vraie partie de bout en bout, avec des unités sans texte, des runes et des battlefields sans capacité.
+The goal: a real game end to end, with vanilla units, runes and battlefields without abilities.
 
-- [ ] Le tour : début de tour (Awaken, Beginning avec scoring, Channel, Draw et Burn Out), phase principale, fin de tour (315–317).
-- [ ] Le pool de runes, l'énergie et la puissance, le paiement et le paiement automatique (160–168).
-- [ ] Jouer une unité (349–359, sans capacités).
-- [ ] Le déplacement standard (144, 445+).
-- [ ] Les cleanups à point fixe (318–324).
-- [ ] Les showdowns sans sorts (341–348) et le combat (459–466).
-- [ ] Tenir et conquérir, la règle du dernier point (467–472), la victoire (193–196), l'abandon (649).
-- [ ] Le mode 1v1 (section des modes), avec ses particularités de premier tour (second joueur : 3 runes au premier tour, voir Q-001).
-- [ ] `log` : format du journal, sérialisation, replay, empreinte d'état.
-- [ ] Fuzzer et invariants (`06-testing.md`), 10 000 parties sans violation.
-- [ ] Benchmarks du moteur et budgets en CI.
+- [ ] The turn: start of turn (Awaken, Beginning with scoring, Channel, Draw and Burn Out), main phase, end of turn (315–317).
+- [ ] The rune pool, energy and power, payment and automatic payment (160–168).
+- [ ] Playing a unit (349–359, without abilities).
+- [ ] Standard move (144, 445+).
+- [ ] Fixed-point cleanups (318–324).
+- [ ] Showdowns without spells (341–348) and combat (459–466).
+- [ ] Hold and conquer, the last-point rule (467–472), victory (193–196), conceding (649).
+- [ ] The 1v1 mode (modes section), with its first-turn specifics (second player: 3 runes on the first turn, see Q-001).
+- [ ] `log`: log format, serialization, replay, state fingerprint.
+- [ ] Fuzzer and invariants (`06-testing.md`), 10,000 games without a violation.
+- [ ] Engine benchmarks and budgets in CI.
 
-**Accepté quand** : 10 000 parties aléatoires vont au bout sans violation d'invariant, chaque règle des sections ci-dessus est `covered`, et le rejeu de chaque partie est déterministe.
+**Accepted when**: 10,000 random games run to the end without an invariant violation, every rule of the sections above is `covered`, and the replay of every game is deterministic.
 
-## M3 — La chaîne, les capacités et les mots-clés
+## M3 — The chain, abilities and keywords
 
-- [ ] La chaîne et le processus HOT FEPR (325–340), avec un nom par étape dans le code.
-- [ ] Les sorts (153–159), le timing Action et Reaction (806, 813), les showdowns avec sorts.
-- [ ] Les capacités passives, de remplacement, activées, déclenchées (360+), l'ordre des déclencheurs simultanés.
-- [ ] Les couches (473–480) et `characteristics()`.
-- [ ] Les équipements et l'attachement (147–152, 716).
-- [ ] Les jetons (179–187).
-- [ ] Le DSL de `cards` et un module par mot-clé de la section 800.
-- [ ] Le mode manuel (`ManualOverride`).
+- [ ] The chain and the HOT FEPR process (325–340), with one name per step in the code.
+- [ ] Spells (153–159), Action and Reaction timing (806, 813), showdowns with spells.
+- [ ] Passive, replacement, activated and triggered abilities (360+), the order of simultaneous triggers.
+- [ ] Layers (473–480) and `characteristics()`.
+- [ ] Gear and attachment (147–152, 716).
+- [ ] Tokens (179–187).
+- [ ] The `cards` DSL and one module per keyword of section 800.
+- [ ] Manual mode (`ManualOverride`).
 
-**Accepté quand** : chaque mot-clé a ses scénarios, le fuzzer tourne avec des cartes de test couvrant tous les mots-clés, et les sections ci-dessus sont `covered`.
+**Accepted when**: every keyword has its scenarios, the fuzzer runs with test cards covering every keyword, and the sections above are `covered`.
 
-## M4 — Les vraies cartes
+## M4 — The real cards
 
-- [ ] `codex` : synchronisation Riftcodex, normalisation `CardDefinition` et `Printing`, snapshots, diff entre snapshots.
-- [ ] Errata, bannissements, configuration des boosters (saisis à la main avec leurs sources).
-- [ ] Validation de deck et import (liste texte, format Foil, codes des deckbuilders si documentés).
-- [ ] Implémentation complète de deux decks champion (pool fermé), statut `complete` pour toutes leurs cartes.
-- [ ] Rapport de couverture des cartes.
+- [ ] `codex`: Riftcodex sync, `CardDefinition` and `Printing` normalization, snapshots, diff between snapshots.
+- [ ] Errata, bans, booster configuration (entered by hand with their sources).
+- [ ] Deck validation and import (text list, Foil format, deckbuilder codes if documented).
+- [ ] Full implementation of two champion decks (closed pool), `complete` status for all their cards.
+- [ ] Card coverage report.
 
-**Accepté quand** : deux decks champion s'affrontent sur 10 000 parties sans mode manuel ni violation d'invariant.
+**Accepted when**: two champion decks play each other over 10,000 games without manual mode or invariant violations.
 
-## M5 — Serveur, observabilité, console
+## M5 — Server, observability, console
 
-- [ ] `telemetry` : logs Pino, métriques Prometheus, traces OpenTelemetry, erreurs GlitchTip.
-- [ ] `infra/` : Docker Compose des dépendances et de la stack d'observabilité, tableaux de bord et alertes versionnés.
-- [ ] `apps/server` : `/healthz`, `/readyz`, `/health/details`, `/metrics`, auto-test du moteur au démarrage.
-- [ ] `protocol` et WebSocket : rejoindre, intention, événements filtrés, décision, refus, fin, resynchronisation, reprise après redémarrage.
-- [ ] Salons privés et solo, comptes invités.
-- [ ] `apps/cli` : `foil health`, `foil replay`, `foil scenario`, `foil rules coverage`, `foil codex sync`.
-- [ ] Parcours synthétique et métrique associée.
-- [ ] `apps/console` : santé, parties en cours, replays, règles (couverture et lanceur de scénarios), cartes, erreurs.
+- [ ] `telemetry`: Pino logs, Prometheus metrics, OpenTelemetry traces, GlitchTip errors.
+- [ ] `infra/`: Docker Compose for the dependencies and the observability stack, versioned dashboards and alerts.
+- [ ] `apps/server`: `/healthz`, `/readyz`, `/health/details`, `/metrics`, engine self-test at startup.
+- [ ] `protocol` and WebSocket: join, intent, filtered events, decision, refusal, end, resync, resumption after a restart.
+- [ ] Private and solo rooms, guest accounts.
+- [ ] `apps/cli`: `foil health`, `foil replay`, `foil scenario`, `foil rules coverage`, `foil codex sync`.
+- [ ] Synthetic journey and its metric.
+- [ ] `apps/console`: health, running games, replays, rules (coverage and scenario runner), cards, errors.
 
-**Accepté quand** : `pnpm health` est vert sur la stack locale complète, une partie entre deux navigateurs se joue jusqu'au bout, un redémarrage du serveur en pleine partie la reprend sans perte, et la console affiche tout ce qui est listé dans `07-observability.md`.
+**Accepted when**: `pnpm health` is green on the full local stack, a game between two browsers is played to the end, a server restart in the middle of a game resumes it without loss, and the console shows everything listed in `07-observability.md`.
 
-## M6 — Le client de jeu
+## M6 — The game client
 
-- [ ] `ui` : tokens synchronisés depuis `brand`, composants, son, motion.
-- [ ] `apps/play` : table complète pilotée par les événements, decks, bibliothèque, replays.
-- [ ] Rewind et forward, paiement automatique, contrôles de showdown, emotes.
-- [ ] Tactile, clavier, lecteurs d'écran, `prefers-reduced-motion`.
+- [ ] `ui`: tokens synced from `brand`, components, sound, motion.
+- [ ] `apps/play`: full event-driven table, decks, library, replays.
+- [ ] Rewind and forward, automatic payment, showdown controls, emotes.
+- [ ] Touch, keyboard, screen readers, `prefers-reduced-motion`.
 
-**Accepté quand** : une partie complète se joue au clavier seul, sur mobile, et avec les animations réduites ; les tests Playwright couvrent un tour complet.
+**Accepted when**: a full game can be played with the keyboard alone, on mobile, and with reduced animations; Playwright tests cover a full turn.
 
-## M7 — L'IA
+## M7 — The AI
 
-- [ ] Politiques `random`, `greedy`, `mcts` avec déterminisation.
-- [ ] Explication des coups affichée dans le client.
-- [ ] IA dans un Web Worker pour le mode hors ligne.
-- [ ] Tournoi nocturne entre politiques et alerte de non-régression.
+- [ ] `random`, `greedy`, `mcts` policies with determinization.
+- [ ] Move explanations displayed in the client.
+- [ ] AI in a Web Worker for offline mode.
+- [ ] Nightly tournament between policies and a non-regression alert.
 
-**Accepté quand** : `mcts` bat `greedy` dans au moins 70 % des parties sur le panel de decks, avec un budget de 2 secondes par coup.
+**Accepted when**: `mcts` beats `greedy` in at least 70% of games on the deck panel, with a budget of 2 seconds per move.
 
-## M8 — Simulations, point faible, sealed
+## M8 — Simulations, weak spot, sealed
 
-- [ ] `sim` : jobs, workers, file, résultats avec intervalles de confiance.
-- [ ] Point faible d'un deck et d'un coup.
-- [ ] Sealed : ouverture de boosters fidèle à `booster-config.json`, construction depuis le pool.
-- [ ] Matchmaking public (constructed et sealed, BO1 et BO3), spectateurs.
+- [ ] `sim`: jobs, workers, queue, results with confidence intervals.
+- [ ] Weak spot of a deck and of a move.
+- [ ] Sealed: booster opening faithful to `booster-config.json`, building from the pool.
+- [ ] Public matchmaking (constructed and sealed, BO1 and BO3), spectators.
 
-**Accepté quand** : une simulation de 10 000 parties entre deux decks rend un résultat reproductible avec son intervalle de confiance, et l'ouverture de boosters reproduit les taux configurés sur 100 000 tirages.
+**Accepted when**: a simulation of 10,000 games between two decks gives a reproducible result with its confidence interval, and booster opening reproduces the configured rates over 100,000 draws.
 
-## M9 — Mise en production
+## M9 — Going to production
 
-- [ ] Repo privé `infra` : VPS, Compose, Caddy, déploiement par étiquette d'image, secrets chiffrés.
-- [ ] Sauvegardes et test de restauration.
-- [ ] Uptime Kuma externe et page de statut.
-- [ ] `apps/site` avec la mention de Riot.
-- [ ] Runbooks de toutes les alertes.
+- [ ] Private `infra` repo: VPS, Compose, Caddy, deployment by image tag, encrypted secrets.
+- [ ] Backups and a restore test.
+- [ ] External Uptime Kuma and status page.
+- [ ] `apps/site` with Riot's notice.
+- [ ] Runbooks for every alert.
 
-**Accepté quand** : la production passe `foil health --env prod`, une restauration de sauvegarde a été testée, et chaque alerte a son runbook.
+**Accepted when**: production passes `foil health --env prod`, a backup restore has been tested, and every alert has its runbook.

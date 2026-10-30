@@ -1,12 +1,12 @@
 ---
-description: Où en est la roadmap
+description: Where the roadmap stands
 ---
 
-Lis `docs/12-roadmap.md` et le code, puis résume :
+Read `docs/12-roadmap.md` and the code, then summarize:
 
-1. Le jalon en cours, les cases cochées et celles qui restent.
-2. Pour chaque critère d'acceptation du jalon, s'il est rempli (vérifie-le : lance les commandes correspondantes plutôt que de te fier aux cases).
-3. Ce qui bloque, et les questions ouvertes de règles ou les ADR « Proposé » qui en dépendent.
-4. Les trois prochaines tâches, dans l'ordre.
+1. The current milestone, the boxes checked and those remaining.
+2. For each acceptance criterion of the milestone, whether it is met (check it: run the matching commands rather than trusting the boxes).
+3. What blocks, and the open rule questions or "Proposed" ADRs it depends on.
+4. The next three tasks, in order.
 
-Si une case est cochée alors que le critère n'est pas rempli, signale-le.
+If a box is checked while the criterion is not met, flag it.
