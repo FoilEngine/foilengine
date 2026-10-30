@@ -60,6 +60,7 @@ pnpm lint               # biome (lint and format, CI mode)
 pnpm format             # biome: applies formatting and safe fixes
 pnpm check:deps         # dependency rules between packages (docs/01-architecture.md)
 pnpm foil <command>     # the foil CLI (apps/cli), e.g. `pnpm foil rules index`
+pnpm test:rules         # rule coverage report (pnpm test:rules --pin to pin newly covered rules)
 ```
 
 Prerequisites: Node 24 LTS (`.nvmrc`); the pnpm version is pinned by `packageManager`.
@@ -68,7 +69,6 @@ Scripts not created yet, with the milestone they arrive in (`docs/12-roadmap.md`
 
 | Script | Role | Milestone |
 | --- | --- | --- |
-| `pnpm test:rules` | rule tests and the rule coverage report | M1 |
 | `pnpm fuzz` | random games with invariant checks | M2 |
 | `pnpm cards:coverage` | card coverage report (`docs/04-cards-and-effects.md`) | M4 |
 | `pnpm infra:up`, `pnpm infra:obs` | local dependencies and observability stack (`infra/README.md`) | M5 |
