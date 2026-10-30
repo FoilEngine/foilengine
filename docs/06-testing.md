@@ -12,7 +12,7 @@ The goal: be able to test **every rule** of the Core Rules, know at any time whi
 | **Fuzzing** | `fuzz()` + fast-check | Thousands of random games, invariants at every step | Short on every commit, long every night |
 | **Reference replays** | `golden/` | Full games replayed, final state identical bit for bit | Every commit |
 | Properties | fast-check | Serialization, determinism, `viewFor` without leaks | Every commit |
-| Benchmarks | `vitest bench` | Engine performance budgets | Every PR |
+| Benchmarks | `vitest bench`, `packages/spec/bench/` | Engine performance budgets, no regression above 20% (`03-rules-engine.md`) | Every PR |
 | Server integration | Vitest + real server + Postgres and Valkey in containers | Protocol, rooms, reconnection, authority | Every PR |
 | Load | k6 | Concurrent games, WebSocket latency | Before every significant production release |
 | End to end | Playwright | Client flows (create a room, play a turn, watch the replay) | Every PR touching `play` |
