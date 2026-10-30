@@ -223,7 +223,11 @@ importers:
 
   packages/protocol: {}
 
-  packages/rules: {}
+  packages/rules:
+    dependencies:
+      '@foilengine/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/sim: {}
 

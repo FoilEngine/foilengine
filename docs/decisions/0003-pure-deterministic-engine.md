@@ -9,11 +9,13 @@ Replays, rewind, tests, fuzzing, the AI and bug detection in production all rely
 
 ## Decision
 
-`@foilengine/rules` does no I/O, uses neither the clock nor `Math.random`, and depends only on `types`. Randomness comes from a seeded PRNG (xoshiro128** or PCG) whose state is stored in `GameState`.
+`@foilengine/rules` does no I/O, uses neither the clock nor `Math.random`, and depends only on `types`. Randomness comes from a seeded PRNG whose state is stored in `GameState`.
+
+**Generator (chosen in M1)**: xoshiro128** 1.1 (Blackman and Vigna, public domain), in `packages/rules/src/rng/`. It only uses 32-bit integer operations (`Math.imul`, shifts), so Node and browsers produce the same sequence without `BigInt`. The initial state is derived from the game seed (a string) by four FNV-1a lanes with a Murmur3 finalizer. Tests check the generator against values computed from the official C source, and lock the seed derivation.
 
 ## Consequences
 
-Replaying seed + actions gives exactly the same game. Any divergence is a bug that can be detected automatically (fuzzer, control replay in production).
+Replaying seed + actions gives exactly the same game. The seed derivation (`createRng`) is part of the replay contract: changing it changes every game recorded from a seed, so it needs a new log format version. Any divergence is a bug that can be detected automatically (fuzzer, control replay in production).
 
 ## Rejected alternatives
 

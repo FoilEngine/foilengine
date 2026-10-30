@@ -18,7 +18,7 @@ The order is driven by dependencies: the engine first, tested, then everything t
 ## M1 — Model and engine skeleton
 
 - [x] `types`: identifiers, `CardDefinition`, state, zones, actions, events, views, decisions.
-- [ ] `rules`: serializable seeded RNG (xoshiro128** or PCG) and its tests.
+- [x] `rules`: serializable seeded RNG (xoshiro128** or PCG) and its tests.
 - [ ] `rules`: `createGame` with the complete setup (104–118), mulligan included.
 - [ ] `rules`: `viewFor` and the no-leak test.
 - [ ] `testkit`: `board()`, `scenario()`, test cards, and Core Rules indexing (`foil rules index`).
