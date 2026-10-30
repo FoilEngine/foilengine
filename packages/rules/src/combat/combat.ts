@@ -6,6 +6,7 @@ import type {
   AssignDamageDecision,
   CardDefinition,
   DamageAssignment,
+  GameObject,
   GameState,
   IllegalReason,
   ObjectId,
@@ -31,11 +32,11 @@ type UnitsView = Pick<GameState, 'objects' | 'cards'>;
 /** A unit's Might (143.2); below 0 it counts as 0 (143.2.c). No layers before M3. */
 export function mightOf(state: UnitsView, unit: ObjectId): number {
   const object = state.objects[unit];
-  const might =
-    object === undefined
-      ? 0
-      : ((state.cards[object.card] as CardDefinition | undefined)?.might ?? 0);
-  return Math.max(0, might);
+  return object === undefined ? 0 : mightOfObject(state.cards, object);
+}
+
+function mightOfObject(cards: GameState['cards'], object: GameObject): number {
+  return Math.max(0, (cards[object.card] as CardDefinition | undefined)?.might ?? 0);
 }
 
 /** Damage still needed to make the unit's damage lethal: non-zero and at least its Might (142.4.b). */
@@ -47,7 +48,7 @@ const unitsOf = (draft: Draft, battlefield: ObjectId, player: PlayerId) =>
   battlefieldOf(draft, battlefield).units.filter((unit) => controllerOf(draft, unit) === player);
 
 const sumMight = (draft: Draft, units: readonly ObjectId[]) =>
-  units.reduce((total, unit) => total + mightOf(draft, unit), 0);
+  units.reduce((total, unit) => total + mightOfObject(draft.cards, objectOf(draft, unit)), 0);
 
 /**
  * 323.12, 466: a Combat begins at a battlefield where it is staged. It opens with a Combat
@@ -288,7 +289,7 @@ export function killLethalUnits(draft: Draft): boolean {
   for (const location of locations) {
     const dying = location.list.filter((id) => {
       const object = objectOf(draft, id);
-      return object.damage > 0 && object.damage >= mightOf(draft, id);
+      return object.damage > 0 && object.damage >= mightOfObject(draft.cards, object);
     });
     if (dying.length === 0) continue;
     location.set(location.list.filter((id) => !dying.includes(id)));

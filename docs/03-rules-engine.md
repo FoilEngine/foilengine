@@ -105,6 +105,12 @@ The engine will be called millions of times by simulations and the AI. Indicativ
 
 A regression of more than 20% on a benchmark fails the CI.
 
+The benchmarks are in `packages/spec/bench/` and run with `pnpm bench`. They use the test cards; "mid-game" is the first Main Phase from turn 5 on, with at least four cards in hand, of a random game with a fixed seed. Each benchmark asserts its budget on the mean time of one call. They run on native Node ESM (`vitest.bench.config.ts`): Vite's module runner would add a getter call to every import, a cost that is not the engine's.
+
+The CI job "Engine benchmarks" checks the budgets. On a pull request, it first benchmarks the base branch on the same runner, then compares the medians with `scripts/compare-bench.ts`: a benchmark more than 20% slower fails the job. The comparison table goes to the job summary.
+
+To keep these budgets, a draft (`draft.ts`) does not copy the objects of the state: it records the objects it changes on top of them, and `stateOf` builds the new table once. `apply` checks a `PlayCard` or a `StandardMove` while applying it, instead of simulating it a first time in `isLegal`.
+
 ## Rules versions
 
 The engine carries the version of the Core Rules it implements (`rulesVersion`). When Riot publishes a new version:

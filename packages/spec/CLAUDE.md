@@ -11,6 +11,8 @@ Rule and card scenarios. Tests only: this package exports nothing and nothing de
 
 - `test/rules/<section>/`: rule scenarios. Each title starts with `rule <exact number>:` and declares `rules: [...]`.
 - `test/cards/<set>/`: card scenarios. Each title starts with `card <id>:`.
+- `test/engine/`: engine properties (determinism, no leak, payment), not rules.
+- `bench/`: engine benchmarks and their budgets (`pnpm bench`, docs/03-rules-engine.md).
 
 ## Points of attention
 
