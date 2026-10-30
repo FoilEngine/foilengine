@@ -3,8 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "foil": "./src/main.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@foilengine/testkit": "workspace:*",
+    "unpdf": "1.9.1"
   }
 }
