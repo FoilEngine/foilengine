@@ -15,7 +15,15 @@ export type IllegalCode =
   /** A chosen card is not where it must be. */
   | 'card-not-in-hand'
   /** The same card was chosen twice. */
-  | 'duplicate-card';
+  | 'duplicate-card'
+  /** The card cannot be played from where it is, or is not a kind of card that can be played yet. */
+  | 'card-not-playable'
+  /** The location is not a valid one for this card (355.2). */
+  | 'invalid-location'
+  /** A rune of the payment cannot be used as requested. */
+  | 'invalid-payment'
+  /** The resources in the Rune Pool do not cover the cost (358.2). */
+  | 'cannot-pay';
 
 /** Why an action is illegal, with the rule that forbids it when there is one. */
 export type IllegalReason = {
@@ -35,7 +43,9 @@ export type SetupProblemCode =
   | 'champion-not-in-main-deck'
   | 'main-deck-too-small'
   | 'wrong-rune-count'
-  | 'wrong-battlefield-count';
+  | 'wrong-battlefield-count'
+  /** A card lacks what the engine needs to play it: a cost (131.1), a might (143), a single domain for a rune. */
+  | 'incomplete-card';
 
 /** Why a game cannot be created from a setup. */
 export type SetupProblem = {

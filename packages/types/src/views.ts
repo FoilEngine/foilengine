@@ -4,7 +4,7 @@
 import type { Decision } from './decisions.ts';
 import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
-import type { GameStage } from './state.ts';
+import type { GameStage, RunePool } from './state.ts';
 
 /** An object whose face the viewer may see. */
 export type VisibleObject = {
@@ -37,12 +37,15 @@ export type OpponentZones = PublicZones & { readonly hand: HiddenZone };
 export type SelfView = {
   readonly id: PlayerId;
   readonly points: number;
+  readonly runePool: RunePool;
   readonly zones: OwnZones;
 };
 
 export type OpponentView = {
   readonly id: PlayerId;
   readonly points: number;
+  /** Rune Pools are public: resources are added by public runes. */
+  readonly runePool: RunePool;
   readonly zones: OpponentZones;
 };
 

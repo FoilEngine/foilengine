@@ -1,12 +1,12 @@
 // The full game state. Only the server and the engine see it; players get a PlayerView.
 // Pure JSON (ADR 0004). Any change to its shape increments STATE_VERSION.
 
-import type { CardDefinition } from './cards.ts';
+import type { CardDefinition, Domain } from './cards.ts';
 import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -28,12 +28,23 @@ export type GameObject = {
 
 export type PlayerZones = { readonly [Z in PlayerZoneId]: readonly ObjectId[] };
 
+/**
+ * Energy and Power available to pay costs (165–166). `power.any` is Power of any domain
+ * ([A], 135.2.e.5.b), the Universal Power of 163.2.b. Empties at the start of each Main Phase
+ * and at the end of each turn (167).
+ */
+export type RunePool = {
+  readonly energy: number;
+  readonly power: { readonly [D in Domain | 'any']: number };
+};
+
 export type PlayerState = {
   readonly id: PlayerId;
   /** Never below 0 (194.4). */
   readonly points: number;
   /** Turns this player has started; the First Turn Process of the mode depends on it (485.7). */
   readonly turnsTaken: number;
+  readonly runePool: RunePool;
   /** Ordered zones list the top of the deck first. */
   readonly zones: PlayerZones;
 };
