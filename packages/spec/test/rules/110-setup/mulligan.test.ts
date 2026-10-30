@@ -123,7 +123,7 @@ describe('117 Mulligan', () => {
     expect(orders).toEqual(new Set(['kept', 'swapped']));
   });
 
-  it('rule 124: a recycled card becomes a new object; its identity stays private (128.4)', () => {
+  it('rule 124: a recycled card becomes a new object; its identity stays private (108.7.c)', () => {
     const { state } = start();
     const [a] = take(hand(state, first(state)), 1);
     const { state: after, events } = apply(state, {

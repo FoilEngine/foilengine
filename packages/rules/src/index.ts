@@ -15,3 +15,4 @@ export { type CreateGameResult, createGame, OPENING_HAND_SIZE } from './setup/cr
 export { MULLIGAN_MAX } from './setup/mulligan.ts';
 export { SUPPORTED_MODES } from './setup/validate-setup.ts';
 export { RULES_VERSION } from './version.ts';
+export { viewFor } from './view/view-for.ts';

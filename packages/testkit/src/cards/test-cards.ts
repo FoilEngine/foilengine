@@ -75,18 +75,54 @@ export function testDeck(overrides: Partial<DeckList> = {}): DeckList {
   };
 }
 
-/** A 1v1 Duel setup between players `A` and `B` (seating order A, B), both with `testDeck()`. */
+/**
+ * A copy of the test cards under other ids (`test:<variant>:…`), and the matching deck.
+ * Gives each player cards of their own, so a test can tell whose card a view shows.
+ */
+export function testDeckVariant(variant: string): {
+  deck: DeckList;
+  cards: Readonly<Record<CardId, CardDefinition>>;
+} {
+  const rename = (id: CardId) => id.replace(/^test:/, `test:${variant}:`) as CardId;
+  const cards = Object.fromEntries(
+    Object.values(TEST_CARD_DEFINITIONS).map((definition) => {
+      const id = rename(definition.id);
+      return [id, { ...definition, id }];
+    }),
+  );
+  const base = testDeck();
+  return {
+    deck: {
+      legend: rename(base.legend),
+      champion: rename(base.champion),
+      mainDeck: base.mainDeck.map(rename),
+      runeDeck: base.runeDeck.map(rename),
+      battlefields: base.battlefields.map(rename),
+    },
+    cards,
+  };
+}
+
+/**
+ * A 1v1 Duel setup between players `A` and `B` (seating order A, B), both with `testDeck()`.
+ * With `distinctDecks`, B plays `testDeckVariant('b')`: no card is shared between the players.
+ */
 export function testSetup(
-  overrides: Partial<Omit<GameSetup, 'players'>> & { players?: readonly PlayerSetup[] } = {},
+  overrides: Partial<Omit<GameSetup, 'players'>> & {
+    players?: readonly PlayerSetup[];
+    distinctDecks?: boolean;
+  } = {},
 ): GameSetup {
+  const { distinctDecks = false, ...rest } = overrides;
+  const b = distinctDecks ? testDeckVariant('b') : { deck: testDeck(), cards: {} };
   return {
     mode: '1v1-duel',
     rulesVersion: 'CR-2026-10-09',
     players: [
       { id: 'A' as PlayerId, deck: testDeck() },
-      { id: 'B' as PlayerId, deck: testDeck() },
+      { id: 'B' as PlayerId, deck: b.deck },
     ],
-    cards: TEST_CARD_DEFINITIONS,
-    ...overrides,
+    cards: { ...TEST_CARD_DEFINITIONS, ...b.cards },
+    ...rest,
   };
 }
