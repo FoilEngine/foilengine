@@ -254,6 +254,12 @@ export type CombatEnded = EventBase & {
   readonly winner: PlayerId | null;
 };
 
+/** A player conceded and was removed from the game (651). */
+export type PlayerConceded = EventBase & {
+  readonly type: 'PlayerConceded';
+  readonly player: PlayerId;
+};
+
 /** A turn began (301, 315). */
 export type TurnStarted = EventBase & {
   readonly type: 'TurnStarted';
@@ -350,7 +356,8 @@ export type GameEvent =
   | UnitKilled
   | UnitsHealed
   | UnitsRecalled
-  | CombatEnded;
+  | CombatEnded
+  | PlayerConceded;
 
 export type GameEventType = GameEvent['type'];
 
@@ -395,6 +402,7 @@ export const PRIVATE_EVENT_FIELDS = {
   UnitsHealed: [],
   UnitsRecalled: [],
   CombatEnded: [],
+  PlayerConceded: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */

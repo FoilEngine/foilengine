@@ -72,6 +72,19 @@ export type AssignCombatDamage = {
   readonly assignment: readonly { readonly unit: ObjectId; readonly amount: number }[];
 };
 
-export type Action = Mulligan | EndTurn | PlayCard | StandardMove | PassFocus | AssignCombatDamage;
+/** A player concedes; they may do so at any time (650). */
+export type Concede = {
+  readonly type: 'Concede';
+  readonly player: PlayerId;
+};
+
+export type Action =
+  | Mulligan
+  | EndTurn
+  | PlayCard
+  | StandardMove
+  | PassFocus
+  | AssignCombatDamage
+  | Concede;
 
 export type ActionType = Action['type'];
