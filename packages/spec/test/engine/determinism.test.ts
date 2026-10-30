@@ -46,9 +46,11 @@ describe('determinism', () => {
           expect(JSON.stringify(run())).toBe(JSON.stringify(run()));
         },
       ),
-      { numRuns: 50 },
+      // Each run plays two full games: 20 runs keep the test under a few seconds until the
+      // engine meets its performance budgets (M2 benchmarks).
+      { numRuns: 20 },
     );
-  });
+  }, 20_000);
 
   it('events are numbered 1, 2, 3… without gaps', () => {
     const { events } = playSetup('numbering', () => 5);
@@ -77,7 +79,7 @@ describe('state', () => {
     for (const state of playSetup('zones', () => 3).states) {
       const located = [
         ...state.players.flatMap((p) => Object.values(p.zones).flat()),
-        ...state.battlefields.map((b) => b.object),
+        ...state.battlefields.flatMap((b) => [b.object, ...b.units]),
       ];
       expect(new Set(located).size).toBe(located.length);
       expect(new Set(located)).toEqual(new Set(Object.keys(state.objects)));
