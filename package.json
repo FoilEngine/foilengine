@@ -16,6 +16,7 @@
     "test": "turbo run test && vitest run",
     "test:rules": "node apps/cli/src/main.ts rules coverage",
     "bench": "pnpm --filter @foilengine/spec bench",
+    "fuzz": "node apps/cli/src/main.ts fuzz",
     "check:deps": "node scripts/check-deps.ts",
     "prepare": "lefthook install",
     "foil": "node apps/cli/src/main.ts"

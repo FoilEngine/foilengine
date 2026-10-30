@@ -1,35 +1,21 @@
-// Rules exercised by playing: the rules quoted by the events of random games.
-// In M1 the games stop after setup; the M2 fuzzer will play them to the end.
+// Rules exercised by playing: the rules quoted by the events of random games, played to the
+// end by the fuzzer (docs/06-testing.md). Invariants are the fuzzer's job: not checked here.
 
-import { apply, createGame, legalActions, pendingDecision } from '@foilengine/rules';
-import type { GameEvent, Seed } from '@foilengine/types';
-import { testSetup } from '../cards/test-cards.ts';
+import { playFuzzGame } from '../fuzz/fuzz.ts';
 
 export function exercisedRules(games = 25): Set<string> {
   const rules = new Set<string>();
-  const record = (events: readonly GameEvent[]) => {
-    for (const event of events) if (event.rule !== null) rules.add(event.rule);
-  };
   for (let game = 0; game < games; game++) {
-    const created = createGame(testSetup({ distinctDecks: true }), `exercise-${game}` as Seed);
-    if (!created.ok) throw new Error(`Test setup refused: ${JSON.stringify(created.problems)}`);
-    record(created.events);
-    let state = created.state;
-    let turn = 0;
-    for (
-      let decision = pendingDecision(state);
-      decision !== null;
-      decision = pendingDecision(state)
-    ) {
-      const actions = legalActions(state, decision.player).filter(
-        (action) => action.type !== 'Concede',
+    const result = playFuzzGame(
+      { seed: `exercise-${game}`, policy: 'uniform', choices: [] },
+      { invariants: [] },
+    );
+    if (result.violation !== null) {
+      throw new Error(
+        `Game exercise-${game}: ${result.violation.invariant}: ${result.violation.message}`,
       );
-      const action = actions[(game * 7 + turn++) % actions.length];
-      if (action === undefined) break;
-      const result = apply(state, action);
-      record(result.events);
-      state = result.state;
     }
+    for (const rule of result.rules) rules.add(rule);
   }
   return rules;
 }

@@ -254,12 +254,18 @@ importers:
 
   packages/testkit:
     dependencies:
+      '@foilengine/log':
+        specifier: workspace:*
+        version: link:../log
       '@foilengine/rules':
         specifier: workspace:*
         version: link:../rules
       '@foilengine/types':
         specifier: workspace:*
         version: link:../types
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
       vitest:
         specifier: 5.0.5
         version: 5.0.5(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(jiti@2.7.0))
