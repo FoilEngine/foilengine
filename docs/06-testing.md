@@ -1,4 +1,4 @@
-# 06 — Tests (`@foilengine/testkit`)
+# 06 — Tests (`@foilengine/testkit` et `@foilengine/spec`)
 
 L'objectif : pouvoir tester **chaque règle** des Core Rules, savoir à tout moment lesquelles sont couvertes, et transformer chaque bug en test.
 
@@ -21,6 +21,8 @@ L'objectif : pouvoir tester **chaque règle** des Core Rules, savoir à tout mom
 ## Le harnais de scénarios
 
 Un scénario décrit un état de départ, des actions, et ce qu'on attend. Il cite toujours la ou les règles testées.
+
+Le harnais vit dans `@foilengine/testkit` ; les scénarios vivent dans `@foilengine/spec`, qui dépend de `rules`, `cards` et `testkit` et dont rien ne dépend : `packages/spec/test/rules/<section>/` pour les règles, `packages/spec/test/cards/<set>/` pour les cartes. Ainsi `rules` et `cards` ne dépendent jamais de `testkit` (pas de cycle). Les tests unitaires d'un package (RNG, calcul de coût…) restent dans son propre `test/`.
 
 ```ts
 scenario('rule 315.3: turn player channels 2 runes at Channel step', {
@@ -89,7 +91,7 @@ Une violation produit un **fichier de reproduction** (graine, decks, journal jus
 
 ## Replays de référence
 
-`testkit/golden/*.foilreplay` : des parties complètes, issues de vraies parties ou écrites à la main pour couvrir une interaction. La CI les rejoue et compare l'empreinte de l'état final et la suite d'événements. Un changement volontaire de comportement met à jour le replay avec une justification dans le commit.
+`testkit/golden/*.foilreplay` : des parties complètes, issues de vraies parties ou écrites à la main pour couvrir une interaction. Ce sont des **fichiers de données** : la CI les rejoue et compare l'empreinte de l'état final et la suite d'événements, et le serveur les lit au démarrage pour son auto-test, sans importer le code de `testkit`. Un changement volontaire de comportement met à jour le replay avec une justification dans le commit.
 
 ## Bugs de règles
 
@@ -102,4 +104,4 @@ Tout bug de règle signalé (issue « Rule applied incorrectly ») suit le même
 
 ## Tests en production
 
-Le moteur tourne aussi des vérifications en production (voir `07-observability.md`) : auto-test au démarrage sur les replays de référence, vérification d'invariants échantillonnée sur les vraies parties, et rejeu des parties terminées en tâche de fond pour détecter tout non-déterminisme.
+Le moteur tourne aussi des vérifications en production (voir `07-observability.md`) : auto-test au démarrage sur les replays de référence (lus comme fichiers de données, sans `testkit`), vérification d'invariants échantillonnée sur les vraies parties, et rejeu des parties terminées en tâche de fond pour détecter tout non-déterminisme.

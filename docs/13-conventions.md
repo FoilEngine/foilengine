@@ -10,7 +10,8 @@
 ## TypeScript
 
 - `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`. Pas de `any` ; `unknown` puis validation.
-- Modules ES, imports explicites avec extension quand la résolution l'exige.
+- Modules ES, imports explicites avec extension quand la résolution l'exige : avec `module: nodenext`, les imports relatifs portent l'extension `.ts` (`import { x } from './x.ts'`).
+- `erasableSyntaxOnly` : pas d'`enum`, de `namespace` ni de propriétés de paramètres de constructeur ; préférer les unions de littéraux et les objets `as const`. Le code tourne ainsi directement dans Node 24, sans compilation.
 - Pas de classes dans l'état de jeu : objets simples et fonctions pures. Les classes sont acceptées ailleurs (serveur, clients) quand elles simplifient.
 - Les identifiants sont des types marqués (`type ObjectId = string & { readonly __brand: 'ObjectId' }`).
 - Les unions discriminées (`type`) pour les actions, événements et messages, avec un `switch` exhaustif (`assertNever`).
@@ -32,7 +33,7 @@
 
 ## Tests
 
-- Les tests sont à côté de leur package dans `test/`, nommés `*.test.ts`. Les scénarios de règles sont dans `packages/rules/test/rules/<section>/`.
+- Les tests sont à côté de leur package dans `test/`, nommés `*.test.ts`. Les scénarios de règles sont dans `packages/spec/test/rules/<section>/`, ceux des cartes dans `packages/spec/test/cards/<set>/` (voir `06-testing.md`).
 - Un scénario de règle commence par `rule <numéro>:`. Un scénario de carte par `card <id>:`.
 - Pas de test qui dépend du réseau, de l'heure ou de l'ordre d'exécution.
 
@@ -40,7 +41,8 @@
 
 - Branche principale : `main`, protégée. Tout passe par une PR, même en solo (la CI doit être verte).
 - Branches : `feat/…`, `fix/…`, `rules/…` (implémentation de règles), `cards/…`, `docs/…`, `chore/…`.
-- Commits : **Conventional Commits** avec le package en portée : `feat(rules): implement channel step (315.3)`, `fix(server): resync on sequence gap`, `test(rules): cover mulligan (117)`.
+- Commits : **Conventional Commits** avec le package en portée : `feat(rules): implement channel step (315.3)`, `fix(server): resync on sequence gap`, `test(spec): cover mulligan (117)`.
+- Portées autorisées, vérifiées par commitlint (hook `commit-msg` et CI) : le nom d'un package ou d'une app (`types`, `rules`, `cards`, `codex`, `protocol`, `log`, `mind`, `sim`, `testkit`, `spec`, `telemetry`, `db`, `ui`, `server`, `play`, `site`, `console`, `cli`), ou `repo` (outillage du monorepo), `ci`, `deps`, `docs`. La portée est facultative. La liste est dans `commitlint.config.js`.
 - Une PR = un sujet. Le modèle de PR demande les règles touchées, les tests ajoutés et l'impact sur le protocole ou le format du journal.
 - Versionnement : les packages restent privés au monorepo. Les formats qui sortent du repo (protocole, journal, snapshot codex) ont leur propre numéro de version, incrémenté à chaque changement incompatible.
 

@@ -45,10 +45,11 @@ Les autres options et pourquoi on ne les retient pas.
 | 0007 | Les effets des cartes en DSL | Accepté |
 | 0008 | Tests de règles numérotés et couverture | Accepté |
 | 0009 | Mode manuel pour les cartes non implémentées | Accepté |
-| 0010 | Stack serveur : Node 22, Fastify, WebSocket, Zod | Proposé |
+| 0010 | Stack serveur : Node 24, Fastify, WebSocket, Zod | Proposé (Node 24 accepté par 0017) |
 | 0011 | Données : PostgreSQL, Drizzle, Valkey, BullMQ, authentification Discord | Proposé |
 | 0012 | Clients : React et Vite, Astro pour la vitrine | Proposé |
 | 0013 | Hébergement : un VPS, Docker Compose, Caddy | Proposé |
 | 0014 | Observabilité : OpenTelemetry et la stack Grafana | Proposé |
 | 0015 | Projet gratuit sous la politique Legal Jibber Jabber | Accepté |
 | 0016 | Licence du code | À décider |
+| 0017 | Toolchain, repository checks and M0 decisions | Accepté |

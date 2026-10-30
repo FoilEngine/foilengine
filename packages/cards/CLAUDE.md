@@ -4,7 +4,7 @@ Le DSL des effets et l'implémentation de chaque carte, avec son statut.
 
 ## Dépendances
 
-- **Autorisées** : `types`, et l'API d'effets de `rules`.
+- **Autorisées** : `types`, et l'API d'effets de `rules` via `@foilengine/rules/effects` (vérifié par Biome).
 - **Interdites** : modifier l'état autrement que par l'API d'effets ; importer les internes de `rules`.
 
 ## API publique
@@ -14,7 +14,7 @@ Le DSL des effets et l'implémentation de chaque carte, avec son statut.
 ## Points d'attention
 
 - Un fichier par carte, nommé par son `riftbound_id`, regroupé par set.
-- Les tests de la carte d'abord, avec le harnais de `testkit`, nommés `card <id>: …`.
+- Les tests de la carte d'abord, avec le harnais de `testkit`, nommés `card <id>: …`, dans `packages/spec/test/cards/<set>/` (`cards` ne dépend jamais de `testkit`).
 - Le texte suivi est le texte en vigueur (errata compris), lu dans le snapshot `codex`.
 - Le code sur mesure est l'exception : le justifier en commentaire, et proposer une brique de DSL au troisième cas similaire.
 

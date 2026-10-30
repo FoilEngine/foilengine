@@ -2,14 +2,30 @@
 
 Ce dossier contient les documents de règles officiels de Riftbound. **Ils font foi** pour tout le moteur.
 
+## Source hierarchy
+
+When two sources disagree, the higher one wins:
+
+1. Card text, including official errata.
+2. The Core Rules PDF.
+3. Official FAQ and rulings.
+4. The Tournament Rules (formats and deckbuilding).
+5. Our docs (`docs/`).
+
+Our docs are only a reading map. When they conflict with the PDF, the PDF is right: fix the doc, and never write code from the doc. Unofficial sources (riftboundfaq.com, guides, Discord) settle nothing. When the PDF is ambiguous, open a question in `questions.md`.
+
+## Version identifiers
+
+A Core Rules version is identified by `CR-<last update date>`, taken from the "Last Updated" line of the PDF. The current version is **`CR-2026-10-09`**. Riot's file names use release labels (`RUP5`); they are kept here as aliases only. The engine's `rulesVersion`, the rule index (`index/CR-2026-10-09.json`) and the question entries use the `CR-` identifier.
+
 ## Fichiers attendus
 
 À télécharger depuis le Rules Hub officiel (playriftbound.com, section Rules Hub) et à déposer ici, en gardant la version dans le nom :
 
 | Fichier | Contenu |
 | --- | --- |
-| `core-rules-1.4.pdf` | Core Rules en vigueur (version 1.4, Vendetta, mise à jour le 2026-03-30 au moment de la rédaction) |
-| `tournament-rules-<date>.pdf` | Tournament Rules en vigueur (construction de deck en tournoi, formats, sideboard) |
+| `core-rules-2026-10-09.pdf` | Core Rules en vigueur, mises à jour le 2026-10-09. Identifiant : **`CR-2026-10-09`** (alias Riot : `RUP5`, d'après le nom du fichier officiel `RiftboundCoreRulesRUP5_En_EN.pdf`) |
+| `tournament-rules-2026-08-27.pdf` | Tournament Rules en vigueur, mises à jour le 2026-08-27 (construction de deck en tournoi, formats, sideboard). Fichier officiel : `RiftboundTournamentRulesRUP5_en_EN.pdf` |
 | `faq/*.pdf` ou `faq/*.md` | FAQ officielles par set |
 | `errata/*.md` | Errata officiels, recopiés avec leur source |
 

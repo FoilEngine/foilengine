@@ -14,7 +14,7 @@ body:
     id: version
     attributes:
       label: Core Rules version
-      placeholder: "CR-1.4"
+      placeholder: "CR-2026-10-09"
     validations:
       required: true
   - type: textarea

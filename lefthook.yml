@@ -1,0 +1,5 @@
+# Git hooks, installed by `pnpm install` (prepare script).
+commit-msg:
+  commands:
+    commitlint:
+      run: pnpm exec commitlint --edit {1}

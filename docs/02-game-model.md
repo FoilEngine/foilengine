@@ -1,6 +1,6 @@
 # 02 — Modèle de jeu
 
-Ce document décrit comment l'état d'une partie de Riftbound est représenté dans `@foilengine/types` et `@foilengine/rules`. Il s'appuie sur les **Core Rules 1.4 (Vendetta, mises à jour le 2026-03-30)**. Les numéros cités ici servent de repère : **la référence reste le PDF dans `docs/rules/`**. Avant d'implémenter une règle, relis son texte exact dans le PDF et vérifie son numéro : il peut changer d'une version à l'autre.
+Ce document décrit comment l'état d'une partie de Riftbound est représenté dans `@foilengine/types` et `@foilengine/rules`. Il a été écrit d'après les **Core Rules 1.4 (Vendetta, mises à jour le 2026-03-30)** ; la version en vigueur est **`CR-2026-10-09`**, et les numéros cités ici seront revérifiés avec `/rules-update` au début de M1. Les numéros cités ici servent de repère : **la référence reste le PDF dans `docs/rules/`**. Avant d'implémenter une règle, relis son texte exact dans le PDF et vérifie son numéro : il peut changer d'une version à l'autre.
 
 ## Carte des Core Rules
 
@@ -70,7 +70,7 @@ Les objets d'un plateau sont une information publique (109). Les cartes face cac
 ```ts
 interface GameState {
   version: number;              // version du schéma d'état
-  rulesVersion: string;         // ex. "CR-1.4"
+  rulesVersion: string;         // ex. "CR-2026-10-09"
   mode: ModeId;                 // ex. "duel-1v1"
   rng: RngState;                // graine et compteur, sérialisables
   nextObjectId: number;

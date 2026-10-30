@@ -4,8 +4,8 @@ La console d'administration et de monitoring.
 
 ## Dépendances
 
-- **Autorisées** : `ui`, `protocol`, `types`, `log`, `testkit` (rapports et lanceur de scénarios côté serveur).
-- **Interdites** : être accessible sans rôle admin.
+- **Autorisées** : `ui`, `protocol`, `types`, `log`.
+- **Interdites** : être accessible sans rôle admin ; importer `testkit` ou `rules`. Rapports de couverture, replays et lanceur de scénarios passent par l'API du serveur.
 
 ## API publique
 

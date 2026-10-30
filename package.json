@@ -1,0 +1,30 @@
+{
+  "name": "foilengine",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24.11.0 <25"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "biome ci .",
+    "format": "biome check --write .",
+    "typecheck": "turbo run typecheck && tsc -p tsconfig.json --noEmit",
+    "test": "turbo run test && vitest run",
+    "check:deps": "node scripts/check-deps.ts",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4",
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "@types/node": "^24.19.2",
+    "fast-check": "4.10.2",
+    "lefthook": "2.2.2",
+    "turbo": "2.11.10",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}
