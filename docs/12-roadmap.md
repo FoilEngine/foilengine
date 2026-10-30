@@ -21,7 +21,7 @@ The order is driven by dependencies: the engine first, tested, then everything t
 - [x] `rules`: serializable seeded RNG (xoshiro128** or PCG) and its tests.
 - [x] `rules`: `createGame` with the complete setup (104–118), mulligan included.
 - [x] `rules`: `viewFor` and the no-leak test.
-- [ ] `testkit`: `board()`, `scenario()`, test cards, and Core Rules indexing (`foil rules index`).
+- [x] `testkit`: `board()`, `scenario()`, test cards, and Core Rules indexing (`foil rules index`).
 - [ ] `testkit`: rule coverage report (even empty).
 
 **Accepted when**: a game is created deterministically from a seed, the mulligan is tested with its rule numbers, and the coverage report lists every rule of the PDF.

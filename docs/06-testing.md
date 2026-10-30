@@ -32,7 +32,7 @@ scenario('rule 315.3.b: turn player channels 2 runes at Channel step', {
     .player('B')
     .activePlayer('A')
     .atStep('start.channel'),
-  then: (t) => {
+  check: (t) => {
     t.expectEvents(['RuneChanneled', 'RuneChanneled']);
     t.expect(t.player('A').runesInPlay).toHaveLength(2);
   },
@@ -41,15 +41,18 @@ scenario('rule 315.3.b: turn player channels 2 runes at Channel step', {
 scenario('rule 315.3.b.1: channel only what remains when the rune deck is short', {
   rules: ['315.3.b.1'],
   setup: board().player('A', { runeDeck: 1 }).activePlayer('A').atStep('start.channel'),
-  then: (t) => t.expectEvents(['RuneChanneled']),
+  check: (t) => t.expectEvents(['RuneChanneled']),
 });
 ```
 
+The example above shows where the harness is going: `atStep`, `activePlayer` and rune decks come with the turn structure in M2. The part of a scenario that checks the result is called `check`, not `then`: an object with a `then` method passes for a promise.
+
 The parts of the harness:
 
-- **`board()`**: a readable state builder (players, zones, cards by name or id, units on battlefields, phase and step, priority, focus, chain). It goes through the same validations as `createGame`, so it never produces an impossible state.
-- **`act(...)`**: applies actions and fails if one is illegal (or `actIllegal(...)` to check a refusal and its reason).
-- **`expectEvents`**, **`expectState`**, **`expectLegal`**, **`expectIllegal(reason)`**, **`expectDecision`**.
+- **`board()`**: a readable state builder. It always starts from a real `createGame` (same validations, `BoardError` otherwise), then only changes what the rules leave to chance: who goes first (115) and the order of the shuffled decks (114). Any state it builds is therefore reachable, never impossible. In M1: `.setup(setup)` (default `testSetup()`), `.seed(seed)`, `.firstPlayer(id)`, `.player(id, { hand, mainDeckTop })` with cards by id or exact name, `.afterMulligans()`. Units on battlefields, phase and step, priority, focus and chain arrive with the milestones that implement them.
+- **`scenario(title, { rules, setup, act, check })`**: refuses, when the file is loaded, a title that does not start with `rule <first declared rule>:` and any rule number that does not exist in the index of the Core Rules version the engine implements.
+- **`act(...)`**: applies actions and fails if one is illegal (or `actIllegal(...)` to check a refusal and its reason, and that the state did not change).
+- **`expectEvents`** (types of the events of the last `act`), **`expectLegal`**, **`expectIllegal(action, code)`**, **`expectDecision`**, plus `mulligan(player, cards)`, `hand(player)`, `mainDeck(player)` and `player(id)` to read the state.
 - **Test cards**: fictional cards (`test:vanilla-2-2`, `test:draw-on-play`…) to test a rule without depending on a real card.
 - Scenarios can be written in TypeScript, or in YAML for simple cases (readable by a non-developer and generated from the console).
 
