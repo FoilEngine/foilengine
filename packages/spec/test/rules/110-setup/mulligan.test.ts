@@ -124,10 +124,11 @@ describe('117 Mulligan', () => {
     rules: ['117.1'],
     setup: stacked(),
     check: (t) => {
-      // 1 (keep) + 4 (one card) + 6 (two cards) for a hand of 4.
-      t.expect(legalActions(t.state, A)).toHaveLength(11);
+      // 1 (keep) + 4 (one card) + 6 (two cards) for a hand of 4, then conceding (650).
+      const mulligans = legalActions(t.state, A).filter((a) => a.type === 'Mulligan');
+      t.expect(mulligans).toHaveLength(11);
       for (const action of legalActions(t.state, A)) t.expectLegal(action);
-      t.expect(legalActions(t.state, B)).toEqual([]);
+      t.expect(legalActions(t.state, B)).toEqual([{ type: 'Concede', player: B }]);
     },
   });
 

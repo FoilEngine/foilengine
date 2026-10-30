@@ -158,9 +158,10 @@ describe('316 Main Phase, 317 Ending Phase', () => {
       t.expectDecision({ kind: 'Priority', player: A, rule: '312.2.a' });
       t.expectIllegal({ type: 'EndTurn', player: B }, 'not-your-decision');
       const actions = legalActions(t.state, A);
-      t.expect(actions.at(-1)).toEqual({ type: 'EndTurn', player: A });
-      t.expect(actions.slice(0, -1).every((action) => action.type === 'PlayCard')).toBe(true);
-      t.expect(legalActions(t.state, B)).toEqual([]);
+      t.expect(actions.at(-1)).toEqual({ type: 'Concede', player: A });
+      t.expect(actions.at(-2)).toEqual({ type: 'EndTurn', player: A });
+      t.expect(actions.slice(0, -2).every((action) => action.type === 'PlayCard')).toBe(true);
+      t.expect(legalActions(t.state, B)).toEqual([{ type: 'Concede', player: B }]);
     },
   });
 

@@ -92,7 +92,7 @@ describe('event visibility (ADR 0005)', () => {
 
   it('every event type has its private fields declared', () => {
     const types: GameEventType[] = Object.keys(PRIVATE_EVENT_FIELDS) as GameEventType[];
-    expect(types).toHaveLength(37);
+    expect(types).toHaveLength(38);
     expect(PRIVATE_EVENT_FIELDS.CardDrawn).toEqual(['object', 'card']);
   });
 });
@@ -141,6 +141,8 @@ describe('assertNever', () => {
           return 'pass';
         case 'AssignCombatDamage':
           return 'assign damage';
+        case 'Concede':
+          return 'concede';
         default:
           return assertNever(action);
       }

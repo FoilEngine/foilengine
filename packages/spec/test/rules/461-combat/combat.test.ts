@@ -86,9 +86,9 @@ describe('461–468 Combat', () => {
         const v1 = ofCard(t.state, 'test:vanilla-1');
         const v5 = ofCard(t.state, 'test:vanilla-5');
         // 3 damage on A's Vanilla 1 (lethal 1) and Vanilla 5 (lethal 5): 1 then 2, or 3 on Vanilla 5.
-        const options = legalActions(t.state, B).map((a) =>
-          a.type === 'AssignCombatDamage' ? sorted([...a.assignment]) : [],
-        );
+        const options = legalActions(t.state, B)
+          .filter((a) => a.type === 'AssignCombatDamage')
+          .map((a) => (a.type === 'AssignCombatDamage' ? sorted([...a.assignment]) : []));
         t.expect(options).toHaveLength(2);
         t.expect(options).toEqual(
           expect.arrayContaining([

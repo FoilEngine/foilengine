@@ -190,7 +190,7 @@ An `Action` is a **player's intent**, serializable, with no reference to JavaScr
 - `StandardMove { units, destination }` (144, 447+)
 - `PassPriority`, `PassFocus`
 - `EndTurn`
-- `Concede` (649–652)
+- `Concede` (649–652): legal for every player at any time (650), so `legalActions` always lists it last while the game goes on
 - `ManualOverride { description, patch }`: manual mode, always marked as such in the log
 
 `legalActions(state)` returns the possible actions **up to structure** (for example `PlayCard` with the valid targets), and a function `isLegal(state, action)` checks a complete action, with a reason when it refuses.

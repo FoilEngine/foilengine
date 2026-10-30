@@ -40,7 +40,9 @@ describe('autoPayment', () => {
           for (const pick of picks) {
             const decision = pendingDecision(current);
             if (decision === null) break;
-            const actions = legalActions(current, decision.player);
+            const actions = legalActions(current, decision.player).filter(
+              (action) => action.type !== 'Concede',
+            );
             const action = actions[pick % actions.length];
             if (action === undefined) break;
             const result = apply(current, action);
