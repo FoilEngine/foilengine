@@ -22,6 +22,7 @@ Foil Engine est un simulateur de Riftbound (le jeu de cartes de Riot Games) dot�
 | Les clients et le design system | `docs/10-clients.md` (et le repo `FoilEngine/brand`) |
 | Le déploiement | `docs/11-infra.md` |
 | Un terme du jeu | `docs/14-glossary.md` |
+| Les règles de dépendance, l'outillage, la CI | `docs/01-architecture.md`, `docs/decisions/0017-toolchain-repository-checks-and-m0-decisions.md` |
 | Un choix d'architecture | `docs/decisions/` (un ADR au statut « Proposé » ne s'implémente pas avant validation) |
 
 ## Les règles qui ne se discutent pas
@@ -35,22 +36,44 @@ Foil Engine est un simulateur de Riftbound (le jeu de cartes de Riot Games) dot�
 7. **Ne jamais inventer une règle.** Si les Core Rules ne tranchent pas, ou si tu n'es pas sûr, écris le cas dans `docs/rules/questions.md` et signale-le. Ne devine pas.
 8. **Pas d'assets Riot dans l'identité de Foil.** Les images de cartes s'affichent telles quelles, mais aucun logo ni marque de Riot dans le nom, le logo ou la communication.
 
+## Source hierarchy
+
+When sources disagree, the higher one wins:
+
+1. Card text, including official errata.
+2. The Core Rules PDF (`docs/rules/`, current version `CR-2026-10-09`).
+3. Official FAQ and rulings.
+4. The Tournament Rules (formats and deckbuilding).
+5. Our docs (`docs/`).
+
+Our docs are only a reading map. When they conflict with the PDF, the PDF is right: fix the doc, never write code from the doc. Unofficial sources (riftboundfaq.com, guides, Discord) settle nothing. When the PDF is ambiguous, open a question in `docs/rules/questions.md`. Details in `docs/rules/README.md`.
+
 ## Commandes
 
 ```bash
-pnpm install            # dépendances
+pnpm install            # dépendances (installe aussi le hook commit-msg)
 pnpm dev                # tout en mode dev (turbo)
 pnpm build              # build de tous les packages
 pnpm test               # tous les tests
-pnpm test:rules         # uniquement les tests de règles, avec la couverture des règles
-pnpm fuzz               # parties aléatoires avec vérification des invariants
 pnpm typecheck
-pnpm lint               # biome
-pnpm health             # healthcheck complet de l'environnement courant (voir docs/07)
-pnpm dev:obs            # l'application avec la stack d'observabilité locale
+pnpm lint               # biome (lint et format, en mode CI)
+pnpm format             # biome : applique le formatage et les corrections sûres
+pnpm check:deps         # règles de dépendance entre packages (docs/01-architecture.md)
 ```
 
-Ces scripts sont à créer au fil de la roadmap. S'il en manque un, ajoute-le dans le `package.json` racine.
+Prérequis : Node 24 LTS (`.nvmrc`) ; la version de pnpm est fixée par `packageManager`.
+
+Scripts pas encore créés, avec le jalon où ils arrivent (`docs/12-roadmap.md`) :
+
+| Script | Rôle | Jalon |
+| --- | --- | --- |
+| `pnpm test:rules` | tests de règles et rapport de couverture des règles | M1 |
+| `pnpm fuzz` | parties aléatoires avec vérification des invariants | M2 |
+| `pnpm infra:up`, `pnpm infra:obs` | dépendances et stack d'observabilité locales (`infra/README.md`) | M5 |
+| `pnpm dev:obs` | l'application avec la stack d'observabilité locale | M5 |
+| `pnpm health` | healthcheck complet de l'environnement courant (voir docs/07) | M5 |
+
+Ne crée pas un script avant son jalon. Quand tu le crées, ajoute-le dans le `package.json` racine et retire-le de ce tableau.
 
 ## Façon de travailler
 

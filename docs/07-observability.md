@@ -73,7 +73,7 @@ Réponse de `/health/details` :
 {
   "status": "degraded",
   "version": "a1b2c3d",
-  "rulesVersion": "CR-1.4",
+  "rulesVersion": "CR-2026-10-09",
   "codexSnapshot": "2026-10-30",
   "uptimeSeconds": 86400,
   "checks": {
@@ -91,7 +91,7 @@ Réponse de `/health/details` :
 
 Chaque check a un seuil `warn` et `fail`, défini dans la config et documenté ici quand il change.
 
-**L'auto-test du moteur** (`engineSelfTest`) rejoue les replays de référence au démarrage et toutes les 10 minutes, et compare les empreintes. S'il échoue, `/readyz` passe en échec : un moteur qui ne joue plus juste ne doit pas recevoir de parties.
+**L'auto-test du moteur** (`engineSelfTest`) rejoue les replays de référence au démarrage et toutes les 10 minutes, et compare les empreintes. Les replays de référence sont des fichiers de données (`.foilreplay`) lus au démarrage : le serveur n'importe pas `testkit`, il les rejoue avec `rules` et `log`. S'il échoue, `/readyz` passe en échec : un moteur qui ne joue plus juste ne doit pas recevoir de parties.
 
 ## La commande `pnpm health` (et `foil health`)
 
@@ -114,12 +114,12 @@ Sortie lisible, une ligne par vérification avec un statut, et un code de sortie
 
 ## La console (`apps/console`)
 
-Une application web réservée aux administrateurs. Pages :
+Une application web réservée aux administrateurs. Elle passe par l'API du serveur pour tout ce qu'elle affiche ou lance, et n'importe pas `testkit`. Pages :
 
 1. **Santé** : l'équivalent visuel de `/health/details`, en direct, avec l'historique des dernières 24 heures.
 2. **Parties en cours** : liste, mode, durée, joueurs (pseudonymisés), dernière action, latence. Ouvrir une partie en spectateur administrateur, ce qui permet de voir l'état complet.
 3. **Replays** : rechercher une partie, la rejouer pas à pas avec l'état complet et les événements, exporter le replay, lancer `/investigate-replay` sur un replay (génère un fichier pour Claude Code).
-4. **Règles** : le rapport de couverture des règles (statut par numéro), les questions ouvertes, et un **lanceur de scénarios** : choisir ou écrire un scénario (YAML), l'exécuter contre la version déployée et voir le résultat.
+4. **Règles** : le rapport de couverture des règles (statut par numéro), les questions ouvertes, et un **lanceur de scénarios** : choisir ou écrire un scénario (YAML), l'exécuter contre la version déployée via l'API du serveur et voir le résultat. Question ouverte (ADR 0017) : le serveur n'importe pas `testkit`, il reste à décider comment il exécute un scénario.
 5. **Cartes** : couverture des cartes par set et par legend, cartes les plus souvent en mode manuel, cartes les plus impliquées dans des erreurs moteur.
 6. **Simulations** : file des jobs, débit des workers, résultats récents.
 7. **Erreurs** : les dernières erreurs moteur avec un lien vers GlitchTip et vers le replay.

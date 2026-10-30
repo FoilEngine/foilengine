@@ -24,19 +24,23 @@ packages/
   log/         journal d'événements, replays, notation
   mind/        l'IA
   sim/         simulations en masse et analyse
-  testkit/     scénarios de règles, fuzzing, invariants, couverture
+  testkit/     harnais de scénarios, fuzzing, invariants, couverture
+  spec/        scénarios de règles et de cartes (tests uniquement)
   telemetry/   logs, métriques, traces, healthchecks
   db/          schéma et migrations
   ui/          design system (tokens, composants, son, motion)
+scripts/       outillage du monorepo (vérification des dépendances)
 infra/         docker compose local, monitoring, alertes, tableaux de bord
 docs/          documentation (commencer par docs/00-vision.md)
 ```
 
 ## Démarrer
 
+Node 24 LTS (`.nvmrc`) et pnpm, dont la version est fixée par `packageManager` (Corepack ou pnpm ≥ 9.7 basculent tout seuls).
+
 ```bash
 pnpm install
-pnpm dev
+pnpm lint && pnpm typecheck && pnpm test
 ```
 
 La documentation de référence est dans `docs/`. Le fichier `CLAUDE.md` donne les règles de travail.

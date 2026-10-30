@@ -48,7 +48,7 @@ Termes du jeu (anglais, tels qu'utilisés dans le code) et termes du projet.
 | Journal | La suite ordonnée des événements d'une partie |
 | Replay | Un journal rejouable avec sa graine et ses decks |
 | Empreinte | Hash stable d'un état, pour vérifier le déterminisme |
-| Scénario | Un test de règle ou de carte écrit avec le harnais de `testkit` |
+| Scénario | Un test de règle ou de carte écrit avec le harnais de `testkit`, rangé dans `spec` |
 | Invariant | Propriété vérifiée à chaque étape par le fuzzer |
 | Mode manuel | Résolution à la main d'une carte non implémentée (`ManualOverride`) |
 | Point faible | Carte ou coup qui coûte le plus de victoires à un deck |
