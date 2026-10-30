@@ -4,7 +4,6 @@ import { describe, expect } from 'vitest';
 import {
   A,
   afterConquest,
-  B,
   battlefield,
   endTurn,
   move,
@@ -120,19 +119,6 @@ describe('144 Standard Move, 447–455 Movement', () => {
       t.expectIllegal(move(A, units, battlefield(t.state, 1)), 'invalid-move');
     },
   });
-
-  scenario(
-    'rule 454: moving to a battlefield with enemy units causes Combat, not implemented yet',
-    {
-      rules: ['454'],
-      setup: () => endTurn(afterConquest().state).state,
-      check: (t) => {
-        const [unit] = unitsInBase(t.state, B) as [ObjectId];
-        const reason = t.expectIllegal(move(B, [unit], battlefield(t.state, 0)), 'not-implemented');
-        t.expect(reason.rule).toBe('454');
-      },
-    },
-  );
 
   scenario('rule 144.1.c: no Standard Move during a Showdown', {
     rules: ['144.1.c'],

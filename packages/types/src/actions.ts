@@ -65,6 +65,13 @@ export type PassFocus = {
   readonly player: PlayerId;
 };
 
-export type Action = Mulligan | EndTurn | PlayCard | StandardMove | PassFocus;
+/** A player assigns their combat damage among the opposing units (467.2.c). */
+export type AssignCombatDamage = {
+  readonly type: 'AssignCombatDamage';
+  readonly player: PlayerId;
+  readonly assignment: readonly { readonly unit: ObjectId; readonly amount: number }[];
+};
+
+export type Action = Mulligan | EndTurn | PlayCard | StandardMove | PassFocus | AssignCombatDamage;
 
 export type ActionType = Action['type'];

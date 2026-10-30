@@ -1,0 +1,406 @@
+// Combat (461–468) between units without abilities: the Combat Showdown (466), the Combat
+// Damage Step (467) and the Resolution Step (468). Damage, kills, heals and recalls with it.
+
+import type {
+  AssignCombatDamage,
+  AssignDamageDecision,
+  CardDefinition,
+  DamageAssignment,
+  GameState,
+  IllegalReason,
+  ObjectId,
+  PlayerId,
+} from '@foilengine/types';
+import { cleanup } from '../cleanup/cleanup.ts';
+import {
+  battlefieldOf,
+  controllerOf,
+  type Draft,
+  emit,
+  objectOf,
+  playerOf,
+  playersAt,
+  renewObject,
+  updateObject,
+} from '../draft.ts';
+import { EngineInvariantError } from '../errors.ts';
+import { score } from '../scoring/score.ts';
+
+type UnitsView = Pick<GameState, 'objects' | 'cards'>;
+
+/** A unit's Might (143.2); below 0 it counts as 0 (143.2.c). No layers before M3. */
+export function mightOf(state: UnitsView, unit: ObjectId): number {
+  const object = state.objects[unit];
+  const might =
+    object === undefined
+      ? 0
+      : ((state.cards[object.card] as CardDefinition | undefined)?.might ?? 0);
+  return Math.max(0, might);
+}
+
+/** Damage still needed to make the unit's damage lethal: non-zero and at least its Might (142.4.b). */
+export function lethalAmount(state: UnitsView, unit: ObjectId): number {
+  return Math.max(1, mightOf(state, unit) - (state.objects[unit]?.damage ?? 0));
+}
+
+const unitsOf = (draft: Draft, battlefield: ObjectId, player: PlayerId) =>
+  battlefieldOf(draft, battlefield).units.filter((unit) => controllerOf(draft, unit) === player);
+
+const sumMight = (draft: Draft, units: readonly ObjectId[]) =>
+  units.reduce((total, unit) => total + mightOf(draft, unit), 0);
+
+/**
+ * 323.12, 466: a Combat begins at a battlefield where it is staged. It opens with a Combat
+ * Showdown (463.3, 466.2); the player who applied Contested is the Attacker and gains Focus
+ * (466.2.c.1, 466.2.c.1.a), the other player is the Defender (466.2.c.2).
+ */
+export function startCombat(draft: Draft, battlefieldId: ObjectId): void {
+  const battlefield = battlefieldOf(draft, battlefieldId);
+  const attacker = battlefield.contestedBy;
+  const defender = [...playersAt(draft, battlefield)].find((p) => p !== attacker);
+  if (attacker === null || defender === undefined) {
+    throw new EngineInvariantError(`Combat at ${battlefieldId} without an attacker and a defender`);
+  }
+  battlefield.combatStaged = false;
+  battlefield.showdownStaged = false;
+  draft.combat = {
+    battlefield: battlefieldId,
+    attacker,
+    defender,
+    step: 'showdown',
+    attackerAssignment: null,
+    defenderAssignment: null,
+  };
+  emit(draft, {
+    type: 'CombatStarted',
+    rule: '466.2.c',
+    visibility: { kind: 'public' },
+    battlefield: battlefieldId,
+    attacker,
+    defender,
+  });
+  draft.showdown = { battlefield: battlefieldId, focus: attacker, passes: 0 };
+  emit(draft, {
+    type: 'ShowdownStarted',
+    rule: '466.2.c.1.a',
+    visibility: { kind: 'public' },
+    battlefield: battlefieldId,
+    focus: attacker,
+  });
+}
+
+/** 348.1: the Combat Showdown closed; proceed with the Combat Damage Step (467). */
+export function closeCombatShowdown(draft: Draft): void {
+  const combat = draft.combat;
+  if (combat === null) throw new EngineInvariantError('No Combat in progress');
+  draft.showdown = null;
+  emit(draft, {
+    type: 'ShowdownEnded',
+    rule: '348.1',
+    visibility: { kind: 'public' },
+    battlefield: combat.battlefield,
+  });
+
+  // 467.1: the damage step happens only if both Attacking and Defending units remain.
+  const attacking = unitsOf(draft, combat.battlefield, combat.attacker);
+  const defending = unitsOf(draft, combat.battlefield, combat.defender);
+  if (attacking.length === 0 || defending.length === 0) {
+    resolveCombat(draft);
+    return;
+  }
+  // A player whose units have no Might has no damage to assign.
+  draft.combat = {
+    ...combat,
+    step: 'damage',
+    attackerAssignment: sumMight(draft, attacking) === 0 ? [] : null,
+    defenderAssignment: sumMight(draft, defending) === 0 ? [] : null,
+  };
+  dealIfAssigned(draft);
+}
+
+/** Who must assign damage now: the Attacker first, then the Defender (467.2.c). */
+export function damageDecision(state: GameState): AssignDamageDecision | null {
+  const combat = state.combat;
+  if (combat === null || combat.step !== 'damage') return null;
+  const battlefield = state.battlefields.find((b) => b.object === combat.battlefield);
+  if (battlefield === undefined) return null;
+  const unitsOfPlayer = (player: PlayerId) =>
+    battlefield.units.filter((unit) => state.objects[unit]?.owner === player);
+  const decide = (player: PlayerId, opponent: PlayerId): AssignDamageDecision => ({
+    kind: 'AssignDamage',
+    player,
+    battlefield: combat.battlefield,
+    amount: unitsOfPlayer(player).reduce((total, unit) => total + mightOf(state, unit), 0),
+    targets: unitsOfPlayer(opponent),
+    rule: '467.2.c',
+  });
+  if (combat.attackerAssignment === null) return decide(combat.attacker, combat.defender);
+  if (combat.defenderAssignment === null) return decide(combat.defender, combat.attacker);
+  return null;
+}
+
+/**
+ * Checks an assignment against 467.2.c: all the damage is assigned among the opposing units;
+ * lethal damage is assigned in full to a unit before another one gets any (467.2.c.3), so at
+ * most one unit gets non-lethal damage; and no unit gets more than lethal damage unless every
+ * unit already gets lethal damage (467.2.c.4).
+ */
+export function checkAssignment(
+  state: GameState,
+  action: AssignCombatDamage,
+): IllegalReason | null {
+  const decision = damageDecision(state);
+  if (decision === null)
+    return { code: 'wrong-action', message: 'No combat damage to assign', rule: null };
+  const invalid = (message: string, rule: IllegalReason['rule']): IllegalReason => ({
+    code: 'invalid-assignment',
+    message,
+    rule,
+  });
+  const amounts = new Map<ObjectId, number>();
+  for (const { unit, amount } of action.assignment) {
+    if (!decision.targets.includes(unit))
+      return invalid(`${unit} is not an opposing unit at this battlefield`, '467.2.c');
+    if (amounts.has(unit)) return invalid(`${unit} is assigned damage twice`, '467.2.c');
+    if (!Number.isInteger(amount) || amount < 0)
+      return invalid(`Invalid amount ${amount}`, '418.1.e');
+    amounts.set(unit, amount);
+  }
+  const total = [...amounts.values()].reduce((a, b) => a + b, 0);
+  if (total !== decision.amount) {
+    return invalid(`${decision.amount} damage must be assigned, not ${total}`, '467.2.c');
+  }
+  const lethal = new Map(decision.targets.map((unit) => [unit, lethalAmount(state, unit)]));
+  const assigned = (unit: ObjectId) => amounts.get(unit) ?? 0;
+  const partial = decision.targets.filter(
+    (unit) => assigned(unit) > 0 && assigned(unit) < (lethal.get(unit) ?? 1),
+  );
+  if (partial.length > 1) {
+    return invalid(
+      'Lethal damage must be assigned in full before damaging another unit',
+      '467.2.c.3',
+    );
+  }
+  const allLethal = decision.targets.every((unit) => assigned(unit) >= (lethal.get(unit) ?? 1));
+  if (!allLethal && decision.targets.some((unit) => assigned(unit) > (lethal.get(unit) ?? 1))) {
+    return invalid(
+      'No unit gets more than lethal damage while another one can still get some',
+      '467.2.c.4',
+    );
+  }
+  return null;
+}
+
+/**
+ * The assignments legalActions offers: for each order of the opposing units, lethal damage in
+ * that order, the rest on the last unit. Every other valid assignment is accepted by isLegal.
+ */
+export function assignmentOptions(state: GameState): AssignCombatDamage[] {
+  const decision = damageDecision(state);
+  if (decision === null) return [];
+  const options = new Map<string, AssignCombatDamage>();
+  for (const order of permutations(decision.targets)) {
+    let remaining = decision.amount;
+    const assignment: DamageAssignment[] = [];
+    for (const unit of order) {
+      const amount = Math.min(lethalAmount(state, unit), remaining);
+      remaining -= amount;
+      if (amount > 0) assignment.push({ unit, amount });
+    }
+    const last = assignment.at(-1);
+    if (remaining > 0 && last !== undefined)
+      assignment[assignment.length - 1] = { ...last, amount: last.amount + remaining };
+    const sorted = [...assignment].sort((a, b) => (a.unit < b.unit ? -1 : 1));
+    options.set(JSON.stringify(sorted), {
+      type: 'AssignCombatDamage',
+      player: decision.player,
+      assignment: sorted,
+    });
+  }
+  return [...options.values()];
+}
+
+/** Every order of the units; capped so that a large combat stays cheap (isLegal accepts the rest). */
+function permutations<T>(items: readonly T[], cap = 720): T[][] {
+  if (items.length <= 1) return [[...items]];
+  const result: T[][] = [];
+  for (const [index, item] of items.entries()) {
+    for (const rest of permutations([...items.slice(0, index), ...items.slice(index + 1)], cap)) {
+      result.push([item, ...rest]);
+      if (result.length >= cap) return result;
+    }
+  }
+  return result;
+}
+
+/** Records an assignment (467.2.c); when both are in, damage is dealt and the combat resolves. */
+export function assignDamage(draft: Draft, action: AssignCombatDamage): void {
+  const combat = draft.combat;
+  if (combat === null) throw new EngineInvariantError('No Combat in progress');
+  emit(draft, {
+    type: 'DamageAssigned',
+    rule: '467.2.c',
+    visibility: { kind: 'public' },
+    player: action.player,
+    assignment: action.assignment,
+  });
+  draft.combat =
+    action.player === combat.attacker
+      ? { ...combat, attackerAssignment: action.assignment }
+      : { ...combat, defenderAssignment: action.assignment };
+  dealIfAssigned(draft);
+}
+
+/** 467.2.c.1.a, 467.2.d: once all damage is assigned, it is dealt simultaneously. Then 468. */
+function dealIfAssigned(draft: Draft): void {
+  const combat = draft.combat;
+  if (combat === null || combat.attackerAssignment === null || combat.defenderAssignment === null)
+    return;
+  const damage = [...combat.attackerAssignment, ...combat.defenderAssignment].filter(
+    (d) => d.amount > 0,
+  );
+  for (const { unit, amount } of damage) {
+    updateObject(draft, unit, { damage: objectOf(draft, unit).damage + amount });
+  }
+  if (damage.length > 0) {
+    emit(draft, { type: 'DamageDealt', rule: '467.2.d', visibility: { kind: 'public' }, damage });
+  }
+  resolveCombat(draft); // 467.3
+}
+
+/** 323.4: units with lethal damage are killed and put in their owners' trash (429). Returns whether any was. */
+export function killLethalUnits(draft: Draft): boolean {
+  let killed = false;
+  const locations: { list: ObjectId[]; set: (next: ObjectId[]) => void }[] = [
+    ...draft.players.map((player) => ({
+      list: player.zones.base,
+      set: (next: ObjectId[]) => {
+        player.zones.base = next;
+      },
+    })),
+    ...draft.battlefields.map((b) => ({
+      list: b.units,
+      set: (next: ObjectId[]) => {
+        b.units = next;
+      },
+    })),
+  ];
+  for (const location of locations) {
+    const dying = location.list.filter((id) => {
+      const object = objectOf(draft, id);
+      return object.damage > 0 && object.damage >= mightOf(draft, id);
+    });
+    if (dying.length === 0) continue;
+    location.set(location.list.filter((id) => !dying.includes(id)));
+    for (const unit of dying) {
+      // 429.2: from the board to its owner's trash; a Non-Board Zone, so a new object (124).
+      const owner = objectOf(draft, unit).owner;
+      const dead = renewObject(draft, unit);
+      playerOf(draft, owner).zones.trash.push(dead.id);
+      emit(draft, {
+        type: 'UnitKilled',
+        rule: '323.4',
+        visibility: { kind: 'public' },
+        player: owner,
+        unit,
+        object: dead.id,
+        card: dead.card,
+      });
+      killed = true;
+    }
+  }
+  return killed;
+}
+
+/** Heals every damaged unit on the board (419). */
+export function healAllUnits(draft: Draft, rule: '468.1.a.1' | '317.2.b'): void {
+  const units = [
+    ...draft.players.flatMap((p) => p.zones.base),
+    ...draft.battlefields.flatMap((b) => b.units),
+  ].filter((id) => objectOf(draft, id).damage > 0);
+  for (const unit of units) updateObject(draft, unit, { damage: 0 });
+  if (units.length > 0)
+    emit(draft, { type: 'UnitsHealed', rule, visibility: { kind: 'public' }, units });
+}
+
+/** 468: the Resolution Step. */
+function resolveCombat(draft: Draft): void {
+  const combat = draft.combat;
+  if (combat === null) throw new EngineInvariantError('No Combat in progress');
+  const battlefield = battlefieldOf(draft, combat.battlefield);
+
+  // 468.1: a Combat Special Cleanup: 3a kills units with lethal damage (323.4), then the inserted
+  // steps heal all units (468.1.a.1) and recall the Attackers if Defenders are still present (468.1.a.2).
+  killLethalUnits(draft);
+  healAllUnits(draft, '468.1.a.1');
+  let recalled = false;
+  const attackers = unitsOf(draft, combat.battlefield, combat.attacker);
+  if (attackers.length > 0 && unitsOf(draft, combat.battlefield, combat.defender).length > 0) {
+    // 457, 460: a Recall is not a Move and leaves the units' statuses as they are.
+    battlefield.units = battlefield.units.filter((unit) => !attackers.includes(unit));
+    playerOf(draft, combat.attacker).zones.base.push(...attackers);
+    emit(draft, {
+      type: 'UnitsRecalled',
+      rule: '468.1.a.2',
+      visibility: { kind: 'public' },
+      player: combat.attacker,
+      units: attackers,
+    });
+    recalled = true;
+  }
+
+  // 468.3: the combat result.
+  const present = [...playersAt(draft, battlefield)];
+  const [only] = present;
+  const winner = !recalled && present.length === 1 && only !== undefined ? only : null;
+  if (present.length > 1) {
+    // 468.3.d.1: No Result with units of both players: stage a Showdown and a Combat again.
+    battlefield.showdownStaged = true;
+    battlefield.combatStaged = true;
+  } else {
+    // 468.5: the player with units remaining establishes Control if they did not have it,
+    // which is a Conquer if they have not Scored it this turn (468.5.d); Contested is cleared
+    // (468.5.a); with no units left, the battlefield becomes Uncontrolled (468.5.b).
+    battlefield.contestedBy = null;
+    if (only !== undefined && battlefield.controller !== only) {
+      if (battlefield.controller !== null) {
+        emit(draft, {
+          type: 'ControlLost',
+          rule: '468.5',
+          visibility: { kind: 'public' },
+          player: battlefield.controller,
+          battlefield: battlefield.object,
+        });
+      }
+      battlefield.controller = only;
+      emit(draft, {
+        type: 'ControlEstablished',
+        rule: '468.5',
+        visibility: { kind: 'public' },
+        player: only,
+        battlefield: battlefield.object,
+      });
+      score(draft, only, battlefield.object, 'conquer');
+    } else if (only === undefined && battlefield.controller !== null) {
+      emit(draft, {
+        type: 'ControlLost',
+        rule: '468.5.b',
+        visibility: { kind: 'public' },
+        player: battlefield.controller,
+        battlefield: battlefield.object,
+      });
+      battlefield.controller = null;
+    }
+  }
+
+  // 468.7: Combat ends; Attacker and Defender designations go with it.
+  draft.combat = null;
+  emit(draft, {
+    type: 'CombatEnded',
+    rule: '468.7',
+    visibility: { kind: 'public' },
+    battlefield: battlefield.object,
+    winner,
+  });
+  cleanup(draft);
+}

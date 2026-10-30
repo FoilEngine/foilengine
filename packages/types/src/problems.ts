@@ -27,7 +27,9 @@ export type IllegalCode =
   /** A unit of the move cannot make it: not yours, not ready, or not at a valid origin (144). */
   | 'invalid-move'
   /** The rules allow it, but the engine does not implement it yet (the reason names what is missing). */
-  | 'not-implemented';
+  | 'not-implemented'
+  /** The combat damage assignment breaks 467.2.c. */
+  | 'invalid-assignment';
 
 /** Why an action is illegal, with the rule that forbids it when there is one. */
 export type IllegalReason = {

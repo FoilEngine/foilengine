@@ -3,6 +3,7 @@
 // what the call may change, and `stateOf` builds the next state from the draft.
 
 import type {
+  CombatState,
   GameEvent,
   GameObject,
   GameStage,
@@ -38,10 +39,13 @@ export type DraftBattlefield = {
   controller: PlayerId | null;
   contestedBy: PlayerId | null;
   showdownStaged: boolean;
+  combatStaged: boolean;
   units: ObjectId[];
 };
 
 export type Draft = {
+  /** The card definitions of the game, read-only. */
+  readonly cards: GameState['cards'];
   rng: RngState;
   nextObjectId: number;
   eventSeq: number;
@@ -49,6 +53,7 @@ export type Draft = {
   players: DraftPlayer[];
   battlefields: DraftBattlefield[];
   showdown: ShowdownState | null;
+  combat: CombatState | null;
   turnOrder: readonly PlayerId[];
   stage: GameStage;
   winner: PlayerId | null;
@@ -57,6 +62,7 @@ export type Draft = {
 
 export function draftOf(state: GameState): Draft {
   return {
+    cards: state.cards,
     rng: state.rng,
     nextObjectId: state.nextObjectId,
     eventSeq: state.eventSeq,
@@ -83,6 +89,7 @@ export function draftOf(state: GameState): Draft {
       units: [...battlefield.units],
     })),
     showdown: state.showdown,
+    combat: state.combat,
     turnOrder: state.turnOrder,
     stage: state.stage,
     winner: state.winner,
@@ -110,6 +117,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
     ),
     battlefields: draft.battlefields.map((battlefield) => ({ ...battlefield })),
     showdown: draft.showdown,
+    combat: draft.combat,
     turnOrder: draft.turnOrder,
     stage: draft.stage,
     winner: draft.winner,
@@ -147,6 +155,7 @@ export function createObject(
     owner,
     previousObjectId,
     exhausted: false,
+    damage: 0,
   };
   draft.nextObjectId += 1;
   draft.objects[object.id] = object;

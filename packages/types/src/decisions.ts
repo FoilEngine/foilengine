@@ -30,4 +30,14 @@ export type FocusDecision = {
   readonly rule: RuleNumber;
 };
 
-export type Decision = MulliganDecision | PriorityDecision | FocusDecision;
+/** The player must assign `amount` combat damage among the `targets` (467.2.c). */
+export type AssignDamageDecision = {
+  readonly kind: 'AssignDamage';
+  readonly player: PlayerId;
+  readonly battlefield: ObjectId;
+  readonly amount: number;
+  readonly targets: readonly ObjectId[];
+  readonly rule: RuleNumber;
+};
+
+export type Decision = MulliganDecision | PriorityDecision | FocusDecision | AssignDamageDecision;

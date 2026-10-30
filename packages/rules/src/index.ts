@@ -1,5 +1,6 @@
 // @foilengine/rules: the rules engine. Pure and deterministic (ADR 0003).
 
+export { lethalAmount, mightOf } from './combat/combat.ts';
 export { apply, isLegal, legalActions, type Outcome, outcome, pendingDecision } from './engine.ts';
 export { EngineInvariantError, IllegalActionError } from './errors.ts';
 export {

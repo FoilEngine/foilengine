@@ -62,14 +62,7 @@ function standardMove(draft: Draft, state: GameState, action: StandardMove): Ill
     const others = [...playersAt(draft, target)].filter((p) => p !== playerId);
     if (others.length >= 2)
       return invalid('A battlefield with units of 2 other players', '144.4.a.1');
-    if (others.length === 1) {
-      return {
-        code: 'not-implemented',
-        message:
-          'Moving to a battlefield with enemy units causes Combat (454), which is not implemented yet',
-        rule: '454',
-      };
-    }
+    // 454: with units of one other player there, the move causes Combat at the next cleanup.
   } else if (origins.some((origin) => origin.kind !== 'battlefield')) {
     // 144.4.b: from a battlefield to the base.
     return invalid('Units move to their base from a battlefield', '144.4.b');

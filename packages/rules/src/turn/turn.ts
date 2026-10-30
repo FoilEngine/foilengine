@@ -5,6 +5,7 @@
 import type { PlayerId, TurnPhase } from '@foilengine/types';
 import { drawCards } from '../actions/draw.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
+import { healAllUnits } from '../combat/combat.ts';
 import {
   controllerOf,
   type Draft,
@@ -120,9 +121,10 @@ export function endTurn(draft: Draft): void {
   const { turnPlayer, turnNumber } = stage;
 
   // 317 Ending Phase: the Ending Step (317.1, effects in M3), then the Expiration Step (317.2):
-  // an Ending Special Cleanup that heals units (no damage yet), expires "this turn" effects
+  // an Ending Special Cleanup that heals all units (317.2.b), expires "this turn" effects
   // (none yet) and empties every Rune Pool (317.2.d, 167).
   enterPhase(draft, turnPlayer, turnNumber, 'ending');
+  healAllUnits(draft, '317.2.b');
   emptyRunePools(draft, '317.2.d');
   cleanup(draft);
   if (draft.winner !== null) return;

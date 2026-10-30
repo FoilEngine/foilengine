@@ -3,6 +3,7 @@
 export type {
   Action,
   ActionType,
+  AssignCombatDamage,
   EndTurn,
   MoveDestination,
   Mulligan,
@@ -21,7 +22,13 @@ export {
   type PowerSymbol,
   type Supertype,
 } from './cards.ts';
-export type { Decision, FocusDecision, MulliganDecision, PriorityDecision } from './decisions.ts';
+export type {
+  AssignDamageDecision,
+  Decision,
+  FocusDecision,
+  MulliganDecision,
+  PriorityDecision,
+} from './decisions.ts';
 export {
   type BattlefieldContested,
   type BattlefieldScored,
@@ -31,8 +38,12 @@ export {
   type CardPlaced,
   type CardPlayed,
   type CardRecycled,
+  type CombatEnded,
+  type CombatStarted,
   type ControlEstablished,
   type ControlLost,
+  type DamageAssigned,
+  type DamageDealt,
   type DeckShuffled,
   type EventOfType,
   type FocusPassed,
@@ -58,7 +69,10 @@ export {
   type TurnEnded,
   type TurnOrderDetermined,
   type TurnStarted,
+  type UnitKilled,
+  type UnitsHealed,
   type UnitsMoved,
+  type UnitsRecalled,
   type Visibility,
   type VisibleEvent,
 } from './events.ts';
@@ -68,6 +82,8 @@ export type { IllegalCode, IllegalReason, SetupProblem, SetupProblemCode } from 
 export type { DeckList, GameSetup, ModeId, PlayerSetup } from './setup.ts';
 export {
   type BattlefieldState,
+  type CombatState,
+  type DamageAssignment,
   type GameObject,
   type GameStage,
   type GameState,

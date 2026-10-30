@@ -71,9 +71,11 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
       controller: battlefield.controller,
       contestedBy: battlefield.contestedBy,
       showdownStaged: battlefield.showdownStaged,
+      combatStaged: battlefield.combatStaged,
       units: visible(battlefield.units),
     })),
     showdown: state.showdown,
+    combat: state.combat,
     stage: state.stage,
     decision: decision !== null && decision.player === viewer ? decision : null,
     winner: state.winner,
@@ -81,7 +83,13 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
 }
 
 function show(object: GameObject): VisibleObject {
-  return { id: object.id, card: object.card, owner: object.owner, exhausted: object.exhausted };
+  return {
+    id: object.id,
+    card: object.card,
+    owner: object.owner,
+    exhausted: object.exhausted,
+    damage: object.damage,
+  };
 }
 
 function objectOf(state: GameState, id: ObjectId): GameObject {

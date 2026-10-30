@@ -34,6 +34,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
   if (problems.length > 0) return { ok: false, problems };
 
   const draft: Draft = {
+    cards: setup.cards,
     rng: createRng(seed),
     nextObjectId: 1,
     eventSeq: 0,
@@ -48,6 +49,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     })),
     battlefields: [],
     showdown: null,
+    combat: null,
     turnOrder: [],
     stage: { kind: 'mulligan', pending: [] },
     winner: null,
@@ -90,6 +92,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
       controller: null,
       contestedBy: null,
       showdownStaged: false,
+      combatStaged: false,
       units: [],
     });
     emit(draft, {
@@ -161,6 +164,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     turnOrder,
     battlefields: [],
     showdown: null,
+    combat: null,
     stage: draft.stage,
     winner: null,
   };
