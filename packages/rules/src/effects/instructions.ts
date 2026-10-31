@@ -14,6 +14,7 @@ import { attach } from '../actions/attach.ts';
 import { drawCards } from '../actions/draw.ts';
 import { killPermanents } from '../actions/kill.ts';
 import { playToken } from '../actions/play-token.ts';
+import { weaponmasterOptions } from '../actions/weaponmaster.ts';
 import { type Draft, emit, locationOf, objectOf, playerOf, updateObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { isValidTarget } from './targets.ts';
@@ -133,6 +134,21 @@ export function executeInstructions(
         if (source === null || target === null) break;
         attach(draft, source, target);
         break;
+      }
+      case 'weaponmaster': {
+        // 821.1.c: its controller may choose an Equipment to attach to this unit (ADR 0020). With
+        // none to choose, or once the unit has left the board, nothing happens.
+        const unit = item.ability?.source ?? null;
+        if (unit === null || locationOf(draft, unit) === null) break;
+        const options = weaponmasterOptions(draft, item.controller, unit);
+        if (options.length === 0) break;
+        draft.resolving = {
+          item: item.object,
+          next: index + 1,
+          token,
+          choice: { kind: 'weaponmaster', player: item.controller, unit, options },
+        };
+        return false;
       }
       case 'gain-xp': {
         // 730.1: its controller gains XP.
