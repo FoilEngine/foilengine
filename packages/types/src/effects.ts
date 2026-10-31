@@ -15,7 +15,14 @@ export type Keyword =
   /** 815: assigned lethal combat damage before its controller's units without Tank. */
   | 'tank'
   /** 826: assigned lethal combat damage after its controller's units without Backline. */
-  | 'backline';
+  | 'backline'
+  /** 805: "As you play me, you may pay [1][C] as an additional cost. If you do, I enter ready." */
+  | 'accelerate'
+  /**
+   * 816: "At the start of this permanent's controller's Beginning Phase, before scoring, kill
+   * this": a card with Temporary also has that triggered ability (a `beginning` trigger).
+   */
+  | 'temporary';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b): Assault X, "While I am an attacker, I have +X [M]"
@@ -47,7 +54,9 @@ export type Instruction =
   /** "Give [target] +X [M] this turn." (479.4): a negative `amount` gives -X [M]. */
   | { readonly kind: 'give-might'; readonly amount: number; readonly target: number }
   /** "Buff [target]." (702.2.a): place a buff on a unit, unless it already has one (702.3.a). */
-  | { readonly kind: 'buff'; readonly target: number };
+  | { readonly kind: 'buff'; readonly target: number }
+  /** "Kill [target]." (429.6): `self` is the permanent the ability is on ("kill this"). */
+  | { readonly kind: 'kill'; readonly target: number | 'self' };
 
 /** The cost of an activated ability (377.1): Energy, Power, and exhausting its source ([E]). */
 export type AbilityCost = {
@@ -61,7 +70,7 @@ export type AbilityCost = {
  * The Condition of a triggered ability (383.2.a). For now, the named ones on a permanent about
  * itself: "When you play me" (383.4.a), "When I conquer" (383.4.c), "When I hold" (383.4.d),
  * "When I attack" (383.4.e), "When I defend" (383.4.f), "When I die" (808.1.c: killed and sent
- * to the trash, 808.1.d).
+ * to the trash, 808.1.d), "At the start of your Beginning Phase" (`beginning`, 816.1.c).
  */
 export type Trigger =
   | { readonly kind: 'played' }
@@ -69,7 +78,8 @@ export type Trigger =
   | { readonly kind: 'hold' }
   | { readonly kind: 'attack' }
   | { readonly kind: 'defend' }
-  | { readonly kind: 'dies' };
+  | { readonly kind: 'dies' }
+  | { readonly kind: 'beginning' };
 
 /**
  * A Passive Ability of a permanent, active while it is on the board (363–365): a statement of fact

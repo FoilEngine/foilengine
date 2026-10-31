@@ -43,6 +43,8 @@ export type PlayCard = {
   readonly card: ObjectId;
   readonly location?: PlayLocation;
   readonly targets?: readonly ObjectId[];
+  /** Pay the optional additional cost of Accelerate (805, 355.1.a): the unit enters ready. */
+  readonly accelerate?: boolean;
   readonly payment: readonly RuneUse[];
 };
 
