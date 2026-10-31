@@ -379,6 +379,31 @@ export const TEST_CARDS = {
     keywords: [{ keyword: 'deflect', value: 1 }],
     text: '[Deflect]',
   }),
+  /** Vision (817): "When this is played, Predict." */
+  seer: card('test:seer', 'unit', {
+    name: 'Seer',
+    cost: { energy: 1, power: [] },
+    might: 1,
+    keywords: ['vision'],
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'played' },
+        instructions: [{ kind: 'predict', amount: 1 }],
+      },
+    ],
+    text: '[Vision]',
+  }),
+  /** A choice in the middle of a resolution (ADR 0020), then an instruction after it. */
+  glimpse: card('test:glimpse', 'spell', {
+    name: 'Glimpse',
+    cost: { energy: 1, power: [] },
+    instructions: [
+      { kind: 'predict', amount: 2 },
+      { kind: 'draw', amount: 1 },
+    ],
+    text: 'Predict 2, then draw 1.',
+  }),
   /** A gear with an activated ability (151): "[1], [E]: Draw 1." It must enter ready (149.1). */
   lantern: card('test:lantern', 'gear', {
     name: 'Lantern',
@@ -511,6 +536,7 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.ganker,
   TEST_CARDS.ambusher,
   TEST_CARDS.warder,
+  TEST_CARDS.seer,
 ];
 
 /** The test gear, for decks that exercise them. */
@@ -526,6 +552,7 @@ export const TEST_SPELLS = [
   TEST_CARDS.wither,
   TEST_CARDS.bless,
   TEST_CARDS.muster,
+  TEST_CARDS.glimpse,
 ];
 
 /** Every test card, keyed by id. */

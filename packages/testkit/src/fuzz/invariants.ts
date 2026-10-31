@@ -125,6 +125,12 @@ function hiddenFrom(
       }
     }
   }
+  // ADR 0020: a player sees the cards of their own pending choice (Predict looks at the top of
+  // their Main Deck, 437.1), in their view only.
+  const choice = state.resolving?.choice;
+  if (choice !== undefined && choice.player === viewer) {
+    return { inView: inView.filter((id) => !choice.cards.includes(id)), inEvents };
+  }
   return { inView, inEvents };
 }
 
