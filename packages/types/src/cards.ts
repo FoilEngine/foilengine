@@ -54,6 +54,8 @@ export type CardDefinition = {
    * Text of its Top-Most Card (136.2.c, 718.3). For now, keywords only.
    */
   readonly effectText?: { readonly keywords?: readonly (Keyword | ValuedKeyword)[] };
+  /** "Repeat [Cost]" (820.1.c): the cost to execute a spell's instructions one more time. */
+  readonly repeat?: Cost;
   /** Might Bonus (137): modulates the Might of the card it is Attached to (137.3). */
   readonly mightBonus?: number;
   /**

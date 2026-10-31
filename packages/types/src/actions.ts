@@ -45,6 +45,11 @@ export type PlayCard = {
   readonly targets?: readonly ObjectId[];
   /** Pay the optional additional cost of Accelerate (805, 355.1.a): the unit enters ready. */
   readonly accelerate?: boolean;
+  /**
+   * Pay the Repeat cost (820.1.d): the instructions are executed one more time, with these
+   * targets, chosen now (820.2, 820.2.a).
+   */
+  readonly repeat?: { readonly targets?: readonly ObjectId[] };
   readonly payment: readonly RuneUse[];
 };
 

@@ -45,8 +45,8 @@ describe('pure JSON (ADR 0004)', () => {
   });
 
   it('the state has a schema version', () => {
-    expect(STATE_VERSION).toBe(17);
-    expectTypeOf<GameState['version']>().toEqualTypeOf<17>();
+    expect(STATE_VERSION).toBe(18);
+    expectTypeOf<GameState['version']>().toEqualTypeOf<18>();
   });
 });
 
@@ -92,7 +92,7 @@ describe('event visibility (ADR 0005)', () => {
 
   it('every event type has its private fields declared', () => {
     const types: GameEventType[] = Object.keys(PRIVATE_EVENT_FIELDS) as GameEventType[];
-    expect(types).toHaveLength(55);
+    expect(types).toHaveLength(56);
     expect(PRIVATE_EVENT_FIELDS.CardDrawn).toEqual(['object', 'card']);
   });
 });
