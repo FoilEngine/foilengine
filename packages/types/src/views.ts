@@ -23,6 +23,8 @@ export type VisibleObject = {
   readonly buffs: number;
   /** A unit's Might on the board, after continuous effects (143.2.a: its Effective Might). */
   readonly might: number | null;
+  /** Whether it has the Empowered status (442.2). */
+  readonly empowered?: true;
   /** The cards Attached to it (719), public like it (148.1.a.2). Absent when there are none. */
   readonly attached?: readonly VisibleObject[];
 };

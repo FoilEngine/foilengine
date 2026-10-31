@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 16;
+export const STATE_VERSION = 17;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -28,6 +28,8 @@ export type GameObject = {
   readonly damage: number;
   /** Buffs on a unit (701): at most one (702.3); a new object has none (705). */
   readonly buffs: number;
+  /** The Empowered status (442.1.a, 442.2): absent when it does not have it (124.1). */
+  readonly empowered?: true;
   /**
    * The cards Attached to this Top-Most Card (435, 719), in the order they were attached. They
    * are in no zone of their own: they are where it is (719.3). Absent when there are none.

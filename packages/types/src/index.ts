@@ -86,6 +86,7 @@ export {
   type GearRecalled,
   type MightGiven,
   type MulliganTaken,
+  type ObjectEmpowered,
   type ObjectExhausted,
   type ObjectsReadied,
   type PhaseStarted,

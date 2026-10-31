@@ -281,6 +281,13 @@ export type Predicted = EventBase & {
   readonly count: number;
 };
 
+/** A permanent became Empowered (442.1, 442.2.a, 827.2). */
+export type ObjectEmpowered = EventBase & {
+  readonly type: 'ObjectEmpowered';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+};
+
 /** A player gained XP (730.1); `xp` is their new total. */
 export type XpGained = EventBase & {
   readonly type: 'XpGained';
@@ -499,6 +506,7 @@ export type GameEvent =
   | GearRecalled
   | Predicted
   | XpGained
+  | ObjectEmpowered
   | UnitsHealed
   | UnitsRecalled
   | CombatEnded
@@ -560,6 +568,7 @@ export const PRIVATE_EVENT_FIELDS = {
   GearRecalled: [],
   Predicted: [],
   XpGained: [],
+  ObjectEmpowered: [],
   UnitsHealed: [],
   UnitsRecalled: [],
   CombatEnded: [],
