@@ -256,6 +256,48 @@ export const TEST_CARDS = {
     ],
     text: 'When I defend, draw 1.',
   }),
+  /** Deathknell (808): "When I die, draw 1." */
+  martyr: card('test:martyr', 'unit', {
+    name: 'Martyr',
+    cost: { energy: 1, power: [] },
+    might: 1,
+    keywords: ['deathknell'],
+    abilities: [
+      { kind: 'triggered', trigger: { kind: 'dies' }, instructions: [{ kind: 'draw', amount: 1 }] },
+    ],
+    text: '[Deathknell][>] Draw 1.',
+  }),
+  /** An optional cost within a triggered ability (383.3.a, 383.3.b). */
+  bounty: card('test:bounty', 'unit', {
+    name: 'Bounty',
+    cost: { energy: 2, power: [] },
+    might: 2,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'conquer' },
+        optional: true,
+        cost: { energy: 1 },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'When I conquer, you may pay [1] to draw 1.',
+  }),
+  /** A mandatory cost within a triggered ability (383.3.b, 383.3.b.1). */
+  toll: card('test:toll', 'unit', {
+    name: 'Toll',
+    cost: { energy: 1, power: [] },
+    might: 1,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'played' },
+        cost: { energy: 1 },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'When you play me, pay [1] to draw 1.',
+  }),
 } as const;
 
 /** The test units with abilities, for decks that exercise them. */
@@ -269,6 +311,9 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.scholar,
   TEST_CARDS.charger,
   TEST_CARDS.guard,
+  TEST_CARDS.martyr,
+  TEST_CARDS.bounty,
+  TEST_CARDS.toll,
 ];
 
 /** The test spells, for decks that exercise the Chain. */
@@ -323,15 +368,16 @@ export function testDeckWithSpells(): DeckList {
 }
 
 /**
- * A legal 1v1 deck with spells and units with abilities: the test champion, Vanilla 1 to 13, and
- * two of each test spell and each test unit with abilities (40 cards).
+ * A legal 1v1 deck with spells and units with abilities: the test champion, Vanilla 1 to 11, one
+ * of each test spell and two of each test unit with abilities (40 cards).
  */
 export function testDeckWithAbilities(): DeckList {
   return testDeck({
     mainDeck: [
       TEST_CARDS.champion.id,
-      ...TEST_CARDS.vanillas.slice(0, 13).map((unit) => unit.id),
-      ...[...TEST_SPELLS, ...TEST_ABILITY_UNITS].flatMap((c) => [c.id, c.id]),
+      ...TEST_CARDS.vanillas.slice(0, 11).map((unit) => unit.id),
+      ...TEST_SPELLS.map((spell) => spell.id),
+      ...TEST_ABILITY_UNITS.flatMap((c) => [c.id, c.id]),
     ],
   });
 }
