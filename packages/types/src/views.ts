@@ -15,6 +15,21 @@ export type VisibleObject = {
   readonly damage: number;
 };
 
+/** A Chain Item as every player sees it (108.1.b). */
+export type ChainItemView = {
+  readonly object: VisibleObject;
+  readonly controller: PlayerId;
+  readonly status: 'pending' | 'finalized';
+  readonly targets: readonly ObjectId[];
+};
+
+/** The Chain as every player sees it. */
+export type ChainView = {
+  readonly items: readonly ChainItemView[];
+  readonly priority: PlayerId;
+  readonly passes: number;
+};
+
 /** A zone whose cards the viewer may not see: only its size is public (108.4.d, 108.7.e). */
 export type HiddenZone = { readonly size: number };
 
@@ -73,6 +88,8 @@ export type PlayerView = {
   readonly battlefields: readonly BattlefieldView[];
   readonly showdown: ShowdownState | null;
   readonly combat: CombatState | null;
+  /** The Chain is public (108.1.b): its cards are shown. */
+  readonly chain: ChainView | null;
   readonly stage: GameStage;
   /** The decision the viewer must make now, if any. */
   readonly decision: Decision | null;

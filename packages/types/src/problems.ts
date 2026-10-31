@@ -20,6 +20,10 @@ export type IllegalCode =
   | 'card-not-playable'
   /** The location is not a valid one for this card (355.2). */
   | 'invalid-location'
+  /** The targets are missing, or one is not a valid choice (355.8, 355.9). */
+  | 'invalid-target'
+  /** The card cannot be played in the current state of the turn (358.4, 309, 308). */
+  | 'wrong-timing'
   /** A rune of the payment cannot be used as requested. */
   | 'invalid-payment'
   /** The resources in the Rune Pool do not cover the cost (358.2). */

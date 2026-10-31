@@ -31,16 +31,25 @@ export type PlayLocation =
   | { readonly kind: 'battlefield'; readonly battlefield: ObjectId };
 
 /**
- * Plays a card (349–359). In M2: a unit from the hand, or the Chosen Champion from the
- * Champion Zone (108.3.d). The runes in `payment` add resources in this order (357.1.a),
- * then the pool pays the total cost (357.1). Resources added beyond the cost stay in the pool.
+ * Plays a card (349–359): a unit or a spell from the hand, or the Chosen Champion from the
+ * Champion Zone (108.3.d). It goes on the Chain (354). A unit needs a `location` (355.2); a card
+ * with targets needs one per target of its definition, in order (355.5). The runes in `payment`
+ * add resources in this order (357.1.a), then the pool pays the total cost (357.1). Resources
+ * added beyond the cost stay in the pool.
  */
 export type PlayCard = {
   readonly type: 'PlayCard';
   readonly player: PlayerId;
   readonly card: ObjectId;
-  readonly location: PlayLocation;
+  readonly location?: PlayLocation;
+  readonly targets?: readonly ObjectId[];
   readonly payment: readonly RuneUse[];
+};
+
+/** The player with Priority on a Chain passes it to the next player in turn order (338.1.b). */
+export type PassPriority = {
+  readonly type: 'PassPriority';
+  readonly player: PlayerId;
 };
 
 /** Where units move to (144.4): a battlefield, or back to their base. */
@@ -84,6 +93,7 @@ export type Action =
   | PlayCard
   | StandardMove
   | PassFocus
+  | PassPriority
   | AssignCombatDamage
   | Concede;
 

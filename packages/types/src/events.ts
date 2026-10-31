@@ -260,6 +260,45 @@ export type PlayerConceded = EventBase & {
   readonly player: PlayerId;
 };
 
+/**
+ * A card was put on the Chain to be played (354): it left its zone and is a new object there
+ * (124). The card is revealed: the Chain is public (108.1.b).
+ */
+export type ChainItemAdded = EventBase & {
+  readonly type: 'ChainItemAdded';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+  readonly previousObject: ObjectId;
+  readonly card: CardId;
+  readonly from: PlayerZoneId;
+  readonly targets: readonly ObjectId[];
+};
+
+/** A Pending Chain Item became a Finalized one (329.3, 359.1). */
+export type ChainItemFinalized = EventBase & {
+  readonly type: 'ChainItemFinalized';
+  readonly object: ObjectId;
+};
+
+/** The player with Priority passed it to the next player in turn order (338.1.b). */
+export type PriorityPassed = EventBase & {
+  readonly type: 'PriorityPassed';
+  readonly player: PlayerId;
+  readonly next: PlayerId;
+};
+
+/**
+ * The newest Finalized Chain Item resolved (340.1). A spell then goes to its owner's trash as a
+ * new object (157, 124): `trashed`.
+ */
+export type ChainItemResolved = EventBase & {
+  readonly type: 'ChainItemResolved';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+  readonly card: CardId;
+  readonly trashed: ObjectId | null;
+};
+
 /** A turn began (301, 315). */
 export type TurnStarted = EventBase & {
   readonly type: 'TurnStarted';
@@ -357,7 +396,11 @@ export type GameEvent =
   | UnitsHealed
   | UnitsRecalled
   | CombatEnded
-  | PlayerConceded;
+  | PlayerConceded
+  | ChainItemAdded
+  | ChainItemFinalized
+  | PriorityPassed
+  | ChainItemResolved;
 
 export type GameEventType = GameEvent['type'];
 
@@ -403,6 +446,10 @@ export const PRIVATE_EVENT_FIELDS = {
   UnitsRecalled: [],
   CombatEnded: [],
   PlayerConceded: [],
+  ChainItemAdded: [],
+  ChainItemFinalized: [],
+  PriorityPassed: [],
+  ChainItemResolved: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */

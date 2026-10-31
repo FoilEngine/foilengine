@@ -1,6 +1,7 @@
 // Card definitions: the card as a rule, shared by all its printings (docs/05-codex-data.md).
-// Keywords and abilities arrive with M3.
+// Effects are plain data interpreted by the engine (ADR 0019, effects.ts).
 
+import type { Instruction, Keyword, TargetSpec } from './effects.ts';
 import type { CardId } from './ids.ts';
 
 /** The six domains (134.2). */
@@ -38,6 +39,12 @@ export type CardDefinition = {
   readonly cost?: Cost;
   /** Units (143). */
   readonly might?: number;
-  /** Rules text in force, errata included. Informative: effects are implemented in `cards`. */
+  /** Rules text in force, errata included. The engine reads the fields below, not this text. */
   readonly text: string;
+  /** Keywords printed on the card (800+). */
+  readonly keywords?: readonly Keyword[];
+  /** What the card chooses as it is played (355.5): instructions refer to these by index. */
+  readonly targets?: readonly TargetSpec[];
+  /** A spell's instructions, executed from top to bottom when it resolves (158.1). */
+  readonly instructions?: readonly Instruction[];
 };

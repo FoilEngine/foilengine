@@ -13,8 +13,9 @@ export type MulliganDecision = {
 };
 
 /**
- * The player has Priority (312): they may take Discretionary Actions (411.1).
- * In M2's first step, the only one is ending the turn (316.9).
+ * The player has Priority (312): they may take Discretionary Actions (411.1). In their Main Phase
+ * in a Neutral Open State (312.2.a): play cards, move, end the turn. On a Chain (312.2.c,
+ * 312.2.d): play a card with Reaction (309.1.a), or pass Priority (338.1).
  */
 export type PriorityDecision = {
   readonly kind: 'Priority';

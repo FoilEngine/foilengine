@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 5;
+export const STATE_VERSION = 6;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -89,6 +89,28 @@ export type CombatState = {
 };
 
 /** A Showdown in progress (341–348). The turn is then in a Showdown State (343.1). */
+/**
+ * An item on the Chain (328, 329): a card being played. Pending until its play is finalized
+ * (329.2, 359.1), then Finalized. The object is the card itself, in the Chain zone (328).
+ */
+export type ChainItem = {
+  readonly object: ObjectId;
+  readonly controller: PlayerId;
+  readonly status: 'pending' | 'finalized';
+  /** The chosen targets, in the order of the card's `targets` (355.5). */
+  readonly targets: readonly ObjectId[];
+};
+
+/** The Chain (327–340). It exists while it holds an item (330); then the turn is Closed (331.1). */
+export type ChainState = {
+  /** Oldest first: items are finalized in that order (337.1.b), the newest resolves first (340.1). */
+  readonly items: readonly ChainItem[];
+  /** The player with Priority (312.2.c, 312.2.d). */
+  readonly priority: PlayerId;
+  /** Players who passed Priority in sequence since the last item was added (339.1). */
+  readonly passes: number;
+};
+
 export type ShowdownState = {
   readonly battlefield: ObjectId;
   /** The player with Focus, and so with Priority (313.2). */
@@ -135,6 +157,8 @@ export type GameState = {
   readonly showdown: ShowdownState | null;
   /** The Combat in progress, if any (461). */
   readonly combat: CombatState | null;
+  /** The Chain, if it exists (330): the turn is then in a Closed State (309.1). */
+  readonly chain: ChainState | null;
   readonly stage: GameStage;
   readonly winner: PlayerId | null;
 };
