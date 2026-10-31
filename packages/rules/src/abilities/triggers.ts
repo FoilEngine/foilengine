@@ -15,6 +15,7 @@ import type {
 } from '@foilengine/types';
 import { addAbility, finalize, givePriorityToNewest, removeFromChain } from '../chain/chain.ts';
 import { controllerOf, type Draft, emit, findObject } from '../draft.ts';
+import { deflectCost, withDeflect } from '../effects/deflect.ts';
 import { isValidTarget, validTargets } from '../effects/targets.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { autoPaymentOnDraft, payCost, useRunes } from '../resources/payment.ts';
@@ -121,6 +122,25 @@ const needsChoices = (ability: Extract<Ability, { kind: 'triggered' }> | null) =
   ability !== null &&
   (ability.optional === true || (ability.targets ?? []).length > 0 || ability.cost !== undefined);
 
+const NO_COST: Cost = { energy: 0, power: [] };
+
+/** For each target of the ability, a valid one with the least Deflect for `controller`. */
+function cheapestTargets(
+  draft: Draft,
+  ability: Extract<Ability, { kind: 'triggered' }>,
+  controller: PlayerId,
+): ObjectId[] {
+  return (ability.targets ?? []).flatMap((spec) => {
+    let best: { target: ObjectId; extra: number } | null = null;
+    for (const target of validTargets(draft, spec, controller)) {
+      const extra = deflectCost(draft, controller, [target]).length;
+      if (best === null || extra < best.extra) best = { target, extra };
+      if (extra === 0) break;
+    }
+    return best === null ? [] : [best.target];
+  });
+}
+
 /** The cost of a triggered ability, as a card cost (383.3.b). */
 export const costOf = (ability: Extract<Ability, { kind: 'triggered' }>): Cost | null =>
   ability.cost === undefined
@@ -180,9 +200,15 @@ export function finalizePending(draft: Draft): void {
       removePending(draft, item, '355.8');
       continue;
     }
-    const cost = costOf(ability);
+    // Its cost includes the Deflect of its targets (809.1.d, 401): payable with the cheapest ones?
+    const cost = withDeflect(
+      draft,
+      item.controller,
+      costOf(ability) ?? NO_COST,
+      cheapestTargets(draft, ability, item.controller),
+    );
     if (
-      cost !== null &&
+      (cost.energy > 0 || cost.power.length > 0) &&
       ability.optional !== true &&
       autoPaymentOnDraft(draft, item.controller, cost) === null
     ) {
@@ -230,9 +256,10 @@ export function finalizeChosen(draft: Draft, action: FinalizeAbility): IllegalRe
       };
     }
   }
-  // 383.3.b, 383.3.b.1: its cost is paid to finalize it, runes adding resources first (357.1.a).
-  const cost = costOf(ability);
-  if (cost !== null) {
+  // 383.3.b, 383.3.b.1: its cost is paid to finalize it, runes adding resources first (357.1.a),
+  // with the Deflect of its targets (809.1.d, 356.2.a.2, 401).
+  const cost = withDeflect(draft, item.controller, costOf(ability) ?? NO_COST, targets);
+  if (cost.energy > 0 || cost.power.length > 0) {
     const runes = useRunes(draft, draft, item.controller, action.payment ?? []);
     if (runes !== null) return runes;
     const paid = payCost(draft, item.controller, cost);
