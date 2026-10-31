@@ -47,7 +47,10 @@ function locations(state: GameState): { id: ObjectId; where: string }[] {
     for (const id of battlefield.units)
       found.push({ id, where: `battlefield ${battlefield.object}` });
   }
-  for (const item of state.chain?.items ?? []) found.push({ id: item.object, where: 'chain' });
+  // An ability on the Chain has no card, so no object in `objects` (377.3.a.1).
+  for (const item of state.chain?.items ?? []) {
+    if (item.ability === null) found.push({ id: item.object, where: 'chain' });
+  }
   return found;
 }
 

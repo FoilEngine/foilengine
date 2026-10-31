@@ -1,9 +1,11 @@
 export {
+  TEST_ABILITY_UNITS,
   TEST_CARD_DEFINITIONS,
   TEST_CARDS,
   TEST_SPELLS,
   testDeck,
   testDeckVariant,
+  testDeckWithAbilities,
   testDeckWithSpells,
   testSetup,
 } from './cards/test-cards.ts';

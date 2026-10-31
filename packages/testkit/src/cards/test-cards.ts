@@ -2,6 +2,7 @@
 // (docs/06-testing.md). Ids start with `test:` and never collide with a riftbound_id.
 
 import type {
+  Ability,
   CardCategory,
   CardDefinition,
   CardId,
@@ -30,6 +31,7 @@ const card = (
     keywords?: Keyword[];
     targets?: TargetSpec[];
     instructions?: Instruction[];
+    abilities?: Ability[];
     text?: string;
   } = {},
 ): CardDefinition => ({
@@ -44,6 +46,7 @@ const card = (
   ...(options.keywords === undefined ? {} : { keywords: options.keywords }),
   ...(options.targets === undefined ? {} : { targets: options.targets }),
   ...(options.instructions === undefined ? {} : { instructions: options.instructions }),
+  ...(options.abilities === undefined ? {} : { abilities: options.abilities }),
   text: options.text ?? '',
 });
 
@@ -127,7 +130,84 @@ export const TEST_CARDS = {
     ],
     text: 'Deal 3 to an enemy unit at a battlefield. Draw 1.',
   }),
+  /** A Play Effect (383.4.a). */
+  scout: card('test:scout', 'unit', {
+    name: 'Scout',
+    cost: { energy: 2, power: [] },
+    might: 2,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'played' },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'When you play me, draw 1.',
+  }),
+  /** A Conquer ability (383.4.c). */
+  raider: card('test:raider', 'unit', {
+    name: 'Raider',
+    cost: { energy: 2, power: [] },
+    might: 2,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'conquer' },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'When I conquer, draw 1.',
+  }),
+  /** A Hold ability (383.4.d). */
+  keeper: card('test:keeper', 'unit', {
+    name: 'Keeper',
+    cost: { energy: 2, power: [] },
+    might: 3,
+    abilities: [
+      { kind: 'triggered', trigger: { kind: 'hold' }, instructions: [{ kind: 'draw', amount: 1 }] },
+    ],
+    text: 'When I hold, draw 1.',
+  }),
+  /** An activated ability with [E] in its cost (377.1). */
+  slinger: card('test:slinger', 'unit', {
+    name: 'Slinger',
+    cost: { energy: 2, power: [] },
+    might: 1,
+    abilities: [
+      {
+        kind: 'activated',
+        cost: { exhaustSelf: true },
+        targets: [{ kind: 'unit' }],
+        instructions: [{ kind: 'deal', amount: 1, target: 0 }],
+      },
+    ],
+    text: '[E]: Deal 1 to a unit.',
+  }),
+  /** An activated ability with Reaction (813.1.c.2). */
+  sage: card('test:sage', 'unit', {
+    name: 'Sage',
+    cost: { energy: 2, power: [] },
+    might: 1,
+    abilities: [
+      {
+        kind: 'activated',
+        cost: { energy: 1 },
+        keywords: ['reaction'],
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: '[Reaction][>] [1]: Draw 1.',
+  }),
 } as const;
+
+/** The test units with abilities, for decks that exercise them. */
+export const TEST_ABILITY_UNITS = [
+  TEST_CARDS.scout,
+  TEST_CARDS.raider,
+  TEST_CARDS.keeper,
+  TEST_CARDS.slinger,
+  TEST_CARDS.sage,
+];
 
 /** The test spells, for decks that exercise the Chain. */
 export const TEST_SPELLS = [TEST_CARDS.insight, TEST_CARDS.bolt, TEST_CARDS.snap, TEST_CARDS.smite];
@@ -147,6 +227,7 @@ export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = O
     TEST_CARDS.gear,
     TEST_CARDS.spell,
     ...TEST_SPELLS,
+    ...TEST_ABILITY_UNITS,
   ].map((definition) => [definition.id, definition]),
 );
 
@@ -175,6 +256,20 @@ export function testDeckWithSpells(): DeckList {
       TEST_CARDS.champion.id,
       ...TEST_CARDS.vanillas.slice(0, 31).map((unit) => unit.id),
       ...TEST_SPELLS.flatMap((spell) => [spell.id, spell.id]),
+    ],
+  });
+}
+
+/**
+ * A legal 1v1 deck with spells and units with abilities: the test champion, Vanilla 1 to 21, and
+ * two of each test spell and each test unit with abilities (40 cards).
+ */
+export function testDeckWithAbilities(): DeckList {
+  return testDeck({
+    mainDeck: [
+      TEST_CARDS.champion.id,
+      ...TEST_CARDS.vanillas.slice(0, 21).map((unit) => unit.id),
+      ...[...TEST_SPELLS, ...TEST_ABILITY_UNITS].flatMap((c) => [c.id, c.id]),
     ],
   });
 }
@@ -219,10 +314,15 @@ export function testSetup(
     players?: readonly PlayerSetup[];
     distinctDecks?: boolean;
     withSpells?: boolean;
+    withAbilities?: boolean;
   } = {},
 ): GameSetup {
-  const { distinctDecks = false, withSpells = false, ...rest } = overrides;
-  const deck = withSpells ? testDeckWithSpells() : testDeck();
+  const { distinctDecks = false, withSpells = false, withAbilities = false, ...rest } = overrides;
+  const deck = withAbilities
+    ? testDeckWithAbilities()
+    : withSpells
+      ? testDeckWithSpells()
+      : testDeck();
   const b = distinctDecks ? testDeckVariant('b', deck) : { deck, cards: {} };
   return {
     mode: '1v1-duel',
