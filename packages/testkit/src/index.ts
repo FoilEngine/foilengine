@@ -2,6 +2,7 @@ export {
   TEST_ABILITY_UNITS,
   TEST_CARD_DEFINITIONS,
   TEST_CARDS,
+  TEST_GEAR,
   TEST_SPELLS,
   testDeck,
   testDeckVariant,

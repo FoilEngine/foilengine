@@ -47,6 +47,7 @@ export type DraftBattlefield = {
   showdownStaged: boolean;
   combatStaged: boolean;
   units: ObjectId[];
+  gear: ObjectId[];
 };
 
 export type Draft = {
@@ -101,6 +102,7 @@ export function draftOf(state: GameState): Draft {
     battlefields: state.battlefields.map((battlefield) => ({
       ...battlefield,
       units: [...battlefield.units],
+      gear: [...battlefield.gear],
     })),
     showdown: state.showdown,
     combat: state.combat,
@@ -270,17 +272,39 @@ export function playersAt(draft: Draft, battlefield: DraftBattlefield): Set<Play
   return new Set(battlefield.units.map((unit) => controllerOf(draft, unit)));
 }
 
-/** Where a unit is (146.1): a player's base, a battlefield, or neither. */
+/**
+ * Where a permanent is (146.1, 152.1): a player's base, a battlefield, or neither. An Attached
+ * card is where its Top-Most Card is (719.3).
+ */
 export function locationOf(
   draft: Draft,
-  unit: ObjectId,
+  object: ObjectId,
 ):
   | { kind: 'base'; player: PlayerId }
   | { kind: 'battlefield'; battlefield: DraftBattlefield }
   | null {
   for (const player of draft.players) {
-    if (player.zones.base.includes(unit)) return { kind: 'base', player: player.id };
+    if (player.zones.base.includes(object)) return { kind: 'base', player: player.id };
   }
-  const battlefield = draft.battlefields.find((b) => b.units.includes(unit));
-  return battlefield === undefined ? null : { kind: 'battlefield', battlefield };
+  const battlefield = draft.battlefields.find(
+    (b) => b.units.includes(object) || b.gear.includes(object),
+  );
+  if (battlefield !== undefined) return { kind: 'battlefield', battlefield };
+  const top = topMostOf(draft, object);
+  return top === null ? null : locationOf(draft, top);
+}
+
+/** The Top-Most Card `object` is Attached to (718), if it is Attached. */
+export function topMostOf(draft: Draft, object: ObjectId): ObjectId | null {
+  const units = [
+    ...draft.players.flatMap((p) => p.zones.base),
+    ...draft.battlefields.flatMap((b) => b.units),
+  ];
+  return units.find((unit) => findObject(draft, unit)?.attached?.includes(object)) ?? null;
+}
+
+/** Sets the cards Attached to `top`; the field is dropped when there are none (719.2). */
+export function setAttached(draft: Draft, top: ObjectId, attached: readonly ObjectId[]): void {
+  const { attached: _, ...rest } = objectOf(draft, top);
+  draft.changedObjects.set(top, attached.length === 0 ? rest : { ...rest, attached });
 }

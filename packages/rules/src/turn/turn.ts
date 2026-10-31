@@ -4,6 +4,7 @@
 
 import {
   assertNever,
+  type ObjectId,
   type PlayerId,
   type Task,
   type TurnPhase,
@@ -189,15 +190,23 @@ function nextTurn(draft: Draft): void {
 function awaken(draft: Draft): void {
   const { player: playerId, turnNumber } = currentTurn(draft);
   const player = playerOf(draft, playerId);
-  // Permanents and runes they control are in their base (107.1.c), and their units at battlefields.
+  // Permanents and runes they control are in their base (107.1.c), their units at battlefields,
+  // and the cards Attached to their units, whose status is their own (719.4). A card Attached to
+  // another player's unit (718.5.e) cannot happen yet: Equip attaches to a unit you control
+  // (818.1.c.2), and no effect changes control.
   enterPhase(draft, playerId, turnNumber, 'awaken');
-  const controlled = [
-    ...player.zones.base,
-    ...draft.battlefields.flatMap((b) =>
-      b.units.filter((unit) => controllerOf(draft, unit) === playerId),
-    ),
-  ];
-  const exhausted = controlled.filter((id) => objectOf(draft, id).exhausted);
+  const exhausted: ObjectId[] = [];
+  const ready = (id: ObjectId) => {
+    const object = objectOf(draft, id);
+    if (object.exhausted) exhausted.push(id);
+    for (const card of object.attached ?? []) {
+      if (objectOf(draft, card).exhausted) exhausted.push(card);
+    }
+  };
+  for (const id of player.zones.base) ready(id);
+  for (const battlefield of draft.battlefields) {
+    for (const unit of battlefield.units) if (controllerOf(draft, unit) === playerId) ready(unit);
+  }
   for (const id of exhausted) updateObject(draft, id, { exhausted: false });
   if (exhausted.length > 0) {
     emit(draft, {

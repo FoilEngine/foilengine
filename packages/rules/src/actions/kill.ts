@@ -6,6 +6,7 @@ import type { ObjectId } from '@foilengine/types';
 import { trigger } from '../abilities/triggers.ts';
 import { type Draft, emit, locationOf, objectOf, playerOf, renewObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
+import { detachAll } from './attach.ts';
 import { ceaseIfToken } from './play-token.ts';
 
 /** Kills these permanents, at the same time, in this order. */
@@ -18,6 +19,8 @@ export function killPermanents(
   // processed just before it goes to the trash, while what they need about it can still be noted.
   trigger(draft, 'dies', units);
   for (const unit of units) {
+    // 719.5, 436.4.b: its Attached cards Detach and stay where it was.
+    detachAll(draft, unit);
     const location = locationOf(draft, unit);
     if (location === null) throw new EngineInvariantError(`${unit} is not on the board`);
     if (location.kind === 'base') {

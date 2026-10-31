@@ -33,6 +33,8 @@ const card = (
     targets?: TargetSpec[];
     instructions?: Instruction[];
     abilities?: Ability[];
+    effectText?: CardDefinition['effectText'];
+    mightBonus?: number;
     text?: string;
   } = {},
 ): CardDefinition => ({
@@ -48,6 +50,8 @@ const card = (
   ...(options.targets === undefined ? {} : { targets: options.targets }),
   ...(options.instructions === undefined ? {} : { instructions: options.instructions }),
   ...(options.abilities === undefined ? {} : { abilities: options.abilities }),
+  ...(options.effectText === undefined ? {} : { effectText: options.effectText }),
+  ...(options.mightBonus === undefined ? {} : { mightBonus: options.mightBonus }),
   text: options.text ?? '',
 });
 
@@ -351,6 +355,37 @@ export const TEST_CARDS = {
     ],
     text: 'When you play me, play a 1 [M] Recruit unit token into your base.',
   }),
+  /** A gear with an activated ability (151): "[1], [E]: Draw 1." It must enter ready (149.1). */
+  lantern: card('test:lantern', 'gear', {
+    name: 'Lantern',
+    cost: { energy: 1, power: [] },
+    abilities: [
+      {
+        kind: 'activated',
+        cost: { energy: 1, exhaustSelf: true },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: '[1], [E]: Draw 1.',
+  }),
+  /** Equipment (150) with Equip [1] (818), a Might Bonus of +1 (137) and [Assault 2] as Effect Text (136). */
+  blade: card('test:blade', 'gear', {
+    name: 'Blade',
+    tags: ['Equipment'],
+    cost: { energy: 1, power: [] },
+    keywords: ['equip'],
+    abilities: [
+      {
+        kind: 'activated',
+        cost: { energy: 1 },
+        targets: [{ kind: 'unit', controller: 'friendly' }],
+        instructions: [{ kind: 'attach', target: 0 }],
+      },
+    ],
+    effectText: { keywords: [{ keyword: 'assault', value: 2 }] },
+    mightBonus: 1,
+    text: 'Equip [1]',
+  }),
   /** Assault 2 (807): +2 [M] while it is an attacker. */
   bruiser: card('test:bruiser', 'unit', {
     name: 'Bruiser',
@@ -451,6 +486,9 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.summoner,
 ];
 
+/** The test gear, for decks that exercise them. */
+export const TEST_GEAR = [TEST_CARDS.lantern, TEST_CARDS.blade];
+
 /** The test spells, for decks that exercise the Chain. */
 export const TEST_SPELLS = [
   TEST_CARDS.insight,
@@ -479,6 +517,7 @@ export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = O
     TEST_CARDS.spell,
     ...TEST_SPELLS,
     ...TEST_ABILITY_UNITS,
+    ...TEST_GEAR,
     TEST_CARDS.recruit,
   ].map((definition) => [definition.id, definition]),
 );
@@ -514,7 +553,7 @@ export function testDeckWithSpells(): DeckList {
 
 /**
  * A legal 1v1 deck with spells and units with abilities: the test champion, Vanilla 1 to 11, one
- * of each test spell and two of each test unit with abilities.
+ * of each test spell, two of each test unit with abilities and two of each test gear.
  */
 export function testDeckWithAbilities(): DeckList {
   return testDeck({
@@ -523,6 +562,7 @@ export function testDeckWithAbilities(): DeckList {
       ...TEST_CARDS.vanillas.slice(0, 11).map((unit) => unit.id),
       ...TEST_SPELLS.map((spell) => spell.id),
       ...TEST_ABILITY_UNITS.flatMap((c) => [c.id, c.id]),
+      ...TEST_GEAR.flatMap((c) => [c.id, c.id]),
     ],
   });
 }

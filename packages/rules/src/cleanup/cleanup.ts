@@ -9,7 +9,7 @@
 // needs a unit to arrive during a non-combat Showdown, which needs spells (M3).
 
 import { killLethalUnits, startCombat, updateDesignations } from '../combat/combat.ts';
-import { type Draft, emit, playersAt } from '../draft.ts';
+import { controllerOf, type Draft, emit, playerOf, playersAt } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { DUEL_VICTORY_SCORE } from '../modes/duel.ts';
 import { startShowdown } from '../showdown/showdown.ts';
@@ -57,6 +57,11 @@ function cleanupOnce(draft: Draft): boolean {
       changed = true;
     }
   }
+
+  // 5 (323.6, 459.1): unattached non-unit gear at battlefields is recalled to its controller's
+  // base, which is not a Move (457, 458). Non-unit runes at battlefields and permanents in another
+  // player's base cannot happen yet: no effect puts them there.
+  if (recallGear(draft)) changed = true;
 
   // 6 (323.7): stage a Showdown at each Contested battlefield with no ongoing Showdown or Combat.
   // 7 (323.8): stage a Combat where units of opposing players are present too.
@@ -145,4 +150,27 @@ export function checkVictory(draft: Draft, rule: '323.1' | '432.3.c.1'): boolean
     }
   }
   return false;
+}
+
+/** 323.6: recalls the gear at battlefields, per controller in turn order. */
+function recallGear(draft: Draft): boolean {
+  const recalled = draft.battlefields.flatMap((battlefield) => {
+    const gear = battlefield.gear;
+    battlefield.gear = [];
+    return gear;
+  });
+  if (recalled.length === 0) return false;
+  for (const player of draft.turnOrder) {
+    const gear = recalled.filter((id) => controllerOf(draft, id) === player);
+    if (gear.length === 0) continue;
+    playerOf(draft, player).zones.base.push(...gear);
+    emit(draft, {
+      type: 'GearRecalled',
+      rule: '323.6',
+      visibility: { kind: 'public' },
+      player,
+      gear,
+    });
+  }
+  return true;
 }

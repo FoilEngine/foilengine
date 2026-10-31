@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 11;
+export const STATE_VERSION = 12;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -28,6 +28,11 @@ export type GameObject = {
   readonly damage: number;
   /** Buffs on a unit (701): at most one (702.3); a new object has none (705). */
   readonly buffs: number;
+  /**
+   * The cards Attached to this Top-Most Card (435, 719), in the order they were attached. They
+   * are in no zone of their own: they are where it is (719.3). Absent when there are none.
+   */
+  readonly attached?: readonly ObjectId[];
 };
 
 /**
@@ -80,6 +85,11 @@ export type BattlefieldState = {
   readonly combatStaged: boolean;
   /** Units present at this battlefield. Facedown cards (107.3) arrive later. */
   readonly units: readonly ObjectId[];
+  /**
+   * Unattached non-unit gear here (152.2), e.g. detached from a unit that died here (436.4.b):
+   * recalled to its controller's base during the next cleanup (323.6, 459.1).
+   */
+  readonly gear: readonly ObjectId[];
 };
 
 /** Combat damage assigned by one player to one unit (467.2.c). */

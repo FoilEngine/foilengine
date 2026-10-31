@@ -75,6 +75,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
       showdownStaged: battlefield.showdownStaged,
       combatStaged: battlefield.combatStaged,
       units: visible(battlefield.units),
+      gear: visible(battlefield.gear),
     })),
     showdown: state.showdown,
     combat: state.combat,
@@ -101,6 +102,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
 }
 
 function show(object: GameObject, reader: BoardReader): VisibleObject {
+  const attached = object.attached ?? [];
   return {
     id: object.id,
     card: object.card,
@@ -110,7 +112,17 @@ function show(object: GameObject, reader: BoardReader): VisibleObject {
     buffs: object.buffs,
     // Continuous effects are public: the Might is shown as they make it (143.2.a).
     might: characteristicsWith(reader, object.id).might,
+    // 148.1.a.2: gear on the board, attached ones included, is public.
+    ...(attached.length === 0
+      ? {}
+      : {
+          attached: attached.map((id) => show(reader.objectAt(id) ?? objectOfMissing(id), reader)),
+        }),
   };
+}
+
+function objectOfMissing(id: ObjectId): never {
+  throw new EngineInvariantError(`Unknown object ${id}`);
 }
 
 function objectOf(state: GameState, id: ObjectId): GameObject {

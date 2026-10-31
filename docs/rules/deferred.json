@@ -311,11 +311,6 @@
       "reason": "Needs effects that move units during combat."
     },
     {
-      "number": "323.6",
-      "milestone": "M3",
-      "reason": "Gear, runes at battlefields and permanents in another player's base only come from effects."
-    },
-    {
       "number": "323.6.a",
       "milestone": "M3",
       "reason": "Hidden cards arrive with Hide (422)."
@@ -1046,49 +1041,24 @@
       "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
     },
     {
-      "number": "457",
-      "milestone": "M3",
-      "reason": "Recalls only happen through effects, or at the end of a combat where both sides survive (468.1.a.2), which needs abilities."
-    },
-    {
-      "number": "458",
-      "milestone": "M3",
-      "reason": "Same as 457."
-    },
-    {
       "number": "458.1",
       "milestone": "M3",
-      "reason": "Same as 457."
-    },
-    {
-      "number": "458.2",
-      "milestone": "M3",
-      "reason": "Same as 457."
+      "reason": "Needs abilities that trigger on a Move: none exist yet."
     },
     {
       "number": "458.3",
       "milestone": "M3",
-      "reason": "Same as 457."
-    },
-    {
-      "number": "459",
-      "milestone": "M3",
-      "reason": "Gear arrives with M3."
-    },
-    {
-      "number": "459.1",
-      "milestone": "M3",
-      "reason": "Gear arrives with M3."
+      "reason": "Needs effects that restrict or block movement."
     },
     {
       "number": "460",
       "milestone": "M3",
-      "reason": "Same as 457."
+      "reason": "Needs effects that recall a permanent that has damage or statuses."
     },
     {
       "number": "460.1",
       "milestone": "M3",
-      "reason": "Same as 457."
+      "reason": "Needs effects that recall a permanent that has damage or statuses."
     },
     {
       "number": "462.1",

@@ -99,6 +99,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
       showdownStaged: false,
       combatStaged: false,
       units: [],
+      gear: [],
     });
     emit(draft, {
       type: 'BattlefieldSelected',

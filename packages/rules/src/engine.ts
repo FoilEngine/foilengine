@@ -384,20 +384,23 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
     const object = state.objects[card];
     const definition = object === undefined ? undefined : state.cards[object.card];
     if (definition?.cost === undefined) continue;
-    if (definition.category !== 'unit' && definition.category !== 'spell') continue;
+    const category = definition.category;
+    if (category !== 'unit' && category !== 'gear' && category !== 'spell') continue;
     if (timingProblem(state, definition) !== null) continue;
     const payment = autoPayment(state, player, definition.cost);
     if (payment === null) continue;
     const candidates: PlayCard[] =
-      definition.category === 'unit'
+      category === 'unit'
         ? locations.map((location) => ({ type: 'PlayCard', player, card, location, payment }))
-        : targetChoices(lookup(), definition.targets ?? [], player).map((targets) => ({
-            type: 'PlayCard',
-            player,
-            card,
-            payment,
-            ...(targets.length === 0 ? {} : { targets }),
-          }));
+        : category === 'gear' // 149.2: to the base, no choice
+          ? [{ type: 'PlayCard', player, card, payment }]
+          : targetChoices(lookup(), definition.targets ?? [], player).map((targets) => ({
+              type: 'PlayCard',
+              player,
+              card,
+              payment,
+              ...(targets.length === 0 ? {} : { targets }),
+            }));
     // 805: a unit with Accelerate may also be played paying [1][C] more, to enter ready.
     const domains = definition.domains;
     if (

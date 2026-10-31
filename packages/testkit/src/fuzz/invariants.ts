@@ -44,8 +44,12 @@ function locations(state: GameState): { id: ObjectId; where: string }[] {
   }
   for (const battlefield of state.battlefields) {
     found.push({ id: battlefield.object, where: 'battlefields' });
-    for (const id of battlefield.units)
+    for (const id of [...battlefield.units, ...battlefield.gear])
       found.push({ id, where: `battlefield ${battlefield.object}` });
+  }
+  // Attached cards are in no zone: they are where their Top-Most Card is (719.3).
+  for (const object of Object.values(state.objects)) {
+    for (const id of object.attached ?? []) found.push({ id, where: `attached to ${object.id}` });
   }
   // An ability on the Chain has no card, so no object in `objects` (377.3.a.1).
   for (const item of state.chain?.items ?? []) {

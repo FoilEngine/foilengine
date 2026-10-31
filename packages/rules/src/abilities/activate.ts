@@ -18,6 +18,7 @@ import {
   emit,
   findObject,
   locationOf,
+  topMostOf,
   updateObject,
 } from '../draft.ts';
 import { isValidTarget } from '../effects/targets.ts';
@@ -34,7 +35,22 @@ const illegal = (
  * Open State (381.1, the decision checks whose turn it is); in a Showdown State only with Action
  * or Reaction (308.1.a); in a Closed State only with Reaction (309.1.a).
  */
-function timingProblem(state: GameState, keywords: readonly string[]): IllegalReason | null {
+function timingProblem(
+  state: GameState,
+  keywords: readonly string[],
+  gear: boolean,
+): IllegalReason | null {
+  // 151.2: a gear's ability, during its controller's Main Phase, in an Open State, not in a
+  // Showdown; Action and Reaction allow more (806, 813).
+  const timed = keywords.includes('action') || keywords.includes('reaction');
+  const mainPhase = state.stage.kind === 'turn' && state.stage.phase === 'main';
+  if (gear && !timed && (!mainPhase || state.showdown !== null)) {
+    return illegal(
+      'wrong-timing',
+      "A gear's ability is activated in the Main Phase, not during a Showdown",
+      '151.2',
+    );
+  }
   if (state.chain !== null && !keywords.includes('reaction')) {
     return illegal('wrong-timing', 'Only abilities with Reaction on a Chain', '309.1.a');
   }
@@ -67,6 +83,14 @@ export function activate(
     return illegal('invalid-source', `${action.player} does not control ${action.source}`, '378');
   }
   const definition = state.cards[source.card] as CardDefinition;
+  // 718.2, 721.2: the Rules Text of an Attached card is Inactive: its abilities cannot be activated.
+  if (topMostOf(draft, action.source) !== null) {
+    return illegal(
+      'invalid-source',
+      `${definition.name} is Attached: its text is Inactive`,
+      '721.2',
+    );
+  }
   const ability = definition.abilities?.[action.ability];
   if (ability?.kind !== 'activated') {
     return illegal(
@@ -125,7 +149,7 @@ export function activate(
       return illegal('invalid-target', `${target} is not a valid target`, '355.9');
     }
   }
-  const timing = timingProblem(state, ability.keywords ?? []);
+  const timing = timingProblem(state, ability.keywords ?? [], definition.category === 'gear');
   if (timing !== null) return timing;
   if (checkOnly) return null;
 

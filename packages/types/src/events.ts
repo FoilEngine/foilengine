@@ -252,6 +252,28 @@ export type TokenCeasedToExist = EventBase & {
   readonly card: CardId;
 };
 
+/** A gear was Attached to a unit, its Top-Most Card (435.1); with Equip, it Equipped it (818.2). */
+export type GearAttached = EventBase & {
+  readonly type: 'GearAttached';
+  readonly player: PlayerId;
+  readonly gear: ObjectId;
+  readonly unit: ObjectId;
+};
+
+/** A gear was Detached from its Top-Most Card (436), at its location (436.4). */
+export type GearDetached = EventBase & {
+  readonly type: 'GearDetached';
+  readonly gear: ObjectId;
+  readonly unit: ObjectId;
+};
+
+/** Gear at a battlefield were recalled to their controller's base (323.6, 459.1), not a Move. */
+export type GearRecalled = EventBase & {
+  readonly type: 'GearRecalled';
+  readonly player: PlayerId;
+  readonly gear: readonly ObjectId[];
+};
+
 /** Units were healed: their damage was cleared (419). */
 export type UnitsHealed = EventBase & {
   readonly type: 'UnitsHealed';
@@ -457,6 +479,9 @@ export type GameEvent =
   | UnitKilled
   | TokenPlayed
   | TokenCeasedToExist
+  | GearAttached
+  | GearDetached
+  | GearRecalled
   | UnitsHealed
   | UnitsRecalled
   | CombatEnded
@@ -513,6 +538,9 @@ export const PRIVATE_EVENT_FIELDS = {
   UnitKilled: [],
   TokenPlayed: [],
   TokenCeasedToExist: [],
+  GearAttached: [],
+  GearDetached: [],
+  GearRecalled: [],
   UnitsHealed: [],
   UnitsRecalled: [],
   CombatEnded: [],

@@ -50,6 +50,13 @@ export type CardDefinition = {
   /** The abilities of the card (361), in printed order. */
   readonly abilities?: readonly Ability[];
   /**
+   * Effect Text (136): inactive unless the card is Attached (136.2.b); then appended to the Rules
+   * Text of its Top-Most Card (136.2.c, 718.3). For now, keywords only.
+   */
+  readonly effectText?: { readonly keywords?: readonly (Keyword | ValuedKeyword)[] };
+  /** Might Bonus (137): modulates the Might of the card it is Attached to (137.3). */
+  readonly mightBonus?: number;
+  /**
    * A token, not a card (185.1): the definition of a token that effects play (`play-token`).
    * It has no cost (185.3.a) and no domain (185.3.b), and is never in a deck.
    */
