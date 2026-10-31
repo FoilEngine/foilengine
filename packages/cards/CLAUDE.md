@@ -4,8 +4,8 @@ The effect DSL and the implementation of every card, with its status.
 
 ## Dependencies
 
-- **Allowed**: `types`, and the effect API of `rules` through `@foilengine/rules/effects` (checked by Biome).
-- **Forbidden**: changing the state other than through the effect API; importing the internals of `rules`.
+- **Allowed**: `types`, and `@foilengine/rules/effects`, which checks definitions (checked by Biome). Cards are plain data that the engine interprets (ADR 0019).
+- **Forbidden**: code that changes a state; importing the internals of `rules`.
 
 ## Public API
 
@@ -16,7 +16,7 @@ The effect DSL and the implementation of every card, with its status.
 - One file per card, named after its `riftbound_id`, grouped by set.
 - The card's tests first, with the `testkit` harness, named `card <id>: …`, in `packages/spec/test/cards/<set>/` (`cards` never depends on `testkit`).
 - The text followed is the text in force (errata included), read from the `codex` snapshot.
-- Custom code is the exception: justify it in a comment, and propose a DSL building block at the third similar case.
+- No custom code: a card the vocabulary cannot express stays `partial` or `missing` until a building block, named after the mechanic, is added to the vocabulary (`types/effects.ts`) and its interpreter to `rules` (ADR 0019).
 
 ## Read
 
