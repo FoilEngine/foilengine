@@ -1256,11 +1256,6 @@
       "reason": "Without abilities, one side of a combat is always destroyed, so attackers and defenders never both remain."
     },
     {
-      "number": "468.2",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
       "number": "468.3.b",
       "milestone": "M3",
       "reason": "The engine reports the winner of a combat; losing a combat only matters to abilities (\"when I lose a combat\")."
