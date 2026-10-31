@@ -274,6 +274,13 @@ export type GearRecalled = EventBase & {
   readonly gear: readonly ObjectId[];
 };
 
+/** A player Predicts: they look at the top `count` cards of their Main Deck (437.1). */
+export type Predicted = EventBase & {
+  readonly type: 'Predicted';
+  readonly player: PlayerId;
+  readonly count: number;
+};
+
 /** Units were healed: their damage was cleared (419). */
 export type UnitsHealed = EventBase & {
   readonly type: 'UnitsHealed';
@@ -482,6 +489,7 @@ export type GameEvent =
   | GearAttached
   | GearDetached
   | GearRecalled
+  | Predicted
   | UnitsHealed
   | UnitsRecalled
   | CombatEnded
@@ -541,6 +549,7 @@ export const PRIVATE_EVENT_FIELDS = {
   GearAttached: [],
   GearDetached: [],
   GearRecalled: [],
+  Predicted: [],
   UnitsHealed: [],
   UnitsRecalled: [],
   CombatEnded: [],

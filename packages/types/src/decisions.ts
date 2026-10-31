@@ -3,7 +3,7 @@
 
 import type { Cost } from './cards.ts';
 import type { TargetSpec } from './effects.ts';
-import type { ObjectId, PlayerId, RuleNumber } from './ids.ts';
+import type { CardId, ObjectId, PlayerId, RuleNumber } from './ids.ts';
 import type { ChainAbility, TriggeredAbility } from './state.ts';
 
 /** The player must choose which cards, if any, to set aside (117.1). */
@@ -71,10 +71,22 @@ export type FinalizeAbilityDecision = {
   readonly rule: RuleNumber;
 };
 
+/**
+ * Predict (437.1, ADR 0020): `player` looks at these cards, the top of their Main Deck, top
+ * first; they choose which to recycle, and the order of the others on top (437.1.a).
+ */
+export type PredictDecision = {
+  readonly kind: 'Predict';
+  readonly player: PlayerId;
+  readonly cards: readonly { readonly object: ObjectId; readonly card: CardId }[];
+  readonly rule: RuleNumber;
+};
+
 export type Decision =
   | MulliganDecision
   | PriorityDecision
   | FocusDecision
   | AssignDamageDecision
   | OrderTriggersDecision
-  | FinalizeAbilityDecision;
+  | FinalizeAbilityDecision
+  | PredictDecision;

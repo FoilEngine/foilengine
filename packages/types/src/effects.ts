@@ -35,7 +35,12 @@ export type Keyword =
    * 822: "I may be played to a battlefield where you control units", and "I have [Reaction] as
    * long as I'm being played to a battlefield where you control units".
    */
-  | 'ambush';
+  | 'ambush'
+  /**
+   * 817: "When this is played, Predict" (817.1.b): a card with Vision also has that triggered
+   * ability (a `played` trigger with a `predict` instruction).
+   */
+  | 'vision';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b, 809.1.b): Assault X, "While I am an attacker, I have
@@ -84,6 +89,12 @@ export type Instruction =
    * (`CardDefinition.token`). Its controller plays it, and owns it (182, 183).
    */
   | { readonly kind: 'play-token'; readonly token: CardId }
+  /**
+   * "Predict X." (437.3): its controller looks at the top X cards of their Main Deck, recycles any
+   * number of them and puts the rest back on top in any order (437.1, 437.1.a). A choice during
+   * the resolution (ADR 0020).
+   */
+  | { readonly kind: 'predict'; readonly amount: number }
   /** "Attach this to [target]." (435): the permanent the ability is on becomes Attached to it. */
   | { readonly kind: 'attach'; readonly target: InstructionObject };
 

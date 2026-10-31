@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 12;
+export const STATE_VERSION = 13;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -201,6 +201,27 @@ export type ShowdownState = {
 /** Phases of the turn (314–317). Start of Turn is split into its four phases (315.1–315.4). */
 export type TurnPhase = 'awaken' | 'beginning' | 'channel' | 'draw' | 'main' | 'ending';
 
+/**
+ * A choice a player makes during a resolution (ADR 0020). Predict (437.1): the top cards of their
+ * Main Deck that they look at, top first.
+ */
+export type ResolutionChoice = {
+  readonly kind: 'predict';
+  readonly player: PlayerId;
+  readonly cards: readonly ObjectId[];
+};
+
+/**
+ * A resolution waiting for a choice (ADR 0020): the Chain item being resolved, the index of its
+ * next instruction, the token an earlier instruction played (359.3.e.14), and the choice.
+ */
+export type ResolutionState = {
+  readonly item: ObjectId;
+  readonly next: number;
+  readonly token: ObjectId | null;
+  readonly choice: ResolutionChoice;
+};
+
 /** Where the game stands. */
 export type GameStage =
   /** Mulligans in turn order (117): `pending` lists the players who still have to decide. */
@@ -244,6 +265,8 @@ export type GameState = {
   readonly tasks: readonly Task[];
   /** Continuous effects created by spells and abilities, oldest first (476, 482). */
   readonly effects: readonly ContinuousEffect[];
+  /** A resolution waiting for a player's choice (ADR 0020); nothing else happens meanwhile (158.3). */
+  readonly resolving: ResolutionState | null;
   readonly stage: GameStage;
   readonly winner: PlayerId | null;
 };
