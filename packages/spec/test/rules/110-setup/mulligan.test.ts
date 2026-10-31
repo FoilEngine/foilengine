@@ -104,8 +104,8 @@ describe('117 Mulligan', () => {
     expect(bottoms).toEqual(new Set([`${id(1)},${id(3)}`, `${id(3)},${id(1)}`]));
   });
 
-  scenario('rule 124: a recycled card becomes a new object; its identity stays private (108.7.c)', {
-    rules: ['124', '108.7.c'],
+  scenario('rule 124: a recycled card becomes a new object, hidden even from its owner (108.4.e)', {
+    rules: ['124', '108.4.e'],
     setup: stacked(),
     check: (t) => {
       const [first] = t.player('A').zones.hand as ObjectId[];
@@ -113,7 +113,7 @@ describe('117 Mulligan', () => {
       const recycled = t.events.find((e) => e.type === 'CardRecycled');
       t.expect(recycled).toMatchObject({
         previousObject: first,
-        visibility: { kind: 'private', to: [A] },
+        visibility: { kind: 'private', to: [] },
       });
       t.expect(recycled?.type === 'CardRecycled' && recycled.object).not.toBe(first);
       t.expect(t.state.objects[first as ObjectId]).toBeUndefined();

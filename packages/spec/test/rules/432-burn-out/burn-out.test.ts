@@ -59,9 +59,28 @@ describe('432 Burn Out', () => {
     check: (t) => {
       const before = t.player('B').zones.trash.map((id) => t.state.objects[id]?.card);
       t.act({ type: 'EndTurn', player: A });
-      const recycled = ofType(t.events, 'CardRecycled').map((e) => e.card);
-      t.expect([...recycled].sort()).toEqual([...before].sort());
-      t.expect(recycled).not.toEqual(before);
+      // B drew the top card after the Burn Out: it was in the trash too.
+      const deck = t.player('B').zones.mainDeck.map((id) => t.state.objects[id]?.card);
+      const drawn = ofType(t.events, 'CardDrawn').at(-1)?.card;
+      const now = [drawn, ...deck];
+      t.expect([...now].sort()).toEqual([...before].sort());
+      t.expect(now).not.toEqual(before);
+    },
+  });
+
+  scenario('rule 108.4.e: the order of the recycled trash is secret, to its owner too', {
+    rules: ['108.4.e', '432.2.b'],
+    setup: bDeckIn('trash'),
+    check: (t) => {
+      const trash = [...t.player('B').zones.trash];
+      t.act({ type: 'EndTurn', player: A });
+      const recycled = ofType(t.events, 'CardRecycled');
+      // The events follow the trash, not the shuffled deck, and their private fields (which object
+      // went where) are shown to no player (PRIVATE_EVENT_FIELDS).
+      t.expect(recycled.map((e) => e.previousObject)).toEqual(trash);
+      for (const event of recycled) {
+        t.expect(event.visibility).toEqual({ kind: 'private', to: [] });
+      }
     },
   });
 
