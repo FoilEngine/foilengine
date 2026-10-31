@@ -49,10 +49,11 @@ describe('determinism', () => {
         },
       ),
       // Each run plays and serializes two full games, every state included: 50 runs take
-      // about 3 seconds locally, and the timeout leaves room for slower CI runners.
+      // about 5 seconds locally, more as the test decks grow with the mechanics; the timeout
+      // leaves room for slower CI runners.
       { numRuns: 50 },
     );
-  }, 15_000);
+  }, 30_000);
 
   it('events are numbered 1, 2, 3… without gaps', () => {
     const { events } = playSetup('numbering', () => 5);

@@ -50,6 +50,7 @@ const arbitraryGame = fc.record({
 });
 
 describe('viewFor leaks no hidden information', () => {
+  // Property tests over many random games: 1 to 3 seconds each locally, more on CI runners.
   it('changing the hidden cards does not change the view (non-interference)', () => {
     fc.assert(
       fc.property(arbitraryGame, fc.nat(), ({ seed, picks }, salt) => {
@@ -70,7 +71,7 @@ describe('viewFor leaks no hidden information', () => {
       }),
       { numRuns: 30 },
     );
-  });
+  }, 15_000);
 
   it("names no card of the opponent's hand or decks, unless a copy of it is public", () => {
     fc.assert(
@@ -101,7 +102,7 @@ describe('viewFor leaks no hidden information', () => {
       }),
       { numRuns: 30 },
     );
-  });
+  }, 15_000);
 
   it('holds no id of a hidden object, nor any previous object id', () => {
     fc.assert(
@@ -118,7 +119,7 @@ describe('viewFor leaks no hidden information', () => {
       }),
       { numRuns: 30 },
     );
-  });
+  }, 15_000);
 
   it('refuses a viewer who is not in the game', () => {
     const [state] = statesOf('stranger', [0, 0]);

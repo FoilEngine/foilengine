@@ -10,6 +10,7 @@ import {
   type ObjectId,
   type TargetSpec,
 } from '@foilengine/types';
+import { trigger } from '../abilities/triggers.ts';
 import { attach } from '../actions/attach.ts';
 import { drawCards } from '../actions/draw.ts';
 import { killPermanents } from '../actions/kill.ts';
@@ -43,7 +44,7 @@ export function executeInstructions(
     const target = item.targets[index];
     return spec !== undefined &&
       target !== undefined &&
-      isValidTarget(draft, spec, target, item.controller)
+      isValidTarget(draft, spec, target, item.controller, item.ability?.source ?? null)
       ? target
       : null;
   };
@@ -149,6 +150,22 @@ export function executeInstructions(
           choice: { kind: 'weaponmaster', player: item.controller, unit, options },
         };
         return false;
+      }
+      case 'empower': {
+        // 442.1, 442.1.c: it becomes Empowered, unless it already is; "When I become Empowered"
+        // abilities trigger (828.1.d, 442.2.a).
+        const target = affected(instruction.target);
+        if (target === null || objectOf(draft, target).empowered === true) break;
+        updateObject(draft, target, { empowered: true });
+        emit(draft, {
+          type: 'ObjectEmpowered',
+          rule: '442.1',
+          visibility: { kind: 'public' },
+          player: item.controller,
+          object: target,
+        });
+        trigger(draft, 'empowered', [target]);
+        break;
       }
       case 'gain-xp': {
         // 730.1: its controller gains XP.

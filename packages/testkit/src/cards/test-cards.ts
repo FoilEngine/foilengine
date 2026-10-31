@@ -466,6 +466,48 @@ export const TEST_CARDS = {
     ],
     text: '[Legion][>] When you play me, draw 1.',
   }),
+  /**
+   * Empower [1] (827) and two Empowered abilities (828): "[Empowered][>] I have +2 [M]." and
+   * "[Empowered][>] When I become Empowered, draw 1."
+   */
+  adept: card('test:adept', 'unit', {
+    name: 'Adept',
+    cost: { energy: 1, power: [] },
+    might: 1,
+    keywords: ['empower', 'empowered'],
+    abilities: [
+      {
+        kind: 'activated',
+        requires: [{ kind: 'not-empowered' }],
+        cost: { energy: 1 },
+        instructions: [{ kind: 'empower', target: 'self' }],
+      },
+      { kind: 'passive', affects: 'self', might: 2, requires: [{ kind: 'empowered' }] },
+      {
+        kind: 'triggered',
+        requires: [{ kind: 'empowered' }],
+        trigger: { kind: 'empowered' },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'Empower [1]. [Empowered][>] I have +2 [M]. [Empowered][>] When I become Empowered, draw 1.',
+  }),
+  /** Disarm 1 (831): "When I attack, give an enemy unit here -1 [M] this turn." */
+  disarmer: card('test:disarmer', 'unit', {
+    name: 'Disarmer',
+    cost: { energy: 2, power: [] },
+    might: 3,
+    keywords: [{ keyword: 'disarm', value: 1 }],
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'attack' },
+        targets: [{ kind: 'unit', controller: 'enemy', at: 'here' }],
+        instructions: [{ kind: 'give-might', amount: -1, target: 0 }],
+      },
+    ],
+    text: '[Disarm]',
+  }),
   /** Hunt 1 (823): "When I conquer or hold, my controller gains 1 XP." */
   tracker: card('test:tracker', 'unit', {
     name: 'Tracker',
@@ -661,6 +703,8 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.armsman,
   TEST_CARDS.legionnaire,
   TEST_CARDS.herald,
+  TEST_CARDS.adept,
+  TEST_CARDS.disarmer,
 ];
 
 /** The test gear, for decks that exercise them. */

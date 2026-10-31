@@ -320,21 +320,23 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
       const draft = draftOf(state);
       const base = decision.cost ?? { energy: 0, power: [] };
       return [
-        ...targetChoices(draft, decision.targets, player).flatMap((targets): Action[] => {
-          const cost = withDeflect(draft, player, base, targets);
-          const free = cost.energy === 0 && cost.power.length === 0;
-          const payment = free ? [] : autoPayment(state, player, cost);
-          if (payment === null) return [];
-          return [
-            {
-              type: 'FinalizeAbility',
-              player,
-              perform: true,
-              ...(targets.length === 0 ? {} : { targets }),
-              ...(payment.length === 0 ? {} : { payment }),
-            },
-          ];
-        }),
+        ...targetChoices(draft, decision.targets, player, decision.ability.source).flatMap(
+          (targets): Action[] => {
+            const cost = withDeflect(draft, player, base, targets);
+            const free = cost.energy === 0 && cost.power.length === 0;
+            const payment = free ? [] : autoPayment(state, player, cost);
+            if (payment === null) return [];
+            return [
+              {
+                type: 'FinalizeAbility',
+                player,
+                perform: true,
+                ...(targets.length === 0 ? {} : { targets }),
+                ...(payment.length === 0 ? {} : { payment }),
+              },
+            ];
+          },
+        ),
         ...decline,
       ];
     }
@@ -481,6 +483,7 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
       xpOf: (p) => state.players.find((s) => s.id === p)?.xp ?? 0,
       finalizedBy: (p) => state.players.find((s) => s.id === p)?.finalizedThisTurn ?? [],
       self: null,
+      empowered: false,
     });
     const base = discounted(definition.cost, discount);
     const payment = autoPayment(state, player, base);
@@ -549,10 +552,11 @@ function targetChoices(
   draft: ReturnType<typeof draftOf>,
   specs: readonly TargetSpec[],
   player: PlayerId,
+  source: ObjectId | null = null,
 ): ObjectId[][] {
   let choices: ObjectId[][] = [[]];
   for (const spec of specs) {
-    const valid = validTargets(draft, spec, player);
+    const valid = validTargets(draft, spec, player, source);
     choices = choices.flatMap((chosen) => valid.map((target) => [...chosen, target]));
   }
   return choices;
@@ -674,7 +678,7 @@ function activatableAbilities(state: GameState, player: PlayerId): Action[] {
       const cost: Cost = { energy: ability.cost.energy ?? 0, power: ability.cost.power ?? [] };
       const payment = autoPayment(state, player, cost);
       if (payment === null) continue;
-      for (const targets of targetChoices(lookup(), ability.targets ?? [], player)) {
+      for (const targets of targetChoices(lookup(), ability.targets ?? [], player, source)) {
         // 809.1.d: Deflect raises the cost with the targets chosen.
         const total = withDeflect(lookup(), player, cost, targets);
         const paid = total === cost ? payment : autoPayment(state, player, total);

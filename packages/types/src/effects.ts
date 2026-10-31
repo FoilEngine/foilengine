@@ -61,17 +61,30 @@ export type Keyword =
    * 812: "[Legion][>] [Text]", "If you have played another card this turn, this card gains
    * [Text]": a Dependent Keyword (727); its ability carries the condition (`legion`).
    */
-  | 'legion';
+  | 'legion'
+  /**
+   * 827: "Empower [Cost]", short for "[Cost]: Empower this. Play only if not Empowered."
+   * (827.1.c.1): a card with Empower also has that activated ability (an `empower` instruction,
+   * with the `not-empowered` condition).
+   */
+  | 'empower'
+  /**
+   * 828: "[Empowered][>] [Text]", "While I have the Empowered status, this card gains [Text]": a
+   * Dependent Keyword (727); its ability carries the condition (`empowered`).
+   */
+  | 'empowered';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b, 809.1.b): Assault X, "While I am an attacker, I have
  * +X [M]" (807.1.c); Shield X, "While I am a defender, I have +X [M]" (814.1.c); Deflect X,
  * "Spells and abilities an opponent controls that target me cost X Power of any domain more for
  * each time they choose me" (809.1.c, 809.1.c.1); Hunt X, "When I conquer or hold, my controller
- * gains X XP" (823.1.c.1): a card with Hunt also has those triggered abilities (`gain-xp`).
+ * gains X XP" (823.1.c.1): a card with Hunt also has those triggered abilities (`gain-xp`);
+ * Disarm X, "When I attack, give an enemy unit here -X [M] this turn" (831.1.d): a card with
+ * Disarm also has that triggered ability, once with the total value (831.1.d.1).
  */
 export type ValuedKeyword = {
-  readonly keyword: 'assault' | 'shield' | 'deflect' | 'hunt';
+  readonly keyword: 'assault' | 'shield' | 'deflect' | 'hunt' | 'disarm';
   readonly value: number;
 };
 
@@ -81,8 +94,8 @@ export type ValuedKeyword = {
  */
 export type TargetSpec = {
   readonly kind: 'unit';
-  /** "a unit at a battlefield" (355.9.b). */
-  readonly at?: 'battlefield';
+  /** "a unit at a battlefield" (355.9.b); "here": where the source of the ability is (197). */
+  readonly at?: 'battlefield' | 'here';
   /** "a friendly unit", "an enemy unit": relative to the controller of the spell. */
   readonly controller?: 'friendly' | 'enemy';
 };
@@ -123,6 +136,8 @@ export type Instruction =
    * the resolution (ADR 0020).
    */
   | { readonly kind: 'weaponmaster' }
+  /** "Empower [target]." (442.1): it becomes Empowered, unless it already is (442.1.c). */
+  | { readonly kind: 'empower'; readonly target: InstructionObject }
   /** "Gain X XP." (730.1): its controller gains XP. */
   | { readonly kind: 'gain-xp'; readonly amount: number }
   /** "Attach this to [target]." (435): the permanent the ability is on becomes Attached to it. */
@@ -149,6 +164,8 @@ export type Trigger =
   | { readonly kind: 'attack' }
   | { readonly kind: 'defend' }
   | { readonly kind: 'dies' }
+  /** "When I become Empowered" (828.1.d). */
+  | { readonly kind: 'empowered' }
   | { readonly kind: 'beginning' };
 
 /**
@@ -158,7 +175,11 @@ export type Trigger =
  */
 export type AbilityCondition =
   | { readonly kind: 'level'; readonly xp: number }
-  | { readonly kind: 'legion' };
+  | { readonly kind: 'legion' }
+  /** Empowered (828.1.b.1): the permanent has the Empowered status. */
+  | { readonly kind: 'empowered' }
+  /** "Play only if not Empowered" (827.1.c.1), a restriction of an Empower ability. */
+  | { readonly kind: 'not-empowered' };
 
 /**
  * A Passive Ability of a permanent, active while it is on the board (363–365): a statement of fact
