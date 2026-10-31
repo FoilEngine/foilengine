@@ -10,8 +10,10 @@ import type {
   ContinuousEffect,
   GameObject,
   GameState,
+  Keyword,
   ObjectId,
   PlayerId,
+  ValuedKeyword,
 } from '@foilengine/types';
 import { controllerOf, type Draft, findObject } from '../draft.ts';
 
@@ -25,11 +27,18 @@ export type BoardReader = {
   /** Units on the board with a passive ability (365.1). */
   passiveSources(): readonly ObjectId[];
   controllerOf(id: ObjectId): PlayerId;
+  /** The Combat in progress, for the Attacker and Defender designations (466.2.c.3). */
+  readonly combat: GameState['combat'];
 };
 
 export type Characteristics = {
   /** A unit's Effective Might (143.2.a); null for an object that is not a unit. */
   readonly might: number | null;
+  /** Its keywords without a value (Tank, Backline…), a characteristic (815.3, 826.6). */
+  readonly keywords: readonly Keyword[];
+  /** Its Assault and Shield values, 0 without the keyword (807.3, 814.3). */
+  readonly assault: number;
+  readonly shield: number;
 };
 
 /** Every object on the board: in bases and at battlefields (runes included). */
@@ -74,6 +83,7 @@ export function readerOfState(state: GameState): BoardReader {
     ...boardOf(() => onBoard(state.players, state.battlefields), state.cards, objectAt),
     // No effect changes control yet: a unit is controlled by its owner (190.3.a.2 arrives later).
     controllerOf: (id) => state.objects[id]?.owner as PlayerId,
+    combat: state.combat,
   };
 }
 
@@ -85,6 +95,7 @@ export function readerOfDraft(draft: Draft): BoardReader {
     objectAt,
     ...boardOf(() => onBoard(draft.players, draft.battlefields), draft.cards, objectAt),
     controllerOf: (id) => controllerOf(draft, id),
+    combat: draft.combat,
   };
 }
 
@@ -98,7 +109,19 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   const object = reader.objectAt(id);
   const definition =
     object === undefined ? undefined : (reader.cards[object.card] as CardDefinition);
-  if (object === undefined || definition?.category !== 'unit') return { might: null };
+  const printed = definition?.keywords ?? [];
+  const flags = printed.filter((k): k is Keyword => typeof k === 'string');
+  // Several instances of Assault or Shield add up (807.2, 814.2).
+  const valued = (keyword: ValuedKeyword['keyword']) =>
+    printed.reduce(
+      (total, k) => (typeof k === 'object' && k.keyword === keyword ? total + k.value : total),
+      0,
+    );
+  const assault = valued('assault');
+  const shield = valued('shield');
+  if (object === undefined || definition?.category !== 'unit') {
+    return { might: null, keywords: flags, assault, shield };
+  }
   // Buffs and effects only ever apply to objects on the board: an object that leaves it becomes a
   // new object, without buffs (705, 124), that no effect targets.
   let might = (definition.might ?? 0) + object.buffs; // 703
@@ -120,7 +143,11 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
       }
     }
   }
-  return { might };
+  // 807.1.c, 807.1.d.1: "While I am an attacker, I have +X [M]"; 814.1.c, 814.1.d.1: "While I am
+  // a defender, I have +X [M]", for as long as the unit has the designation.
+  if (reader.combat?.attackers.includes(id) === true) might += assault;
+  if (reader.combat?.defenders.includes(id) === true) might += shield;
+  return { might, keywords: flags, assault, shield };
 }
 
 /** The characteristics of an object of the state (public API, docs/03-rules-engine.md). */
