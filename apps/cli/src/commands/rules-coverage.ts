@@ -9,6 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   currentCoreRules,
+  type DeferredRule,
   exercisedRules,
   type NotApplicableRule,
   parseOpenQuestions,
@@ -24,6 +25,7 @@ import { REPO_ROOT } from '../paths.ts';
 
 export const PINS_FILE = join(REPO_ROOT, 'packages', 'spec', 'rule-pins.json');
 export const NOT_APPLICABLE_FILE = join(REPO_ROOT, 'docs', 'rules', 'not-applicable.json');
+export const DEFERRED_FILE = join(REPO_ROOT, 'docs', 'rules', 'deferred.json');
 export const QUESTIONS_FILE = join(REPO_ROOT, 'docs', 'rules', 'questions.md');
 export const REPORTS_DIR = join(REPO_ROOT, 'reports');
 
@@ -79,6 +81,7 @@ export async function runRulesCoverage(
   const notApplicable = await readJson<{ rules: NotApplicableRule[] }>(NOT_APPLICABLE_FILE, {
     rules: [],
   });
+  const deferred = await readJson<{ rules: DeferredRule[] }>(DEFERRED_FILE, { rules: [] });
   const questions = existsSync(QUESTIONS_FILE)
     ? parseOpenQuestions(await readFile(QUESTIONS_FILE, 'utf8'))
     : [];
@@ -90,6 +93,7 @@ export async function runRulesCoverage(
       scenarios,
       exercised: exercisedRules(),
       notApplicable: notApplicable.rules,
+      deferred: deferred.rules,
       openQuestions: questions,
       pins,
     });
