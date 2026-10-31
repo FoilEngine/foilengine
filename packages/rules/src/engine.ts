@@ -4,6 +4,7 @@ import {
   type Action,
   type ActivateAbility,
   assertNever,
+  type CardDefinition,
   type CardId,
   type Cost,
   type Decision,
@@ -26,6 +27,7 @@ import {
   playerToOrder,
 } from './abilities/triggers.ts';
 import { applyPredict, predictProblem } from './actions/predict.ts';
+import { chooseWeapon, equipCost, reducedEquipCost } from './actions/weaponmaster.ts';
 import { passPriority, resumeResolution } from './chain/chain.ts';
 import {
   assignDamage,
@@ -67,7 +69,7 @@ export function pendingDecision(state: GameState): Decision | null {
     case 'turn': {
       // ADR 0020: a resolution waits for a choice; nothing else happens meanwhile (158.3).
       const resolving = state.resolving?.choice;
-      if (resolving !== undefined) {
+      if (resolving?.kind === 'predict') {
         return {
           kind: 'Predict',
           player: resolving.player,
@@ -76,6 +78,20 @@ export function pendingDecision(state: GameState): Decision | null {
             card: state.objects[object]?.card as CardId,
           })),
           rule: '437.1',
+        };
+      }
+      if (resolving?.kind === 'weaponmaster') {
+        return {
+          kind: 'Weaponmaster',
+          player: resolving.player,
+          unit: resolving.unit,
+          options: resolving.options.map((gear) => ({
+            gear,
+            cost: reducedEquipCost(
+              equipCost(state.cards[state.objects[gear]?.card as CardId] as CardDefinition) as Cost,
+            ),
+          })),
+          rule: '821.1.c',
         };
       }
       // 383.3.d: a player orders the triggered abilities they control that triggered together.
@@ -241,6 +257,10 @@ export function isLegal(state: GameState, action: Action): Legality {
       return both(checkDecision(decision, 'Predict', action.player), () =>
         fromReason(predictProblem(draftOf(state), action)),
       );
+    case 'Weaponmaster':
+      return both(checkDecision(decision, 'Weaponmaster', action.player), () =>
+        fromReason(chooseWeapon(draftOf(state), action)),
+      );
     default:
       return assertNever(action);
   }
@@ -324,6 +344,24 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
       return predictions(decision.cards.map((c) => c.object)).map(
         ({ recycle, top }): Action => ({ type: 'Predict', player, recycle, top }),
       );
+    case 'Weaponmaster':
+      // 821.1.c: "you may choose": none, or an option whose reduced Equip cost can be paid.
+      return [
+        { type: 'Weaponmaster', player, gear: null },
+        ...decision.options.flatMap(({ gear, cost }): Action[] => {
+          const free = cost.energy === 0 && cost.power.length === 0;
+          const payment = free ? [] : autoPayment(state, player, cost);
+          if (payment === null) return [];
+          return [
+            {
+              type: 'Weaponmaster',
+              player,
+              gear,
+              ...(payment.length === 0 ? {} : { payment }),
+            },
+          ];
+        }),
+      ];
     default:
       return assertNever(decision);
   }
@@ -373,10 +411,15 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
     case 'FinalizeAbility':
     case 'AssignCombatDamage':
     case 'Predict':
+    case 'Weaponmaster':
     case 'Concede': {
       const draft = draftOf(state);
       if (action.type === 'Predict') {
         applyPredict(draft, action);
+        resumeResolution(draft);
+      } else if (action.type === 'Weaponmaster') {
+        const reason = chooseWeapon(draft, action);
+        if (reason !== null) throw new IllegalActionError(reason);
         resumeResolution(draft);
       } else if (action.type === 'FinalizeAbility') {
         const reason = finalizeChosen(draft, action);

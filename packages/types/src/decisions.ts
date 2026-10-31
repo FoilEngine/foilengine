@@ -82,6 +82,18 @@ export type PredictDecision = {
   readonly rule: RuleNumber;
 };
 
+/**
+ * Weaponmaster (821.1.c, ADR 0020): `player` may choose one of these Equipment and pay its `cost`,
+ * its Equip cost reduced by [A] (821.1.c.3), to attach it to `unit`; or choose none.
+ */
+export type WeaponmasterDecision = {
+  readonly kind: 'Weaponmaster';
+  readonly player: PlayerId;
+  readonly unit: ObjectId;
+  readonly options: readonly { readonly gear: ObjectId; readonly cost: Cost }[];
+  readonly rule: RuleNumber;
+};
+
 export type Decision =
   | MulliganDecision
   | PriorityDecision
@@ -89,4 +101,5 @@ export type Decision =
   | AssignDamageDecision
   | OrderTriggersDecision
   | FinalizeAbilityDecision
-  | PredictDecision;
+  | PredictDecision
+  | WeaponmasterDecision;

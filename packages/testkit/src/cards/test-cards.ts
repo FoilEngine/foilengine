@@ -404,6 +404,43 @@ export const TEST_CARDS = {
     ],
     text: 'Predict 2, then draw 1.',
   }),
+  /**
+   * Quick-Draw (819): Equipment with "[Reaction]" and "When you play this, attach it to a unit you
+   * control" (819.1.d); Equip [A] (818), a Might Bonus of +1.
+   */
+  holster: card('test:holster', 'gear', {
+    name: 'Holster',
+    tags: ['Equipment'],
+    cost: { energy: 1, power: [] },
+    keywords: ['quick-draw', 'reaction', 'equip'],
+    abilities: [
+      {
+        kind: 'activated',
+        cost: { power: ['any'] },
+        targets: [{ kind: 'unit', controller: 'friendly' }],
+        instructions: [{ kind: 'attach', target: 0 }],
+      },
+      {
+        kind: 'triggered',
+        trigger: { kind: 'played' },
+        targets: [{ kind: 'unit', controller: 'friendly' }],
+        instructions: [{ kind: 'attach', target: 0 }],
+      },
+    ],
+    mightBonus: 1,
+    text: '[Quick-Draw] Equip [A]',
+  }),
+  /** Weaponmaster (821): a Play Effect that may attach an Equipment you control to it. */
+  armsman: card('test:armsman', 'unit', {
+    name: 'Armsman',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: ['weaponmaster'],
+    abilities: [
+      { kind: 'triggered', trigger: { kind: 'played' }, instructions: [{ kind: 'weaponmaster' }] },
+    ],
+    text: '[Weaponmaster]',
+  }),
   /** Hunt 1 (823): "When I conquer or hold, my controller gains 1 XP." */
   tracker: card('test:tracker', 'unit', {
     name: 'Tracker',
@@ -596,10 +633,11 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.tracker,
   TEST_CARDS.veteran,
   TEST_CARDS.mentor,
+  TEST_CARDS.armsman,
 ];
 
 /** The test gear, for decks that exercise them. */
-export const TEST_GEAR = [TEST_CARDS.lantern, TEST_CARDS.blade];
+export const TEST_GEAR = [TEST_CARDS.lantern, TEST_CARDS.blade, TEST_CARDS.holster];
 
 /** The test spells, for decks that exercise the Chain. */
 export const TEST_SPELLS = [

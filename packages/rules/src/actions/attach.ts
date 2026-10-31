@@ -25,8 +25,9 @@ export function attach(draft: Draft, card: ObjectId, unit: ObjectId): void {
   if (definition.category === 'unit' || locationOf(draft, card) === null) return;
   const current = topMostOf(draft, card);
   if (current === unit) return;
+  // 435.1.f: Detached first, it is left where its Top-Most Card is, then leaves that place.
   if (current !== null) detach(draft, card, current);
-  else leaveZone(draft, card);
+  leaveZone(draft, card);
   setAttached(draft, unit, [...(objectOf(draft, unit).attached ?? []), card]);
   emit(draft, {
     type: 'GearAttached',

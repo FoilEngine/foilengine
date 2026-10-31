@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 14;
+export const STATE_VERSION = 15;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -205,13 +205,21 @@ export type TurnPhase = 'awaken' | 'beginning' | 'channel' | 'draw' | 'main' | '
 
 /**
  * A choice a player makes during a resolution (ADR 0020). Predict (437.1): the top cards of their
- * Main Deck that they look at, top first.
+ * Main Deck that they look at, top first. Weaponmaster (821.1.c): the Equipment they may attach to
+ * `unit`.
  */
-export type ResolutionChoice = {
-  readonly kind: 'predict';
-  readonly player: PlayerId;
-  readonly cards: readonly ObjectId[];
-};
+export type ResolutionChoice =
+  | {
+      readonly kind: 'predict';
+      readonly player: PlayerId;
+      readonly cards: readonly ObjectId[];
+    }
+  | {
+      readonly kind: 'weaponmaster';
+      readonly player: PlayerId;
+      readonly unit: ObjectId;
+      readonly options: readonly ObjectId[];
+    };
 
 /**
  * A resolution waiting for a choice (ADR 0020): the Chain item being resolved, the index of its

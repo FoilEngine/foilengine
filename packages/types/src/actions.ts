@@ -97,6 +97,17 @@ export type Predict = {
   readonly top: readonly ObjectId[];
 };
 
+/**
+ * Answers a Weaponmaster decision (821.1.c): `gear`, one of the options, attached by paying its
+ * reduced Equip cost with `payment`; or `null` to choose none.
+ */
+export type Weaponmaster = {
+  readonly type: 'Weaponmaster';
+  readonly player: PlayerId;
+  readonly gear: ObjectId | null;
+  readonly payment?: readonly RuneUse[];
+};
+
 /** The player with Priority on a Chain passes it to the next player in turn order (338.1.b). */
 export type PassPriority = {
   readonly type: 'PassPriority';
@@ -149,6 +160,7 @@ export type Action =
   | OrderTriggers
   | FinalizeAbility
   | Predict
+  | Weaponmaster
   | AssignCombatDamage
   | Concede;
 

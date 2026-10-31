@@ -18,6 +18,7 @@ export type {
   Predict,
   RuneUse,
   StandardMove,
+  Weaponmaster,
 } from './actions.ts';
 export {
   type CardCategory,
@@ -37,6 +38,7 @@ export type {
   OrderTriggersDecision,
   PredictDecision,
   PriorityDecision,
+  WeaponmasterDecision,
 } from './decisions.ts';
 export type {
   Ability,
