@@ -31,6 +31,7 @@ const input = (overrides: Partial<CoverageInput> = {}): CoverageInput => ({
   scenarios: [],
   exercised: new Set(),
   notApplicable: [],
+  deferred: [],
   openQuestions: [],
   pins: { rulesVersion: index.version, pins: {} },
   ...overrides,
@@ -124,6 +125,42 @@ describe('ruleCoverage', () => {
     expect(statusOf(report, '114')).toBe('exercised');
   });
 
+  it('deferred applies after not-applicable, with its milestone in the note', () => {
+    const report = ruleCoverage(
+      input({
+        notApplicable: [{ number: '110', reason: 'heading' }],
+        deferred: [
+          { number: '113', milestone: 'M3', reason: 'needs the chain' },
+          { number: '114', milestone: 'unplanned', reason: 'multiplayer' },
+        ],
+        exercised: new Set(['113']),
+      }),
+    );
+    expect(report.rules.find((rule) => rule.number === '113')).toMatchObject({
+      status: 'deferred',
+      note: 'M3: needs the chain',
+    });
+    expect(statusOf(report, '114')).toBe('deferred');
+    expect(report.totals.deferred).toBe(2);
+    expect(report.problems.misclassified).toEqual([]);
+  });
+
+  it('flags a rule listed twice, or listed but covered', () => {
+    const report = ruleCoverage(
+      input({
+        scenarios: [{ title: 'rule 111: x', rules: ['111'], passed: true }],
+        notApplicable: [{ number: '110', reason: 'heading' }],
+        deferred: [
+          { number: '110', milestone: 'M3', reason: 'twice' },
+          { number: '111', milestone: 'M3', reason: 'covered anyway' },
+          { number: '997', milestone: 'M3', reason: 'unknown' },
+        ],
+      }),
+    );
+    expect(report.problems.misclassified).toEqual(['110', '111']);
+    expect(report.problems.unknownRules).toEqual(['997']);
+  });
+
   it('reports rule numbers that do not exist in this version', () => {
     const report = ruleCoverage(
       input({
@@ -197,7 +234,7 @@ describe('renderCoverageMarkdown', () => {
     );
     const markdown = renderCoverageMarkdown(report);
     expect(markdown).toContain('# Rule coverage — CR-2026-10-09');
-    expect(markdown).toContain('| 100 | 1 | 0 | 0 | 0 | 0 | 5 |');
+    expect(markdown).toContain('| 100 | 1 | 0 | 0 | 0 | 0 | 0 | 5 |');
     expect(markdown).toContain('- **unpinned**: 111');
   });
 });
