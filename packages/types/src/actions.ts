@@ -80,6 +80,8 @@ export type FinalizeAbility = {
   readonly player: PlayerId;
   readonly perform: boolean;
   readonly targets?: readonly ObjectId[];
+  /** How runes pay the ability's cost (383.3.b), as for a card (357.1.a). */
+  readonly payment?: readonly RuneUse[];
 };
 
 /** The player with Priority on a Chain passes it to the next player in turn order (338.1.b). */

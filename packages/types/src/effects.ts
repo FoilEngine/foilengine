@@ -9,7 +9,9 @@ export type Keyword =
   /** 806: may also be played during Open States of Showdowns, on any player's turn. */
   | 'action'
   /** 813: all of Action, and may also be played during Closed States, on any player's turn. */
-  | 'reaction';
+  | 'reaction'
+  /** 808: "[Deathknell][>] [Effect]", short for "When I die, [Effect]" (a `dies` ability). */
+  | 'deathknell';
 
 /**
  * A target chosen as the card is played (355.5, 355.7). "Unit" means a unit on the board
@@ -41,14 +43,16 @@ export type AbilityCost = {
 /**
  * The Condition of a triggered ability (383.2.a). For now, the named ones on a permanent about
  * itself: "When you play me" (383.4.a), "When I conquer" (383.4.c), "When I hold" (383.4.d),
- * "When I attack" (383.4.e), "When I defend" (383.4.f).
+ * "When I attack" (383.4.e), "When I defend" (383.4.f), "When I die" (808.1.c: killed and sent
+ * to the trash, 808.1.d).
  */
 export type Trigger =
   | { readonly kind: 'played' }
   | { readonly kind: 'conquer' }
   | { readonly kind: 'hold' }
   | { readonly kind: 'attack' }
-  | { readonly kind: 'defend' };
+  | { readonly kind: 'defend' }
+  | { readonly kind: 'dies' };
 
 /** An ability of a card (361). Passive and replacement abilities arrive with the layers. */
 export type Ability =
@@ -63,12 +67,13 @@ export type Ability =
   /**
    * "When …" (383): put on the Chain when its Condition is met (383.3). Its controller makes its
    * choices as it is finalized: whether to perform it when it says "you may" first (`optional`,
-   * 383.3.a), and its targets (355.5).
+   * 383.3.a), its targets (355.5), and paying its `cost` (383.3.b).
    */
   | {
       readonly kind: 'triggered';
       readonly trigger: Trigger;
       readonly optional?: boolean;
+      readonly cost?: Pick<AbilityCost, 'energy' | 'power'>;
       readonly targets?: readonly TargetSpec[];
       readonly instructions: readonly Instruction[];
     };
