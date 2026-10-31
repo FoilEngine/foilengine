@@ -59,7 +59,9 @@ export type SetupProblemCode =
   | 'wrong-rune-count'
   | 'wrong-battlefield-count'
   /** A card lacks what the engine needs to play it: a cost (131.1), a might (143), a single domain for a rune. */
-  | 'incomplete-card';
+  | 'incomplete-card'
+  /** A deck holds a token, or an effect plays a token with no token definition (185, 185.1.b). */
+  | 'invalid-token';
 
 /** Why a game cannot be created from a setup. */
 export type SetupProblem = {

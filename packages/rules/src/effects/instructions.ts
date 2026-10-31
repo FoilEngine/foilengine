@@ -6,10 +6,13 @@ import {
   type CardDefinition,
   type ChainItem,
   type Instruction,
+  type InstructionObject,
+  type ObjectId,
   type TargetSpec,
 } from '@foilengine/types';
 import { drawCards } from '../actions/draw.ts';
 import { killPermanents } from '../actions/kill.ts';
+import { playToken } from '../actions/play-token.ts';
 import { type Draft, emit, locationOf, objectOf, updateObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { isValidTarget } from './targets.ts';
@@ -32,6 +35,15 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
       ? target
       : null;
   };
+  // The token an earlier instruction played, for a later linked instruction (359.3.e.14).
+  let token: ObjectId | null = null;
+  // The object an instruction affects: a valid target, or this permanent or the token if it is
+  // still on the board.
+  const affected = (object: InstructionObject): ObjectId | null => {
+    if (typeof object === 'number') return legal(object);
+    const found = object === 'self' ? (item.ability?.source ?? null) : token;
+    return found !== null && locationOf(draft, found) !== null ? found : null;
+  };
   for (const instruction of effect.instructions ?? []) {
     if (draft.winner !== null) return;
     switch (instruction.kind) {
@@ -40,7 +52,7 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
         drawCards(draft, item.controller, instruction.amount, '414.2.b');
         break;
       case 'deal': {
-        const target = legal(instruction.target);
+        const target = affected(instruction.target);
         // 418.1.e.1: only Valid Damage, 1 or more, is dealt.
         if (target === null || instruction.amount < 1) break;
         const unit = objectOf(draft, target);
@@ -56,7 +68,7 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
       case 'give-might': {
         // 479.4: "Give [target] +X [M] this turn": a continuous effect in the Arithmetic layer,
         // with a timestamp (482.1), until the end of the turn (317.2.c).
-        const target = legal(instruction.target);
+        const target = affected(instruction.target);
         if (target === null) break;
         draft.effects = [
           ...draft.effects,
@@ -78,7 +90,7 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
       }
       case 'buff': {
         // 702.2.a: place a buff on the unit; one that already has a buff gets none (702.3.a).
-        const target = legal(instruction.target);
+        const target = affected(instruction.target);
         if (target === null || objectOf(draft, target).buffs > 0) break;
         updateObject(draft, target, { buffs: 1 });
         emit(draft, {
@@ -92,14 +104,15 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
       case 'kill': {
         // 429.1.a.1, 429.6: "Kill [target]", or "kill this" for the permanent the ability is on;
         // one that is no longer on the board is unaffected.
-        const target =
-          instruction.target === 'self'
-            ? (item.ability?.source ?? null)
-            : legal(instruction.target);
-        if (target === null || locationOf(draft, target) === null) break;
+        const target = affected(instruction.target);
+        if (target === null) break;
         killPermanents(draft, [target], '429.1.a.1');
         break;
       }
+      case 'play-token':
+        // 350.2, 184.2: the controller of the spell or ability plays the token into their base.
+        token = playToken(draft, item.controller, instruction.token);
+        break;
       default:
         assertNever(instruction);
     }

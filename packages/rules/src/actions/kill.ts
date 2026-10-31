@@ -6,6 +6,7 @@ import type { ObjectId } from '@foilengine/types';
 import { trigger } from '../abilities/triggers.ts';
 import { type Draft, emit, locationOf, objectOf, playerOf, renewObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
+import { ceaseIfToken } from './play-token.ts';
 
 /** Kills these permanents, at the same time, in this order. */
 export function killPermanents(
@@ -28,7 +29,8 @@ export function killPermanents(
     // 429.2: directly to its owner's trash; a Non-Board Zone, so a new object (124).
     const owner = objectOf(draft, unit).owner;
     const dead = renewObject(draft, unit);
-    playerOf(draft, owner).zones.trash.push(dead.id);
+    const trash = playerOf(draft, owner).zones.trash;
+    trash.push(dead.id);
     emit(draft, {
       type: 'UnitKilled',
       rule,
@@ -38,5 +40,6 @@ export function killPermanents(
       object: dead.id,
       card: dead.card,
     });
+    ceaseIfToken(draft, dead.id, trash);
   }
 }

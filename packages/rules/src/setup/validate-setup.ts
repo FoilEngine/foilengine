@@ -54,10 +54,36 @@ export function validateSetup(setup: GameSetup): SetupProblem[] {
     });
   }
 
+  const missing = missingTokens(setup);
+  if (missing.length > 0) {
+    problems.push({
+      code: 'invalid-token',
+      player: null,
+      message: `Effects play tokens with no token definition: ${missing.join(', ')}`,
+      rule: '185.1',
+    });
+  }
   for (const player of setup.players) {
     problems.push(...validateDeck(setup, player));
   }
   return problems;
+}
+
+/** The tokens an effect plays (`play-token`) that have no token definition in the setup. */
+function missingTokens(setup: GameSetup): CardId[] {
+  const missing = new Set<CardId>();
+  for (const definition of Object.values(setup.cards)) {
+    const lists = [
+      definition.instructions ?? [],
+      ...(definition.abilities ?? []).map((a) => (a.kind === 'passive' ? [] : a.instructions)),
+    ];
+    for (const instruction of lists.flat()) {
+      if (instruction.kind === 'play-token' && setup.cards[instruction.token]?.token !== true) {
+        missing.add(instruction.token);
+      }
+    }
+  }
+  return [...missing];
 }
 
 function validateDeck(setup: GameSetup, { id, deck }: PlayerSetup): SetupProblem[] {
@@ -69,6 +95,13 @@ function validateDeck(setup: GameSetup, { id, deck }: PlayerSetup): SetupProblem
   const unknown = [...new Set(all.filter((card) => setup.cards[card] === undefined))];
   if (unknown.length > 0) {
     problem('unknown-card', `Unknown cards: ${unknown.join(', ')}`, null);
+    return problems;
+  }
+
+  // 185: tokens are not cards; they are never in a deck.
+  const tokens = [...new Set(all.filter((card) => setup.cards[card]?.token === true))];
+  if (tokens.length > 0) {
+    problem('invalid-token', `A deck cannot contain tokens: ${tokens.join(', ')}`, '185');
     return problems;
   }
 
