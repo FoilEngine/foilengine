@@ -78,6 +78,8 @@ export type BattlefieldView = {
 export type SelfView = {
   readonly id: PlayerId;
   readonly points: number;
+  /** XP, public (729.2). */
+  readonly xp: number;
   readonly scoredThisTurn: readonly ObjectId[];
   readonly runePool: RunePool;
   readonly zones: OwnZones;
@@ -86,6 +88,8 @@ export type SelfView = {
 export type OpponentView = {
   readonly id: PlayerId;
   readonly points: number;
+  /** XP, public (729.2). */
+  readonly xp: number;
   readonly scoredThisTurn: readonly ObjectId[];
   /** Rune Pools are public: resources are added by public runes. */
   readonly runePool: RunePool;
