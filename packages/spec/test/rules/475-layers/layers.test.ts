@@ -207,3 +207,31 @@ describe('317.2.b Healing at the end of the turn', () => {
     },
   });
 });
+
+describe('322 Cleanups repeat until nothing changes', () => {
+  scenario('rule 322: a cleanup that changes the state is followed by another one', {
+    rules: ['322', '322.1', '323.4'],
+    // Turn 1: Banner. Turn 3: Vanilla 1 (Might 1 + 1 from Banner), Snap deals 1 to it; it survives.
+    setup: () => {
+      let state = start(['Banner', v(1), 'Snap', 'Bolt'], [v(1), v(2), v(3), v(4)], 'abilities');
+      state = play(state, A, 'test:banner');
+      state = endTurn(endTurn(state).state).state;
+      state = play(state, A, 'test:vanilla-1');
+      return play(state, A, 'test:snap', [unit(state, A, 'test:vanilla-1')]);
+    },
+    check: (t) => {
+      const banner = unit(t.state, A, 'test:banner');
+      const vanilla = unit(t.state, A, 'test:vanilla-1');
+      t.expect(t.state.objects[vanilla]?.damage).toBe(1);
+      // Bolt kills Banner in a cleanup; the next cleanup sees Vanilla 1 at Might 1 with 1 damage.
+      const object = inHand(t.state, A, 'test:bolt');
+      const payment = autoPayment(t.state, A, { energy: 1, power: [] }) ?? [];
+      t.act(
+        { type: 'PlayCard', player: A, card: object, payment, targets: [banner] },
+        pass(A),
+        pass(B),
+      );
+      t.expect(ofType(t.events, 'UnitKilled').map((e) => e.unit)).toEqual([banner, vanilla]);
+    },
+  });
+});

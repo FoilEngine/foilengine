@@ -296,16 +296,6 @@
       "reason": "Needs the chain."
     },
     {
-      "number": "322",
-      "milestone": "M3",
-      "reason": "No scenario found where a second cleanup changes the outcome without abilities: it needs a step that causes a change an earlier step handles, such as a unit killed by an effect."
-    },
-    {
-      "number": "322.1",
-      "milestone": "M3",
-      "reason": "Same as 322."
-    },
-    {
       "number": "323",
       "milestone": "M3",
       "reason": "Some of the listed cleanup tasks need M3 (323.2, 323.6, 323.13): the full list is tested with them."
