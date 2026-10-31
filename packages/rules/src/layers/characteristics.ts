@@ -2,7 +2,7 @@
 // read from its printed values and the continuous effects that apply to it, layer by layer (479).
 // For now: the Might of units, in the Arithmetic layer (479.4), from passive abilities of
 // permanents on the board (363–365), continuous effects of spells and abilities (476), and buffs
-// (703). Copy, trait- and ability-altering effects (479.1–479.3) and dependencies (480, 481)
+// (703), and the Might Bonus and Effect Text of attached cards (137, 718). Copy, trait- and ability-altering effects (479.1–479.3) and dependencies (480, 481)
 // arrive with the cards that need them.
 
 import type {
@@ -109,7 +109,17 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   const object = reader.objectAt(id);
   const definition =
     object === undefined ? undefined : (reader.cards[object.card] as CardDefinition);
-  const printed = definition?.keywords ?? [];
+  // 718.3, 719.1: the Effect Text of the cards Attached to it is appended to its Rules Text.
+  const attached = (object?.attached ?? []).map(
+    (id) => reader.cards[reader.objectAt(id)?.card as never] as CardDefinition | undefined,
+  );
+  const printed =
+    attached.length === 0
+      ? (definition?.keywords ?? [])
+      : [
+          ...(definition?.keywords ?? []),
+          ...attached.flatMap((card) => card?.effectText?.keywords ?? []),
+        ];
   const flags = printed.filter((k): k is Keyword => typeof k === 'string');
   // Several instances of Assault or Shield add up (807.2, 814.2).
   const valued = (keyword: ValuedKeyword['keyword']) =>
@@ -125,6 +135,8 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   // Buffs and effects only ever apply to objects on the board: an object that leaves it becomes a
   // new object, without buffs (705, 124), that no effect targets.
   let might = (definition.might ?? 0) + object.buffs; // 703
+  // 137.3, 718.4: the Might Bonus of each Attached card.
+  for (const card of attached) might += card?.mightBonus ?? 0;
   for (const effect of reader.effects) if (effect.target === id) might += effect.might;
   const sources = reader.passiveSources();
   if (sources.length > 0 && reader.unitsOnBoard().includes(id)) {

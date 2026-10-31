@@ -82,10 +82,11 @@ function playCard(
     );
   }
   const definition = state.cards[objectOf(draft, action.card).card] as CardDefinition;
-  if ((definition.category !== 'unit' && definition.category !== 'spell') || !definition.cost) {
+  const permanent = definition.category === 'unit' || definition.category === 'gear';
+  if ((!permanent && definition.category !== 'spell') || !definition.cost) {
     return illegal(
       'card-not-playable',
-      `${definition.name} is a ${definition.category}: only units and spells can be played yet`,
+      `${definition.name} is a ${definition.category}: only units, gear and spells can be played`,
       null,
     );
   }
@@ -112,6 +113,11 @@ function playCard(
         );
       }
       battlefield = target.object;
+    }
+  } else if (definition.category === 'gear') {
+    // 148.1.a.1, 149.2: gear can only be played to its player's base.
+    if (location !== undefined && location.kind !== 'base') {
+      return illegal('invalid-location', 'Gear can only be played to your base', '149.2');
     }
   } else if (location !== undefined) {
     return illegal('invalid-location', 'A spell does not enter the board', '355.2');
@@ -161,19 +167,22 @@ function playCard(
 
   // Step 6 (359): finalize.
   finalize(draft, item);
-  if (definition.category === 'unit')
-    enterBoard(draft, action, item, from, battlefield, accelerate);
-  else givePriorityToNewest(draft); // 359.3.a, 337.4
+  // 149.1: gear enter ready.
+  if (permanent) {
+    enterBoard(
+      draft,
+      action,
+      item,
+      from,
+      battlefield,
+      accelerate || definition.category === 'gear',
+    );
+  } else givePriorityToNewest(draft); // 359.3.a, 337.4
   // Steps were taken with the state Closed; a cleanup follows (319.4, 319.6).
   cleanup(draft);
   return null;
 }
 
-/**
- * 337.2, 359.2: a finalized unit resolves at once: it leaves the Chain and enters the board
- * exhausted at the chosen location (359.2.c), as a new object (124). If it was the only item,
- * the Chain ends (330); otherwise the controller of the newest item gains Priority again.
- */
 /**
  * 805.1.b: the Accelerate cost is [1][C]: 1 Energy and 1 Power of the unit's domain
  * (805.1.b.1), or of any domain if it has none (805.1.b.2). A unit with several domains may pay
@@ -194,6 +203,12 @@ function accelerateCost(definition: CardDefinition): Cost | IllegalReason | null
   return { energy: 1, power: [domain ?? 'any'] };
 }
 
+/**
+ * 337.2, 359.2: a finalized unit or gear resolves at once: it leaves the Chain and enters the
+ * board at the chosen location (359.2.c), as a new object (124): a unit exhausted, gear ready. If
+ * it was the only item, the Chain ends (330); otherwise the controller of the newest item gains
+ * Priority again.
+ */
 function enterBoard(
   draft: Draft,
   action: PlayCard,

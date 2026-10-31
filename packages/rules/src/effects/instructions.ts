@@ -10,6 +10,7 @@ import {
   type ObjectId,
   type TargetSpec,
 } from '@foilengine/types';
+import { attach } from '../actions/attach.ts';
 import { drawCards } from '../actions/draw.ts';
 import { killPermanents } from '../actions/kill.ts';
 import { playToken } from '../actions/play-token.ts';
@@ -113,6 +114,14 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
         // 350.2, 184.2: the controller of the spell or ability plays the token into their base.
         token = playToken(draft, item.controller, instruction.token);
         break;
+      case 'attach': {
+        // 435, 818.1.c.2: "Attach this to [target]": the permanent the ability is on.
+        const source = item.ability?.source ?? null;
+        const target = affected(instruction.target);
+        if (source === null || target === null) break;
+        attach(draft, source, target);
+        break;
+      }
       default:
         assertNever(instruction);
     }
