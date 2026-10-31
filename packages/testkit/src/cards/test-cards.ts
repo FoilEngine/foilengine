@@ -299,6 +299,29 @@ export const TEST_CARDS = {
     ],
     text: 'When you play me, pay [1] to draw 1.',
   }),
+  /** Accelerate (805): a Fury unit; pay [1][C] more to have it enter ready. */
+  sprinter: card('test:sprinter', 'unit', {
+    name: 'Sprinter',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: ['accelerate'],
+    text: '[Accelerate]',
+  }),
+  /** Temporary (816): killed at the start of its controller's Beginning Phase, before scoring. */
+  sprite: card('test:sprite', 'unit', {
+    name: 'Sprite',
+    cost: { energy: 1, power: [] },
+    might: 3,
+    keywords: ['temporary'],
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'beginning' },
+        instructions: [{ kind: 'kill', target: 'self' }],
+      },
+    ],
+    text: '[Temporary]',
+  }),
   /** Assault 2 (807): +2 [M] while it is an attacker. */
   bruiser: card('test:bruiser', 'unit', {
     name: 'Bruiser',
@@ -394,6 +417,8 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.guardian,
   TEST_CARDS.archer,
   TEST_CARDS.fickle,
+  TEST_CARDS.sprinter,
+  TEST_CARDS.sprite,
 ];
 
 /** The test spells, for decks that exercise the Chain. */
