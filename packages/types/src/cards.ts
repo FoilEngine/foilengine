@@ -1,7 +1,7 @@
 // Card definitions: the card as a rule, shared by all its printings (docs/05-codex-data.md).
 // Effects are plain data interpreted by the engine (ADR 0019, effects.ts).
 
-import type { Instruction, Keyword, TargetSpec } from './effects.ts';
+import type { Ability, Instruction, Keyword, TargetSpec } from './effects.ts';
 import type { CardId } from './ids.ts';
 
 /** The six domains (134.2). */
@@ -47,4 +47,6 @@ export type CardDefinition = {
   readonly targets?: readonly TargetSpec[];
   /** A spell's instructions, executed from top to bottom when it resolves (158.1). */
   readonly instructions?: readonly Instruction[];
+  /** The abilities of the card (361), in printed order. */
+  readonly abilities?: readonly Ability[];
 };

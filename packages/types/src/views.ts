@@ -4,7 +4,14 @@
 import type { Decision } from './decisions.ts';
 import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
-import type { CombatState, GameStage, RunePool, ShowdownState } from './state.ts';
+import type {
+  ChainAbility,
+  CombatState,
+  GameStage,
+  RunePool,
+  ShowdownState,
+  TriggeredAbility,
+} from './state.ts';
 
 /** An object whose face the viewer may see. */
 export type VisibleObject = {
@@ -15,9 +22,10 @@ export type VisibleObject = {
   readonly damage: number;
 };
 
-/** A Chain Item as every player sees it (108.1.b). */
+/** A Chain Item as every player sees it (108.1.b): a card, or an ability (which has no card). */
 export type ChainItemView = {
-  readonly object: VisibleObject;
+  readonly object: VisibleObject | null;
+  readonly ability: ChainAbility | null;
   readonly controller: PlayerId;
   readonly status: 'pending' | 'finalized';
   readonly targets: readonly ObjectId[];
@@ -90,6 +98,8 @@ export type PlayerView = {
   readonly combat: CombatState | null;
   /** The Chain is public (108.1.b): its cards are shown. */
   readonly chain: ChainView | null;
+  /** Triggered abilities waiting to be put on the Chain (383.3): their sources are public. */
+  readonly triggered: readonly TriggeredAbility[];
   readonly stage: GameStage;
   /** The decision the viewer must make now, if any. */
   readonly decision: Decision | null;

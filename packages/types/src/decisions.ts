@@ -2,6 +2,7 @@
 // It is answered by an Action, never by a callback.
 
 import type { ObjectId, PlayerId, RuleNumber } from './ids.ts';
+import type { TriggeredAbility } from './state.ts';
 
 /** The player must choose which cards, if any, to set aside (117.1). */
 export type MulliganDecision = {
@@ -41,4 +42,20 @@ export type AssignDamageDecision = {
   readonly rule: RuleNumber;
 };
 
-export type Decision = MulliganDecision | PriorityDecision | FocusDecision | AssignDamageDecision;
+/**
+ * The player controls several triggered abilities that triggered at the same time: they choose
+ * the order in which they go on the Chain (383.3.d).
+ */
+export type OrderTriggersDecision = {
+  readonly kind: 'OrderTriggers';
+  readonly player: PlayerId;
+  readonly abilities: readonly TriggeredAbility[];
+  readonly rule: RuleNumber;
+};
+
+export type Decision =
+  | MulliganDecision
+  | PriorityDecision
+  | FocusDecision
+  | AssignDamageDecision
+  | OrderTriggersDecision;

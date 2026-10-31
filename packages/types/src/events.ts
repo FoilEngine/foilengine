@@ -274,6 +274,21 @@ export type ChainItemAdded = EventBase & {
   readonly targets: readonly ObjectId[];
 };
 
+/**
+ * An ability was put on the Chain, Pending: activated by `player` (377.3.a), or triggered
+ * (383.3). It has no card; `object` is its id on the Chain.
+ */
+export type AbilityAdded = EventBase & {
+  readonly type: 'AbilityAdded';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+  readonly source: ObjectId;
+  readonly card: CardId;
+  readonly index: number;
+  readonly triggered: boolean;
+  readonly targets: readonly ObjectId[];
+};
+
 /** A Pending Chain Item became a Finalized one (329.3, 359.1). */
 export type ChainItemFinalized = EventBase & {
   readonly type: 'ChainItemFinalized';
@@ -400,7 +415,8 @@ export type GameEvent =
   | ChainItemAdded
   | ChainItemFinalized
   | PriorityPassed
-  | ChainItemResolved;
+  | ChainItemResolved
+  | AbilityAdded;
 
 export type GameEventType = GameEvent['type'];
 
@@ -450,6 +466,7 @@ export const PRIVATE_EVENT_FIELDS = {
   ChainItemFinalized: [],
   PriorityPassed: [],
   ChainItemResolved: [],
+  AbilityAdded: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */
