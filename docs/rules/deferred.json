@@ -171,16 +171,6 @@
       "reason": "Effects that make a player lose need abilities."
     },
     {
-      "number": "315.2.a",
-      "milestone": "M3",
-      "reason": "Beginning Step effects need abilities."
-    },
-    {
-      "number": "315.2.a.1",
-      "milestone": "M3",
-      "reason": "Beginning Step effects need abilities."
-    },
-    {
       "number": "315.2.b.3",
       "milestone": "unplanned",
       "reason": "Needs teams; no team mode is on the roadmap."
@@ -424,11 +414,6 @@
       "number": "355.1",
       "milestone": "M3",
       "reason": "\"As I am played\" choices need abilities."
-    },
-    {
-      "number": "355.1.a",
-      "milestone": "M3",
-      "reason": "Optional additional costs need abilities."
     },
     {
       "number": "355.2.b",
@@ -719,16 +704,6 @@
       "number": "356.2.a.2",
       "milestone": "M3",
       "reason": "Deflect is a keyword (809)."
-    },
-    {
-      "number": "356.2.b",
-      "milestone": "M3",
-      "reason": "Additional costs come from abilities."
-    },
-    {
-      "number": "356.2.b.1",
-      "milestone": "M3",
-      "reason": "Additional costs come from abilities."
     },
     {
       "number": "356.3",
