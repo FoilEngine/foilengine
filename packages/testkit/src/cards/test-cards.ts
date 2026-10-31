@@ -9,9 +9,12 @@ import type {
   DeckList,
   Domain,
   GameSetup,
+  Instruction,
+  Keyword,
   PlayerId,
   PlayerSetup,
   Supertype,
+  TargetSpec,
 } from '@foilengine/types';
 
 const card = (
@@ -24,6 +27,10 @@ const card = (
     name?: string;
     cost?: Cost;
     might?: number;
+    keywords?: Keyword[];
+    targets?: TargetSpec[];
+    instructions?: Instruction[];
+    text?: string;
   } = {},
 ): CardDefinition => ({
   id: id as CardId,
@@ -34,7 +41,10 @@ const card = (
   domains: options.domains ?? ['fury'],
   ...(options.cost === undefined ? {} : { cost: options.cost }),
   ...(options.might === undefined ? {} : { might: options.might }),
-  text: '',
+  ...(options.keywords === undefined ? {} : { keywords: options.keywords }),
+  ...(options.targets === undefined ? {} : { targets: options.targets }),
+  ...(options.instructions === undefined ? {} : { instructions: options.instructions }),
+  text: options.text ?? '',
 });
 
 /**
@@ -81,7 +91,46 @@ export const TEST_CARDS = {
   vanillas: Array.from({ length: 39 }, (_, i) => vanilla(i + 1)),
   gear: card('test:gear', 'gear', { cost: { energy: 1, power: [] } }),
   spell: card('test:spell', 'spell', { cost: { energy: 1, power: [] } }),
+  /** No keyword: on its controller's turn, in a Neutral Open State only (155). */
+  insight: card('test:insight', 'spell', {
+    name: 'Insight',
+    cost: { energy: 1, power: [] },
+    instructions: [{ kind: 'draw', amount: 1 }],
+    text: 'Draw 1.',
+  }),
+  /** Action (806): also in Showdowns. */
+  bolt: card('test:bolt', 'spell', {
+    name: 'Bolt',
+    cost: { energy: 1, power: [] },
+    keywords: ['action'],
+    targets: [{ kind: 'unit' }],
+    instructions: [{ kind: 'deal', amount: 2, target: 0 }],
+    text: '[Action] Deal 2 to a unit.',
+  }),
+  /** Reaction (813): also on a Chain, on any player's turn. */
+  snap: card('test:snap', 'spell', {
+    name: 'Snap',
+    cost: { energy: 1, power: [] },
+    keywords: ['reaction'],
+    targets: [{ kind: 'unit' }],
+    instructions: [{ kind: 'deal', amount: 1, target: 0 }],
+    text: '[Reaction] Deal 1 to a unit.',
+  }),
+  /** Targeting restrictions (355.9.b). */
+  smite: card('test:smite', 'spell', {
+    name: 'Smite',
+    cost: { energy: 2, power: [] },
+    targets: [{ kind: 'unit', at: 'battlefield', controller: 'enemy' }],
+    instructions: [
+      { kind: 'deal', amount: 3, target: 0 },
+      { kind: 'draw', amount: 1 },
+    ],
+    text: 'Deal 3 to an enemy unit at a battlefield. Draw 1.',
+  }),
 } as const;
+
+/** The test spells, for decks that exercise the Chain. */
+export const TEST_SPELLS = [TEST_CARDS.insight, TEST_CARDS.bolt, TEST_CARDS.snap, TEST_CARDS.smite];
 
 /** Every test card, keyed by id. */
 export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = Object.fromEntries(
@@ -97,6 +146,7 @@ export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = O
     ...TEST_CARDS.vanillas,
     TEST_CARDS.gear,
     TEST_CARDS.spell,
+    ...TEST_SPELLS,
   ].map((definition) => [definition.id, definition]),
 );
 
@@ -116,10 +166,27 @@ export function testDeck(overrides: Partial<DeckList> = {}): DeckList {
 }
 
 /**
+ * A legal 1v1 deck with spells: the test champion, Vanilla 1 to 31, and two of each test spell
+ * (40 cards). For scenarios and fuzzing that need the Chain.
+ */
+export function testDeckWithSpells(): DeckList {
+  return testDeck({
+    mainDeck: [
+      TEST_CARDS.champion.id,
+      ...TEST_CARDS.vanillas.slice(0, 31).map((unit) => unit.id),
+      ...TEST_SPELLS.flatMap((spell) => [spell.id, spell.id]),
+    ],
+  });
+}
+
+/**
  * A copy of the test cards under other ids (`test:<variant>:…`), and the matching deck.
  * Gives each player cards of their own, so a test can tell whose card a view shows.
  */
-export function testDeckVariant(variant: string): {
+export function testDeckVariant(
+  variant: string,
+  base: DeckList = testDeck(),
+): {
   deck: DeckList;
   cards: Readonly<Record<CardId, CardDefinition>>;
 } {
@@ -130,7 +197,6 @@ export function testDeckVariant(variant: string): {
       return [id, { ...definition, id }];
     }),
   );
-  const base = testDeck();
   return {
     deck: {
       legend: rename(base.legend),
@@ -144,22 +210,25 @@ export function testDeckVariant(variant: string): {
 }
 
 /**
- * A 1v1 Duel setup between players `A` and `B` (seating order A, B), both with `testDeck()`.
- * With `distinctDecks`, B plays `testDeckVariant('b')`: no card is shared between the players.
+ * A 1v1 Duel setup between players `A` and `B` (seating order A, B), both with `testDeck()`,
+ * or `testDeckWithSpells()` with `withSpells`. With `distinctDecks`, B plays a variant of the
+ * same deck (`testDeckVariant('b')`): no card is shared between the players.
  */
 export function testSetup(
   overrides: Partial<Omit<GameSetup, 'players'>> & {
     players?: readonly PlayerSetup[];
     distinctDecks?: boolean;
+    withSpells?: boolean;
   } = {},
 ): GameSetup {
-  const { distinctDecks = false, ...rest } = overrides;
-  const b = distinctDecks ? testDeckVariant('b') : { deck: testDeck(), cards: {} };
+  const { distinctDecks = false, withSpells = false, ...rest } = overrides;
+  const deck = withSpells ? testDeckWithSpells() : testDeck();
+  const b = distinctDecks ? testDeckVariant('b', deck) : { deck, cards: {} };
   return {
     mode: '1v1-duel',
     rulesVersion: 'CR-2026-10-09',
     players: [
-      { id: 'A' as PlayerId, deck: testDeck() },
+      { id: 'A' as PlayerId, deck },
       { id: 'B' as PlayerId, deck: b.deck },
     ],
     cards: { ...TEST_CARD_DEFINITIONS, ...b.cards },

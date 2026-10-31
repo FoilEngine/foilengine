@@ -111,11 +111,6 @@
       "reason": "The 1v1 mode (487) does not specify the First Player; Tournament Rules 407 (Play First Rule) arrives with matchmaking. Until then 115 applies: a fair random method."
     },
     {
-      "number": "144.1.b",
-      "milestone": "M3",
-      "reason": "Closed States arrive with the chain."
-    },
-    {
       "number": "144.4.a.1",
       "milestone": "unplanned",
       "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
@@ -268,7 +263,7 @@
     {
       "number": "319",
       "milestone": "M3",
-      "reason": "Some of the listed times need the chain (319.1, 319.3–319.5): the full list is tested with it."
+      "reason": "Some of the listed times need the chain (319.1, 319.3\u2013319.5): the full list is tested with it."
     },
     {
       "number": "319.1",
@@ -307,11 +302,6 @@
     },
     {
       "number": "321",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
-      "number": "321.1",
       "milestone": "M3",
       "reason": "Needs the chain."
     },
@@ -406,11 +396,6 @@
       "reason": "Abilities arrive with M3."
     },
     {
-      "number": "346",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
       "number": "346.1",
       "milestone": "M3",
       "reason": "Needs the chain."
@@ -424,16 +409,6 @@
       "number": "347.1",
       "milestone": "M3",
       "reason": "Playing a card or an ability during a showdown needs Action and Reaction timing."
-    },
-    {
-      "number": "347.1.a",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
-      "number": "347.1.b",
-      "milestone": "M3",
-      "reason": "Needs the chain."
     },
     {
       "number": "350.1",
@@ -451,34 +426,9 @@
       "reason": "Spells arrive with M3."
     },
     {
-      "number": "352",
-      "milestone": "M3",
-      "reason": "Pending and Finalized items belong to the chain."
-    },
-    {
-      "number": "352.1",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
-      "number": "352.2",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
       "number": "353",
       "milestone": "M3",
       "reason": "The process of play goes through the chain; M2 plays a unit in one step."
-    },
-    {
-      "number": "354",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
-      "number": "354.1",
-      "milestone": "M3",
-      "reason": "Needs the chain."
     },
     {
       "number": "354.2",
@@ -526,11 +476,6 @@
       "reason": "Move effects need spells and abilities."
     },
     {
-      "number": "355.5",
-      "milestone": "M3",
-      "reason": "Choices of game objects belong to spells and abilities."
-    },
-    {
       "number": "355.5.a",
       "milestone": "M3",
       "reason": "Needs spells and abilities."
@@ -542,31 +487,6 @@
     },
     {
       "number": "355.6",
-      "milestone": "M3",
-      "reason": "Targeting needs spells and abilities."
-    },
-    {
-      "number": "355.7",
-      "milestone": "M3",
-      "reason": "Targeting needs spells and abilities."
-    },
-    {
-      "number": "355.8",
-      "milestone": "M3",
-      "reason": "Targeting needs spells and abilities."
-    },
-    {
-      "number": "355.9",
-      "milestone": "M3",
-      "reason": "Targeting needs spells and abilities."
-    },
-    {
-      "number": "355.9.a",
-      "milestone": "M3",
-      "reason": "Targeting needs spells and abilities."
-    },
-    {
-      "number": "355.9.a.1",
       "milestone": "M3",
       "reason": "Targeting needs spells and abilities."
     },
@@ -587,11 +507,6 @@
     },
     {
       "number": "355.9.a.5",
-      "milestone": "M3",
-      "reason": "Targeting needs spells and abilities."
-    },
-    {
-      "number": "355.9.b",
       "milestone": "M3",
       "reason": "Targeting needs spells and abilities."
     },
@@ -941,11 +856,6 @@
       "reason": "Non-standard costs come from abilities."
     },
     {
-      "number": "358.1",
-      "milestone": "M3",
-      "reason": "Choices to check come from spells and abilities."
-    },
-    {
       "number": "358.3",
       "milestone": "M3",
       "reason": "An illegal outcome needs spells, or more than two players."
@@ -961,16 +871,6 @@
       "reason": "Needs triggers and the chain."
     },
     {
-      "number": "359.1",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
-      "number": "359.2",
-      "milestone": "M3",
-      "reason": "Permanents leave the chain: M2 plays a unit in one step."
-    },
-    {
       "number": "359.2.a",
       "milestone": "M3",
       "reason": "Passive abilities arrive with M3."
@@ -984,16 +884,6 @@
       "number": "359.2.d",
       "milestone": "M3",
       "reason": "Gear arrives with M3."
-    },
-    {
-      "number": "359.3",
-      "milestone": "M3",
-      "reason": "Spells arrive with M3."
-    },
-    {
-      "number": "359.3.a",
-      "milestone": "M3",
-      "reason": "Spells arrive with M3."
     },
     {
       "number": "359.3.b",

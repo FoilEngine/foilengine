@@ -153,8 +153,8 @@ describe('341–348 Showdowns without spells', () => {
     },
   );
 
-  scenario('rule 343.1.a: no card can be played during a Showdown', {
-    rules: ['343.1.a', '358.4'],
+  scenario('rule 343.1.a: by default, no card can be played during a Showdown', {
+    rules: ['343.1.a', '358.4', '308.1.a'],
     setup: contested,
     check: (t) => {
       const card = t
@@ -169,7 +169,8 @@ describe('341–348 Showdowns without spells', () => {
       });
       t.expectLegal(play());
       t.act(move(A, unitsInBase(t.state, A), battlefield(t.state, 0)));
-      t.actIllegal(play(), 'wrong-action');
+      const reason = t.actIllegal(play(), 'wrong-timing');
+      t.expect(reason.rule).toBe('308.1.a');
     },
   });
 });

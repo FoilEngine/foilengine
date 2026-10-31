@@ -1,8 +1,10 @@
 export {
   TEST_CARD_DEFINITIONS,
   TEST_CARDS,
+  TEST_SPELLS,
   testDeck,
   testDeckVariant,
+  testDeckWithSpells,
   testSetup,
 } from './cards/test-cards.ts';
 export { exercisedRules } from './coverage/exercised.ts';

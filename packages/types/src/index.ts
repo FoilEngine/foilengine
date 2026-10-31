@@ -9,6 +9,7 @@ export type {
   MoveDestination,
   Mulligan,
   PassFocus,
+  PassPriority,
   PlayCard,
   PlayLocation,
   RuneUse,
@@ -30,6 +31,7 @@ export type {
   MulliganDecision,
   PriorityDecision,
 } from './decisions.ts';
+export type { Instruction, Keyword, TargetSpec } from './effects.ts';
 export {
   type BattlefieldContested,
   type BattlefieldScored,
@@ -39,6 +41,9 @@ export {
   type CardPlaced,
   type CardPlayed,
   type CardRecycled,
+  type ChainItemAdded,
+  type ChainItemFinalized,
+  type ChainItemResolved,
   type CombatEnded,
   type CombatStarted,
   type ControlEstablished,
@@ -59,6 +64,7 @@ export {
   type PlayerConceded,
   type PointsGained,
   PRIVATE_EVENT_FIELDS,
+  type PriorityPassed,
   type RedactedEvent,
   type Resources,
   type ResourcesAdded,
@@ -84,6 +90,8 @@ export type { IllegalCode, IllegalReason, SetupProblem, SetupProblemCode } from 
 export type { DeckList, GameSetup, ModeId, PlayerSetup } from './setup.ts';
 export {
   type BattlefieldState,
+  type ChainItem,
+  type ChainState,
   type CombatState,
   type DamageAssignment,
   type GameObject,
@@ -99,6 +107,8 @@ export {
 } from './state.ts';
 export type {
   BattlefieldView,
+  ChainItemView,
+  ChainView,
   HiddenZone,
   OpponentView,
   OpponentZones,

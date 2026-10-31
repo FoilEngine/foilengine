@@ -76,6 +76,20 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
     })),
     showdown: state.showdown,
     combat: state.combat,
+    // 108.1.b: the cards on the Chain are public.
+    chain:
+      state.chain === null
+        ? null
+        : {
+            items: state.chain.items.map((item) => ({
+              object: show(objectOf(state, item.object)),
+              controller: item.controller,
+              status: item.status,
+              targets: item.targets,
+            })),
+            priority: state.chain.priority,
+            passes: state.chain.passes,
+          },
     stage: state.stage,
     decision: decision !== null && decision.player === viewer ? decision : null,
     winner: state.winner,

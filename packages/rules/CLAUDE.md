@@ -9,7 +9,7 @@ The rules engine: the referee. Decides legality, resolves everything, detects vi
 
 ## Public API
 
-`createGame`, `legalActions`, `isLegal`, `apply`, `outcome`, `viewFor`, `pendingDecision`, `characteristics` (entry point `@foilengine/rules`), and the effect API used by `cards` (entry point `@foilengine/rules/effects`, the only one `cards` may reach).
+`createGame`, `legalActions`, `isLegal`, `apply`, `outcome`, `viewFor`, `pendingDecision`, `characteristics` (entry point `@foilengine/rules`), and the checks of card definitions used by `cards` (entry point `@foilengine/rules/effects`, the only one `cards` may reach). Card effects are JSON data that the engine interprets (ADR 0019): `chain/` and `effects/`.
 
 ## Points of attention
 

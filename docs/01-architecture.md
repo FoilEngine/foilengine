@@ -34,7 +34,7 @@ Everything is strict TypeScript in a pnpm + Turborepo monorepo.
 | --- | --- | --- |
 | `@foilengine/types` | Shared types: identifiers, card definitions, state, actions, events, views. No logic. | nothing |
 | `@foilengine/rules` | The rules engine. API: `createGame`, `legalActions`, `apply`, `outcome`, `viewFor`. Pure and deterministic. | `types` |
-| `@foilengine/cards` | The effect DSL and the implementation of every card, with its status. | `types`, `rules` (effect API only, through `@foilengine/rules/effects`) |
+| `@foilengine/cards` | The effect DSL, which builds plain JSON (ADR 0019), and the definition of every card, with its status. | `types`, `rules` (only through `@foilengine/rules/effects`, which checks definitions) |
 | `@foilengine/codex` | Card data import (Riftcodex, TCGplayer catalog), normalization, versioned snapshots. | `types` |
 | `@foilengine/protocol` | Client-server messages, Zod schemas, versioned. | `types` |
 | `@foilengine/log` | Event log format, serialization, replays, notation, rewind. | `types`, `rules` |
@@ -58,7 +58,7 @@ Everything is strict TypeScript in a pnpm + Turborepo monorepo.
 
 - `types` depends on nothing.
 - `rules` depends only on `types`. No I/O library, no clock access, no `Math.random`.
-- `cards` depends only on `types` and on the effect API exposed by `rules` at the `@foilengine/rules/effects` entry point.
+- `cards` depends only on `types` and on `@foilengine/rules/effects`, which checks card definitions; it never changes a state: the engine interprets the definitions (ADR 0019).
 - `spec` hosts the rule and card scenarios; nothing depends on it. `rules` and `cards` never depend on `testkit` (that would be a cycle).
 - No package depends on an app.
 - Client apps (`play`, `site`, `console`) never depend on `rules` to decide legality. `play` may import it only for the offline mode against the AI, running in a Web Worker, and only from `apps/play/src/offline/`.

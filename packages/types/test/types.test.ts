@@ -45,8 +45,8 @@ describe('pure JSON (ADR 0004)', () => {
   });
 
   it('the state has a schema version', () => {
-    expect(STATE_VERSION).toBe(5);
-    expectTypeOf<GameState['version']>().toEqualTypeOf<5>();
+    expect(STATE_VERSION).toBe(6);
+    expectTypeOf<GameState['version']>().toEqualTypeOf<6>();
   });
 });
 
@@ -92,7 +92,7 @@ describe('event visibility (ADR 0005)', () => {
 
   it('every event type has its private fields declared', () => {
     const types: GameEventType[] = Object.keys(PRIVATE_EVENT_FIELDS) as GameEventType[];
-    expect(types).toHaveLength(38);
+    expect(types).toHaveLength(42);
     expect(PRIVATE_EVENT_FIELDS.CardDrawn).toEqual(['object', 'card']);
   });
 });
@@ -139,6 +139,8 @@ describe('assertNever', () => {
           return 'move';
         case 'PassFocus':
           return 'pass';
+        case 'PassPriority':
+          return 'pass priority';
         case 'AssignCombatDamage':
           return 'assign damage';
         case 'Concede':

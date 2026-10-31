@@ -5,6 +5,7 @@
 // that checking a candidate action (legalActions) does not copy every object of the game.
 
 import type {
+  ChainState,
   CombatState,
   GameEvent,
   GameObject,
@@ -59,6 +60,7 @@ export type Draft = {
   battlefields: DraftBattlefield[];
   showdown: ShowdownState | null;
   combat: CombatState | null;
+  chain: ChainState | null;
   turnOrder: readonly PlayerId[];
   stage: GameStage;
   winner: PlayerId | null;
@@ -96,6 +98,7 @@ export function draftOf(state: GameState): Draft {
     })),
     showdown: state.showdown,
     combat: state.combat,
+    chain: state.chain,
     turnOrder: state.turnOrder,
     stage: state.stage,
     winner: state.winner,
@@ -124,6 +127,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
     battlefields: draft.battlefields.map((battlefield) => ({ ...battlefield })),
     showdown: draft.showdown,
     combat: draft.combat,
+    chain: draft.chain,
     turnOrder: draft.turnOrder,
     stage: draft.stage,
     winner: draft.winner,

@@ -4,9 +4,9 @@ Implementing the effects of more than a thousand cards is the biggest job of the
 
 ## Principle
 
-- Most cards are **data** written in a typed DSL: triggers, conditions, targets, atomic actions. No code.
-- A card that does not fit the DSL gets a **custom implementation**, in TypeScript, that only uses the effect API exposed by `rules`. It is the exception, and each case must be justified in a comment.
-- When three custom cards share a pattern, it is added to the DSL.
+- Cards are **data** written in a typed DSL: triggers, conditions, targets, atomic actions. No code. The DSL builds plain JSON, stored in the card definition, and the engine interprets it (ADR 0019): a game, and its replay, carry the effects of its cards.
+- The vocabulary is defined in `@foilengine/types` (`effects.ts`); each building block has one interpreter in `rules`, with its rule numbers and its tests.
+- A card that the vocabulary cannot express stays `partial` or `missing` (manual mode) until a new building block is added. A building block is named after the mechanic, never after a card: there is no card-specific code in the engine.
 
 ## The DSL (indicative shape)
 

@@ -72,7 +72,7 @@ The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 n
 
 ```ts
 type GameState = {
-  version: 5;                       // STATE_VERSION, incremented on every shape change
+  version: 6;                       // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
   rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
@@ -85,12 +85,17 @@ type GameState = {
   battlefields: BattlefieldState[]; // controller, contestedBy, showdownStaged, combatStaged, units present
   showdown: ShowdownState | null;   // battlefield, player with Focus, passes in sequence
   combat: CombatState | null;       // battlefield, attacker, defender, step, damage assigned
+  chain: ChainState | null;         // items (oldest first: card object, controller, status, targets), priority, passes
   stage: GameStage;                 // mulligan | turn (turnPlayer, turnNumber, phase) | ended
   winner: PlayerId | null;
 };
 ```
 
-Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Units are on the board either in their controller's base or in a battlefield's `units`; a unit's location (146.1) is where its id is listed. Each player also keeps `scoredThisTurn`, the battlefields they Scored this turn (472). Each `GameObject` carries the `damage` marked on it (142). Arriving later: the chain, continuous effects (475+), control of units and the other statuses of objects.
+Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Units are on the board either in their controller's base or in a battlefield's `units`; a unit's location (146.1) is where its id is listed. Each player also keeps `scoredThisTurn`, the battlefields they Scored this turn (472). Each `GameObject` carries the `damage` marked on it (142). The Chain (327–340) is a Non-Board Zone that exists while it holds an item (330): each item is a card being played, as a new object (124), with its controller, its status (Pending, then Finalized, 329) and its chosen targets; the Chain also records who has Priority and how many players passed in sequence (339.1). While it exists, the turn is Closed (309.1). Arriving later: abilities on the Chain, continuous effects (475+), control of units and the other statuses of objects.
+
+## Card definitions and effects
+
+`CardDefinition` holds the printed characteristics, and the card's effects as plain JSON (ADR 0019): its `keywords` (806 Action, 813 Reaction for now), the `targets` it chooses as it is played (355.5) and a spell's `instructions`, executed from top to bottom when it resolves (158.1). The vocabulary is in `@foilengine/types` (`effects.ts`): `draw` (414) and `deal` (418) for now; it grows with the mechanics, and the engine interprets every building block. Since `cards` is in the state, a game and its replay carry the effects of its cards.
 
 ## The turn
 
@@ -185,10 +190,10 @@ Deck construction (101–103) is validated in two places. `createGame` checks th
 An `Action` is a **player's intent**, serializable, with no reference to JavaScript objects. It names the acting player. M1 has only the first one; the others arrive with their milestone:
 
 - `Mulligan { player, setAside }`: set aside up to two cards, or none to keep the hand (117.1)
-- `PlayCard { card, choices, payment }` (choice of targets, modes, additional costs, 349–359)
+- `PlayCard { card, location?, targets?, payment }`: a unit chooses its `location` (355.2), a card with targets one target per target of its definition (355.5); modes and additional costs arrive with them (349–359)
 - `ActivateAbility { source, ability, choices, payment }`
 - `StandardMove { units, destination }` (144, 447+)
-- `PassPriority`, `PassFocus`
+- `PassPriority` (338.1.b), on a Chain; `PassFocus` (347.2), in a Showdown
 - `EndTurn`
 - `Concede` (649–652): legal for every player at any time (650), so `legalActions` always lists it last while the game goes on
 - `ManualOverride { description, patch }`: manual mode, always marked as such in the log
@@ -199,7 +204,7 @@ An `Action` is a **player's intent**, serializable, with no reference to JavaScr
 
 A `GameEvent` describes **what happened**, in the exact order, with a sequence number (`seq`). Each event carries the **rule that produced it** (`rule: "117"`) when relevant: that is what enables rule coverage in production, and debugging.
 
-M1 events: `GameCreated` (110), `CardPlaced` (111, 112), `BattlefieldSelected` (113, 487.5), `DeckShuffled` (114), `TurnOrderDetermined` (115), `CardDrawn` (116, 117.2), `MulliganTaken` and `CardRecycled` (117), `SetupCompleted` (118). Later ones include `RuneChanneled`, `CardPlayed`, `ChainItemAdded`, `UnitMoved`, `DamageDealt`, `ShowdownStarted`, `BattlefieldConquered`, `PointsScored`, `GameWon`.
+M1 events: `GameCreated` (110), `CardPlaced` (111, 112), `BattlefieldSelected` (113, 487.5), `DeckShuffled` (114), `TurnOrderDetermined` (115), `CardDrawn` (116, 117.2), `MulliganTaken` and `CardRecycled` (117), `SetupCompleted` (118). Later ones include `RuneChanneled`, `CardPlayed`, `UnitsMoved`, `DamageDealt`, `ShowdownStarted`, `BattlefieldScored`, `PointsGained`, `GameWon`, and for the Chain `ChainItemAdded` (354), `ChainItemFinalized` (359.1), `PriorityPassed` (338.1.b) and `ChainItemResolved` (340.1).
 
 ### Visibility
 
