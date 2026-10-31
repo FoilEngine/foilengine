@@ -441,6 +441,31 @@ export const TEST_CARDS = {
     ],
     text: '[Weaponmaster]',
   }),
+  /** Legion (812) and a discount (356.4): "[Legion][>] I cost [2] less." */
+  legionnaire: card('test:legionnaire', 'unit', {
+    name: 'Legionnaire',
+    cost: { energy: 3, power: [] },
+    might: 3,
+    keywords: ['legion'],
+    abilities: [{ kind: 'discount', energy: 2, requires: [{ kind: 'legion' }] }],
+    text: '[Legion][>] I cost [2] less.',
+  }),
+  /** Legion (812), a triggered Dependent Ability: "[Legion][>] When you play me, draw 1." */
+  herald: card('test:herald', 'unit', {
+    name: 'Herald',
+    cost: { energy: 1, power: [] },
+    might: 1,
+    keywords: ['legion'],
+    abilities: [
+      {
+        kind: 'triggered',
+        requires: [{ kind: 'legion' }],
+        trigger: { kind: 'played' },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: '[Legion][>] When you play me, draw 1.',
+  }),
   /** Hunt 1 (823): "When I conquer or hold, my controller gains 1 XP." */
   tracker: card('test:tracker', 'unit', {
     name: 'Tracker',
@@ -634,6 +659,8 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.veteran,
   TEST_CARDS.mentor,
   TEST_CARDS.armsman,
+  TEST_CARDS.legionnaire,
+  TEST_CARDS.herald,
 ];
 
 /** The test gear, for decks that exercise them. */

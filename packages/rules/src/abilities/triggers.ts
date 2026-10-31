@@ -14,7 +14,7 @@ import type {
   Trigger,
 } from '@foilengine/types';
 import { addAbility, finalize, givePriorityToNewest, removeFromChain } from '../chain/chain.ts';
-import { controllerOf, type Draft, emit, findObject, playerOf } from '../draft.ts';
+import { conditionContext, controllerOf, type Draft, emit, findObject } from '../draft.ts';
 import { deflectCost, withDeflect } from '../effects/deflect.ts';
 import { isValidTarget, validTargets } from '../effects/targets.ts';
 import { EngineInvariantError } from '../errors.ts';
@@ -34,7 +34,8 @@ export function trigger(draft: Draft, kind: Trigger['kind'], sources: readonly O
       if (ability.kind !== 'triggered' || ability.trigger.kind !== kind) continue;
       const controller = controllerOf(draft, source);
       // 727.1.c.1: an ability of a Dependent Keyword triggers only while it is Active.
-      if (!conditionsMet(ability.requires, controller, (p) => playerOf(draft, p).xp)) continue;
+      const context = conditionContext(draft, object.previousObjectId);
+      if (!conditionsMet(ability.requires, controller, context)) continue;
       draft.triggered = [...draft.triggered, { source, card: object.card, index, controller }];
     }
   }

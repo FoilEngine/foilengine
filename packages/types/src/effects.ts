@@ -56,7 +56,12 @@ export type Keyword =
    * tag; pay the cost of its Equip ability, reduced by [A], to attach it to this unit" (821.1.c):
    * a card with Weaponmaster also has that ability (a `weaponmaster` instruction).
    */
-  | 'weaponmaster';
+  | 'weaponmaster'
+  /**
+   * 812: "[Legion][>] [Text]", "If you have played another card this turn, this card gains
+   * [Text]": a Dependent Keyword (727); its ability carries the condition (`legion`).
+   */
+  | 'legion';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b, 809.1.b): Assault X, "While I am an attacker, I have
@@ -148,9 +153,12 @@ export type Trigger =
 
 /**
  * The Condition of a Dependent Keyword (727.1.a): its ability is Inactive until the Condition is
- * met (727.1.b). Level N: its controller has N or more XP (824.1.b.1, 824.1.c).
+ * met (727.1.b). Level N: its controller has N or more XP (824.1.b.1, 824.1.c). Legion: its
+ * controller has finalized a card other than this one this turn (812.1.b.1, 812.1.c).
  */
-export type AbilityCondition = { readonly kind: 'level'; readonly xp: number };
+export type AbilityCondition =
+  | { readonly kind: 'level'; readonly xp: number }
+  | { readonly kind: 'legion' };
 
 /**
  * A Passive Ability of a permanent, active while it is on the board (363–365): a statement of fact
@@ -165,9 +173,21 @@ export type PassiveAbility = {
   readonly requires?: readonly AbilityCondition[];
 };
 
+/**
+ * A discount of the card itself (356.4.a, 356.4.b): "I cost [N] less", applied to its total Energy
+ * cost as it is played, after additional costs and increases (356.4.d), never below 0 (356.6).
+ */
+export type DiscountAbility = {
+  readonly kind: 'discount';
+  readonly energy: number;
+  /** Dependent Keywords: it applies only while met (727.1.c.2). */
+  readonly requires?: readonly AbilityCondition[];
+};
+
 /** An ability of a card (361). Replacement abilities arrive later. */
 export type Ability =
   | PassiveAbility
+  | DiscountAbility
   /** "[cost]: [effect]" (377.1): activated by its controller, it uses the Chain (377.3). */
   | {
       readonly kind: 'activated';

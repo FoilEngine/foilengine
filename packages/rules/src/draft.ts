@@ -38,6 +38,7 @@ export type DraftPlayer = {
   turnsTaken: number;
   runePool: ReturnType<typeof copyPool>;
   xp: number;
+  finalizedThisTurn: ObjectId[];
   scoredThisTurn: ObjectId[];
   zones: MutableZones;
 };
@@ -91,6 +92,7 @@ export function draftOf(state: GameState): Draft {
       turnsTaken: player.turnsTaken,
       runePool: copyPool(player.runePool),
       xp: player.xp,
+      finalizedThisTurn: [...player.finalizedThisTurn],
       scoredThisTurn: [...player.scoredThisTurn],
       zones: {
         base: [...player.zones.base],
@@ -137,6 +139,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
         turnsTaken: player.turnsTaken,
         runePool: player.runePool,
         xp: player.xp,
+        finalizedThisTurn: player.finalizedThisTurn,
         scoredThisTurn: player.scoredThisTurn,
         zones: player.zones,
       }),
@@ -314,4 +317,13 @@ export function topMostOf(draft: Draft, object: ObjectId): ObjectId | null {
 export function setAttached(draft: Draft, top: ObjectId, attached: readonly ObjectId[]): void {
   const { attached: _, ...rest } = objectOf(draft, top);
   draft.changedObjects.set(top, attached.length === 0 ? rest : { ...rest, attached });
+}
+
+/** What the Conditions of Dependent Keywords read on the draft (727, 812, 824). */
+export function conditionContext(draft: Draft, self: ObjectId | null) {
+  return {
+    xpOf: (player: PlayerId) => playerOf(draft, player).xp,
+    finalizedBy: (player: PlayerId) => playerOf(draft, player).finalizedThisTurn,
+    self,
+  };
 }

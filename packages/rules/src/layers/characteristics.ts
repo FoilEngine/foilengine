@@ -30,6 +30,8 @@ export type BoardReader = {
   controllerOf(id: ObjectId): PlayerId;
   /** A player's XP, for Level (824). */
   xpOf(player: PlayerId): number;
+  /** The cards a player finalized this turn, for Legion (812.1.c). */
+  finalizedBy(player: PlayerId): readonly ObjectId[];
   /** The Combat in progress, for the Attacker and Defender designations (466.2.c.3). */
   readonly combat: GameState['combat'];
 };
@@ -91,6 +93,7 @@ export function readerOfState(state: GameState): BoardReader {
     // No effect changes control yet: a unit is controlled by its owner (190.3.a.2 arrives later).
     controllerOf: (id) => state.objects[id]?.owner as PlayerId,
     xpOf: (player) => state.players.find((p) => p.id === player)?.xp ?? 0,
+    finalizedBy: (player) => state.players.find((p) => p.id === player)?.finalizedThisTurn ?? [],
     combat: state.combat,
   };
 }
@@ -104,6 +107,7 @@ export function readerOfDraft(draft: Draft): BoardReader {
     ...boardOf(() => onBoard(draft.players, draft.battlefields), draft.cards, objectAt),
     controllerOf: (id) => controllerOf(draft, id),
     xpOf: (player) => draft.players.find((p) => p.id === player)?.xp ?? 0,
+    finalizedBy: (player) => draft.players.find((p) => p.id === player)?.finalizedThisTurn ?? [],
     combat: draft.combat,
   };
 }
@@ -196,7 +200,12 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
         if (ability.kind !== 'passive') continue;
         // 727.1.c.2: a passive ability of a Dependent Keyword applies while it is Active.
         const owner = reader.controllerOf(source);
-        if (!conditionsMet(ability.requires, owner, reader.xpOf)) continue;
+        const context = {
+          xpOf: reader.xpOf,
+          finalizedBy: reader.finalizedBy,
+          self: reader.objectAt(source)?.previousObjectId ?? null,
+        };
+        if (!conditionsMet(ability.requires, owner, context)) continue;
         const applies =
           ability.affects === 'self'
             ? source === id

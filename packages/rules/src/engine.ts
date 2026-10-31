@@ -42,7 +42,13 @@ import { validTargets } from './effects/targets.ts';
 import { IllegalActionError } from './errors.ts';
 import { keywordsWith } from './layers/characteristics.ts';
 import { applyStandardMove, checkStandardMove, movableUnits } from './movement/standard-move.ts';
-import { applyPlayCard, checkPlayCard, timingProblem } from './play/play-card.ts';
+import {
+  applyPlayCard,
+  checkPlayCard,
+  discounted,
+  discountOf,
+  timingProblem,
+} from './play/play-card.ts';
 import { autoPayment } from './resources/payment.ts';
 import {
   applyMulligan,
@@ -470,7 +476,14 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
     // player controls units; checkPlayCard decides each location.
     const ambush = category === 'unit' && (definition.keywords ?? []).includes('ambush');
     if (!ambush && timingProblem(state, definition) !== null) continue;
-    const payment = autoPayment(state, player, definition.cost);
+    // 356.4: its own discounts, checked as it would be played (the card is not finalized yet).
+    const discount = discountOf(definition, player, {
+      xpOf: (p) => state.players.find((s) => s.id === p)?.xp ?? 0,
+      finalizedBy: (p) => state.players.find((s) => s.id === p)?.finalizedThisTurn ?? [],
+      self: null,
+    });
+    const base = discounted(definition.cost, discount);
+    const payment = autoPayment(state, player, base);
     if (payment === null) continue;
     const unitLocations = ambush ? [...locations, ...ambushLocations(state, player)] : locations;
     const candidates: PlayCard[] =
@@ -480,8 +493,11 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
           ? [{ type: 'PlayCard', player, card, payment }]
           : targetChoices(lookup(), definition.targets ?? [], player).flatMap((targets) => {
               // 809.1.d: Deflect raises the cost with the targets chosen.
-              const cost = withDeflect(lookup(), player, definition.cost as Cost, targets);
-              const paid = cost === definition.cost ? payment : autoPayment(state, player, cost);
+              const cost = discounted(
+                withDeflect(lookup(), player, definition.cost as Cost, targets),
+                discount,
+              );
+              const paid = cost === base ? payment : autoPayment(state, player, cost);
               if (paid === null) return [];
               return [
                 {
@@ -500,10 +516,13 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
       (definition.keywords ?? []).includes('accelerate') &&
       domains.length <= 1
     ) {
-      const total = {
-        energy: definition.cost.energy + 1,
-        power: [...definition.cost.power, domains[0] ?? ('any' as const)],
-      };
+      const total = discounted(
+        {
+          energy: definition.cost.energy + 1,
+          power: [...definition.cost.power, domains[0] ?? ('any' as const)],
+        },
+        discount,
+      );
       const accelerated = autoPayment(state, player, total);
       if (accelerated !== null) {
         for (const location of unitLocations) {

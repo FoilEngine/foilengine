@@ -55,7 +55,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [ ] Layers (475–482) and `characteristics()`.
 - [ ] Gear and attachment (147–152, 716). Playing gear, gear abilities, Equip, Attach and Detach, Might Bonus and Effect Text keywords, the recall of gear: done. Quick-Draw (819) and Weaponmaster (821): done. Abilities in Effect Text and killing or targeting gear remain.
 - [ ] Tokens (179–187). Played into the base, linked instructions, 186.1: done (provisional decision Q-003). Other locations ("here", 184.2), "Create" (440), Replace (439) and the copy (446) remain.
-- [ ] The `cards` DSL and one module per keyword of section 800. Done: Accelerate, Action, Assault, Deathknell, Deflect, Ganking, Reaction, Shield, Tank, Temporary, Equip, Ambush, Backline, Vision, Hunt, Level, Quick-Draw, Weaponmaster.
+- [ ] The `cards` DSL and one module per keyword of section 800. Done: Accelerate, Action, Assault, Deathknell, Deflect, Ganking, Reaction, Shield, Tank, Temporary, Equip, Ambush, Backline, Vision, Hunt, Level, Quick-Draw, Weaponmaster, Legion.
 - [ ] Manual mode (`ManualOverride`).
 
 **Accepted when**: every keyword has its scenarios, the fuzzer runs with test cards covering every keyword, and the sections above are covered.
