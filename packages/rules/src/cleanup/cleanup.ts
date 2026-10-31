@@ -37,9 +37,9 @@ function cleanupOnce(draft: Draft): boolean {
   // 3a (323.4): units with lethal damage are killed.
   if (killLethalUnits(draft)) changed = true;
 
-  // 4 (323.5): players lose control of battlefields where they have no units, in an Open State,
-  // with no Showdown or Combat there (190.4.c). M2 has no chain: the state is always Open.
-  for (const battlefield of draft.battlefields) {
+  // 4 (323.5): players lose control of battlefields where they have no units, in an Open State
+  // (no Chain, 309.2), with no Showdown or Combat there (190.4.c).
+  for (const battlefield of draft.chain === null ? draft.battlefields : []) {
     const controller = battlefield.controller;
     if (controller === null || ongoingAt(battlefield.object)) continue;
     if (!playersAt(draft, battlefield).has(controller)) {
@@ -88,7 +88,10 @@ function cleanupOnce(draft: Draft): boolean {
   // with a staged Showdown without a staged Combat, and it begins (344); otherwise one with a
   // staged Combat, and it begins (462), opening with a Combat Showdown (463.3).
   const neutral = () =>
-    draft.showdown === null && draft.combat === null && draft.stage.kind === 'turn';
+    draft.chain === null &&
+    draft.showdown === null &&
+    draft.combat === null &&
+    draft.stage.kind === 'turn';
   if (neutral()) {
     const showdowns = draft.battlefields.filter((b) => b.showdownStaged && !b.combatStaged);
     const [showdown] = showdowns;

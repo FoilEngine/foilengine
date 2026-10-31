@@ -8,8 +8,12 @@ import {
   type GameState,
   type IllegalReason,
   type ObjectId,
+  type PlayCard,
   type PlayerId,
+  type PlayLocation,
+  type TargetSpec,
 } from '@foilengine/types';
+import { passPriority } from './chain/chain.ts';
 import {
   assignDamage,
   assignmentOptions,
@@ -18,9 +22,10 @@ import {
 } from './combat/combat.ts';
 import { checkConcede, concede } from './concede.ts';
 import { draftOf, stateOf } from './draft.ts';
+import { validTargets } from './effects/targets.ts';
 import { IllegalActionError } from './errors.ts';
 import { applyStandardMove, checkStandardMove, movableUnits } from './movement/standard-move.ts';
-import { applyPlayCard, checkPlayCard } from './play/play-card.ts';
+import { applyPlayCard, checkPlayCard, timingProblem } from './play/play-card.ts';
 import { autoPayment } from './resources/payment.ts';
 import {
   applyMulligan,
@@ -45,6 +50,14 @@ export function pendingDecision(state: GameState): Decision | null {
       return mulliganDecision(state);
     case 'turn':
       if (stage.phase !== 'main') return null;
+      // 312.2.c, 312.2.d: on a Chain, the player it gave Priority to acts, Showdown or not.
+      if (state.chain !== null) {
+        return {
+          kind: 'Priority',
+          player: state.chain.priority,
+          rule: state.chain.passes === 0 ? '312.2.c' : '312.2.d',
+        };
+      }
       // 467.2.c: in the Combat Damage Step, the Attacker then the Defender assign damage.
       if (state.combat?.step === 'damage') return damageDecision(state);
       // 313.2, 347: in a Showdown, the player with Focus acts, and has Priority.
@@ -96,6 +109,25 @@ const noDecision = (): Legality => ({
   reason: { code: 'no-pending-decision', message: 'Nothing can be done right now', rule: null },
 });
 
+/**
+ * A card is played by the player with Priority: in their Main Phase (310.1.a), on a Chain
+ * (338.1.a), or in a Showdown, where the player with Focus has it (313.2, 347.1).
+ */
+function checkPlayDecision(decision: Decision, player: PlayerId): Legality {
+  return decision.kind === 'Focus'
+    ? checkDecision(decision, 'Focus', player)
+    : checkDecision(decision, 'Priority', player);
+}
+
+/** On a Chain, the turn is Closed (309.1): the turn cannot end, units cannot move. */
+function closedProblem(state: GameState, rule: IllegalReason['rule'], message: string): Legality {
+  return state.chain === null
+    ? { ok: true }
+    : { ok: false, reason: { code: 'wrong-timing', message, rule } };
+}
+
+const both = (first: Legality, second: () => Legality): Legality => (first.ok ? second() : first);
+
 const fromReason = (reason: IllegalReason | null): Legality =>
   reason === null ? { ok: true } : { ok: false, reason };
 
@@ -108,19 +140,33 @@ export function isLegal(state: GameState, action: Action): Legality {
     case 'Mulligan':
       return fromReason(checkMulligan(state, action));
     case 'EndTurn':
-      return checkDecision(decision, 'Priority', action.player);
-    case 'PlayCard': {
-      const turn = checkDecision(decision, 'Priority', action.player);
-      return turn.ok ? fromReason(checkPlayCard(state, action)) : turn;
-    }
-    case 'StandardMove': {
-      // 144.1: during the Main Phase, not in a Closed State, nor during a Showdown or Combat:
-      // the Priority decision exists only in a Neutral Open Main Phase.
-      const turn = checkDecision(decision, 'Priority', action.player);
-      return turn.ok ? fromReason(checkStandardMove(state, action)) : turn;
-    }
+      // 305: the turn moves on only when the Chain is empty.
+      return both(checkDecision(decision, 'Priority', action.player), () =>
+        closedProblem(state, '305', 'Resolve the Chain first: pass Priority or play a Reaction'),
+      );
+    case 'PlayCard':
+      return both(checkPlayDecision(decision, action.player), () =>
+        fromReason(checkPlayCard(state, action)),
+      );
+    case 'StandardMove':
+      // 144.1: during the Main Phase (144.1.a), not in a Closed State (144.1.b), nor during a
+      // Showdown or Combat (144.1.c): the Priority decision of a Neutral Open Main Phase.
+      return both(checkDecision(decision, 'Priority', action.player), () =>
+        both(closedProblem(state, '144.1.b', 'No Standard Move during a Closed State'), () =>
+          fromReason(checkStandardMove(state, action)),
+        ),
+      );
     case 'PassFocus':
       return checkDecision(decision, 'Focus', action.player);
+    case 'PassPriority':
+      return both(checkDecision(decision, 'Priority', action.player), () =>
+        state.chain === null
+          ? {
+              ok: false,
+              reason: { code: 'wrong-action', message: 'There is no Chain', rule: '338.1' },
+            }
+          : { ok: true },
+      );
     case 'AssignCombatDamage': {
       const turn = checkDecision(decision, 'AssignDamage', action.player);
       return turn.ok ? fromReason(checkAssignment(state, action)) : turn;
@@ -147,14 +193,18 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
     case 'Mulligan':
       return mulliganActions(state);
     case 'Priority':
+      // 338.1: on a Chain, play a Reaction or pass.
+      if (state.chain !== null) {
+        return [...playableCards(state, player), { type: 'PassPriority', player }];
+      }
       return [
-        ...playableUnits(state, player),
+        ...playableCards(state, player),
         ...standardMoves(state, player),
         { type: 'EndTurn', player },
       ];
     case 'Focus':
-      // M2 has no spell or ability to play during a Showdown: the player can only pass (347.2).
-      return [{ type: 'PassFocus', player }];
+      // 347: play a legally timed card (347.1), or pass (347.2).
+      return [...playableCards(state, player), { type: 'PassFocus', player }];
     case 'AssignDamage':
       return assignmentOptions(state);
     default:
@@ -172,7 +222,13 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
   if (action.type === 'PlayCard' || action.type === 'StandardMove') {
     const decision = pendingDecision(state);
     const turn =
-      decision === null ? noDecision() : checkDecision(decision, 'Priority', action.player);
+      decision === null
+        ? noDecision()
+        : action.type === 'PlayCard'
+          ? checkPlayDecision(decision, action.player)
+          : both(checkDecision(decision, 'Priority', action.player), () =>
+              closedProblem(state, '144.1.b', 'No Standard Move during a Closed State'),
+            );
     if (!turn.ok) throw new IllegalActionError(turn.reason);
     return action.type === 'PlayCard'
       ? applyPlayCard(state, action)
@@ -185,11 +241,13 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
       return applyMulligan(state, action);
     case 'EndTurn':
     case 'PassFocus':
+    case 'PassPriority':
     case 'AssignCombatDamage':
     case 'Concede': {
       const draft = draftOf(state);
       if (action.type === 'EndTurn') endTurn(draft);
       else if (action.type === 'PassFocus') passFocus(draft);
+      else if (action.type === 'PassPriority') passPriority(draft);
       else if (action.type === 'Concede') concede(draft, action);
       else assignDamage(draft, action);
       return { state: stateOf(state, draft), events: draft.events };
@@ -200,32 +258,59 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
 }
 
 /**
- * One PlayCard per unit the player can afford and each valid location, paid with `autoPayment`.
- * Other payments of the same card are legal too (`isLegal` accepts any valid payment);
- * listing them all would explode, so legalActions offers one per card and location.
+ * One PlayCard per card the player can afford, timed for the current state, and each valid
+ * location (units) or choice of targets (spells), paid with `autoPayment`. Other payments of the
+ * same card are legal too (`isLegal` accepts any valid payment); listing them all would explode,
+ * so legalActions offers one per card and choice.
  */
-function playableUnits(state: GameState, player: PlayerId): Action[] {
+function playableCards(state: GameState, player: PlayerId): Action[] {
   const zones = state.players.find((p) => p.id === player)?.zones;
   if (zones === undefined) return [];
-  const locations = [
-    { kind: 'base' as const },
+  const locations: PlayLocation[] = [
+    { kind: 'base' },
     ...state.battlefields
       .filter((b) => b.controller === player)
-      .map((b) => ({ kind: 'battlefield' as const, battlefield: b.object })),
+      .map((b): PlayLocation => ({ kind: 'battlefield', battlefield: b.object })),
   ];
+  const draft = draftOf(state);
   const actions: Action[] = [];
   for (const card of [...zones.hand, ...zones.championZone]) {
     const object = state.objects[card];
     const definition = object === undefined ? undefined : state.cards[object.card];
-    if (definition?.category !== 'unit' || definition.cost === undefined) continue;
+    if (definition?.cost === undefined) continue;
+    if (definition.category !== 'unit' && definition.category !== 'spell') continue;
+    if (timingProblem(state, definition) !== null) continue;
     const payment = autoPayment(state, player, definition.cost);
     if (payment === null) continue;
-    for (const location of locations) {
-      const action: Action = { type: 'PlayCard', player, card, location, payment };
+    const candidates: PlayCard[] =
+      definition.category === 'unit'
+        ? locations.map((location) => ({ type: 'PlayCard', player, card, location, payment }))
+        : targetChoices(draft, definition.targets ?? [], player).map((targets) => ({
+            type: 'PlayCard',
+            player,
+            card,
+            payment,
+            ...(targets.length === 0 ? {} : { targets }),
+          }));
+    for (const action of candidates) {
       if (checkPlayCard(state, action) === null) actions.push(action);
     }
   }
   return actions;
+}
+
+/** Every combination of valid targets, one per target of the card (355.5). */
+function targetChoices(
+  draft: ReturnType<typeof draftOf>,
+  specs: readonly TargetSpec[],
+  player: PlayerId,
+): ObjectId[][] {
+  let choices: ObjectId[][] = [[]];
+  for (const spec of specs) {
+    const valid = validTargets(draft, spec, player);
+    choices = choices.flatMap((chosen) => valid.map((target) => [...chosen, target]));
+  }
+  return choices;
 }
 
 /**

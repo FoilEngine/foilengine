@@ -51,6 +51,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     battlefields: [],
     showdown: null,
     combat: null,
+    chain: null,
     turnOrder: [],
     stage: { kind: 'mulligan', pending: [] },
     winner: null,
@@ -166,6 +167,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     battlefields: [],
     showdown: null,
     combat: null,
+    chain: null,
     stage: draft.stage,
     winner: null,
   };
