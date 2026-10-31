@@ -72,7 +72,7 @@ The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 n
 
 ```ts
 type GameState = {
-  version: 12;                      // STATE_VERSION, incremented on every shape change
+  version: 13;                      // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
   rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
@@ -88,6 +88,7 @@ type GameState = {
   chain: ChainState | null;         // items (oldest first: card or ability, controller, status, targets), priority, passes, begun by a trigger
   triggered: TriggeredAbility[];    // triggered abilities waiting to be put on the Chain (383.3)
   tasks: Task[];                    // Outstanding Tasks: the next steps of the turn or of a combat (333)
+  resolving: ResolutionState | null; // a resolution waiting for a player's choice (ADR 0020)
   effects: ContinuousEffect[];      // continuous effects of spells and abilities, with a timestamp (476, 482)
   stage: GameStage;                 // mulligan | turn (turnPlayer, turnNumber, phase) | ended
   winner: PlayerId | null;
@@ -100,7 +101,7 @@ Each `GameObject` also carries `buffs` (701: at most one, 702.3) and `exhausted`
 
 ## Card definitions and effects
 
-`CardDefinition` holds the printed characteristics, and the card's effects as plain JSON (ADR 0019): its `keywords` (806 Action, 813 Reaction, 808 Deathknell, 815 Tank, 826 Backline, 805 Accelerate, 816 Temporary, 818 Equip, 810 Ganking, 822 Ambush, and the valued 807 Assault X, 814 Shield X and 809 Deflect X, written `{ keyword, value }`), the `targets` it chooses as it is played (355.5), a spell's `instructions`, executed from top to bottom when it resolves (158.1), and its `abilities` (361): activated ones with their cost (energy, Power, exhausting the source), keywords, targets and instructions (377), and triggered ones with their Condition (when played, conquers, holds, attacks, defends, 383.4; dies, 808), the choices they make as they are finalized ("you may" first, 383.3.a; targets, 355.5; a cost to pay, 383.3.b) and instructions. The `deathknell` keyword (808) marks a card whose ability triggers when it dies. Passive abilities (363) change the Might of the permanent itself or of the other friendly units while it is on the board. The instructions include `give-might` (+X or -X [M] this turn, 479.4), `buff` (702.2.a), `kill` (429.6), `play-token` (350.2) and `attach` (435: attach the permanent the ability is on). Equipment (150) carries `equip` (818) and its Equip ability as data (an activated ability whose instruction is `attach`), a `mightBonus` (137) and an `effectText` (136, keywords for now), both applied to the unit it is attached to (718.3, 718.4). An instruction affects a target of the card (its index), `self` (the permanent the ability is on) or `token` (the token an earlier instruction of the same effect played: a linked instruction, 359.3.e.14). A card with Temporary carries its ability as data: a `beginning` trigger (the start of its controller's Beginning Phase, 816.1.c) that kills it. The vocabulary is in `@foilengine/types` (`effects.ts`): `draw` (414) and `deal` (418) for now; it grows with the mechanics, and the engine interprets every building block. Since `cards` is in the state, a game and its replay carry the effects of its cards.
+`CardDefinition` holds the printed characteristics, and the card's effects as plain JSON (ADR 0019): its `keywords` (806 Action, 813 Reaction, 808 Deathknell, 815 Tank, 826 Backline, 805 Accelerate, 816 Temporary, 818 Equip, 810 Ganking, 822 Ambush, 817 Vision (its `played` ability that Predicts, as data), and the valued 807 Assault X, 814 Shield X and 809 Deflect X, written `{ keyword, value }`), the `targets` it chooses as it is played (355.5), a spell's `instructions`, executed from top to bottom when it resolves (158.1), and its `abilities` (361): activated ones with their cost (energy, Power, exhausting the source), keywords, targets and instructions (377), and triggered ones with their Condition (when played, conquers, holds, attacks, defends, 383.4; dies, 808), the choices they make as they are finalized ("you may" first, 383.3.a; targets, 355.5; a cost to pay, 383.3.b) and instructions. The `deathknell` keyword (808) marks a card whose ability triggers when it dies. Passive abilities (363) change the Might of the permanent itself or of the other friendly units while it is on the board. The instructions include `give-might` (+X or -X [M] this turn, 479.4), `buff` (702.2.a), `kill` (429.6), `play-token` (350.2), `predict` (437, a choice during the resolution, ADR 0020) and `attach` (435: attach the permanent the ability is on). Equipment (150) carries `equip` (818) and its Equip ability as data (an activated ability whose instruction is `attach`), a `mightBonus` (137) and an `effectText` (136, keywords for now), both applied to the unit it is attached to (718.3, 718.4). An instruction affects a target of the card (its index), `self` (the permanent the ability is on) or `token` (the token an earlier instruction of the same effect played: a linked instruction, 359.3.e.14). A card with Temporary carries its ability as data: a `beginning` trigger (the start of its controller's Beginning Phase, 816.1.c) that kills it. The vocabulary is in `@foilengine/types` (`effects.ts`): `draw` (414) and `deal` (418) for now; it grows with the mechanics, and the engine interprets every building block. Since `cards` is in the state, a game and its replay carry the effects of its cards.
 
 ## The turn
 
@@ -201,6 +202,7 @@ An `Action` is a **player's intent**, serializable, with no reference to JavaScr
 - `ActivateAbility { source, ability, targets?, payment }` (377, 399–407)
 - `OrderTriggers { order }`: the order of the player's triggered abilities that triggered together (383.3.d)
 - `FinalizeAbility { perform, targets?, payment? }`: the choices for the oldest Pending triggered ability (337.1): decline a "you may" ability (383.3.a.2), or choose its targets and pay its cost (383.3.b)
+- `Predict { recycle, top }`: answers a `Predict` decision, a choice during a resolution (ADR 0020): the cards looked at that are recycled to the bottom of the Main Deck (417), and the others back on top in this order (437.1.a)
 - `PassPriority` (338.1.b), on a Chain; `PassFocus` (347.2), in a Showdown
 - `EndTurn`
 - `Concede` (649–652): legal for every player at any time (650), so `legalActions` always lists it last while the game goes on

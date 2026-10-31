@@ -55,3 +55,4 @@ The other options and why we do not keep them.
 | 0017 | Toolchain, repository checks and M0 decisions | Accepted |
 | 0018 | Deferred rules in the coverage report | Accepted |
 | 0019 | Card effects are data interpreted by the engine | Accepted |
+| 0020 | Choices during the resolution of a spell or ability | Accepted |

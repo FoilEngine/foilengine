@@ -55,6 +55,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     triggered: [],
     tasks: [],
     effects: [],
+    resolving: null,
     turnOrder: [],
     stage: { kind: 'mulligan', pending: [] },
     winner: null,
@@ -175,6 +176,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
     triggered: [],
     tasks: [],
     effects: [],
+    resolving: null,
     stage: draft.stage,
     winner: null,
   };

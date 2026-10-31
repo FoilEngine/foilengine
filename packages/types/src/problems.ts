@@ -37,7 +37,9 @@ export type IllegalCode =
   /** The rules allow it, but the engine does not implement it yet (the reason names what is missing). */
   | 'not-implemented'
   /** The combat damage assignment breaks 467.2.c. */
-  | 'invalid-assignment';
+  | 'invalid-assignment'
+  /** A choice made during a resolution is not one of its options (ADR 0020). */
+  | 'invalid-choice';
 
 /** Why an action is illegal, with the rule that forbids it when there is one. */
 export type IllegalReason = {

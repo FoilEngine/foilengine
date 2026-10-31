@@ -175,7 +175,28 @@ export function resolveNewest(draft: Draft): void {
   const item = chain?.items.at(-1);
   if (chain === null || item === undefined) throw new EngineInvariantError('Nothing to resolve');
   if (item.status !== 'finalized') throw new EngineInvariantError('The newest item is Pending');
-  executeInstructions(draft, item);
+  // A choice stops the resolution: the item stays on the Chain until it resumes (ADR 0020).
+  if (executeInstructions(draft, item)) completeResolution(draft, item);
+}
+
+/**
+ * ADR 0020: once its player has made the choice in `draft.resolving`, the resolution goes on from
+ * the next instruction.
+ */
+export function resumeResolution(draft: Draft): void {
+  const resolving = draft.resolving;
+  if (resolving === null) throw new EngineInvariantError('No resolution waits');
+  const item = draft.chain?.items.find((i) => i.object === resolving.item);
+  if (item === undefined) throw new EngineInvariantError(`${resolving.item} is not on the Chain`);
+  draft.resolving = null;
+  if (executeInstructions(draft, item, resolving.next, resolving.token)) {
+    completeResolution(draft, item);
+  }
+}
+
+/** 340.1: the item leaves the Chain, a spell to its owner's trash; what follows (340.2–340.4). */
+function completeResolution(draft: Draft, item: ChainItem): void {
+  const beganWithTrigger = draft.chain?.triggered ?? false;
   removeFromChain(draft, item.object);
   let card = item.ability?.card;
   let trashed: ObjectId | null = null;
@@ -196,7 +217,7 @@ export function resolveNewest(draft: Draft): void {
     card,
     trashed,
   });
-  afterResolution(draft, chain.triggered);
+  afterResolution(draft, beganWithTrigger);
 }
 
 /**

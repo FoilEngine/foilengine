@@ -86,6 +86,17 @@ export type FinalizeAbility = {
   readonly payment?: readonly RuneUse[];
 };
 
+/**
+ * Answers a Predict decision (437.1.a): `recycle` goes to the bottom of the Main Deck (417), `top`
+ * goes back on top in this order, top first. Together, they are the cards looked at.
+ */
+export type Predict = {
+  readonly type: 'Predict';
+  readonly player: PlayerId;
+  readonly recycle: readonly ObjectId[];
+  readonly top: readonly ObjectId[];
+};
+
 /** The player with Priority on a Chain passes it to the next player in turn order (338.1.b). */
 export type PassPriority = {
   readonly type: 'PassPriority';
@@ -137,6 +148,7 @@ export type Action =
   | ActivateAbility
   | OrderTriggers
   | FinalizeAbility
+  | Predict
   | AssignCombatDamage
   | Concede;
 

@@ -15,6 +15,7 @@ export type {
   PassPriority,
   PlayCard,
   PlayLocation,
+  Predict,
   RuneUse,
   StandardMove,
 } from './actions.ts';
@@ -34,6 +35,7 @@ export type {
   FocusDecision,
   MulliganDecision,
   OrderTriggersDecision,
+  PredictDecision,
   PriorityDecision,
 } from './decisions.ts';
 export type {
@@ -86,6 +88,7 @@ export {
   type PlayerConceded,
   type PointsGained,
   PRIVATE_EVENT_FIELDS,
+  type Predicted,
   type PriorityPassed,
   type RedactedEvent,
   type Resources,
@@ -126,6 +129,8 @@ export {
   type GameState,
   type PlayerState,
   type PlayerZones,
+  type ResolutionChoice,
+  type ResolutionState,
   type RngState,
   type RunePool,
   type ShowdownState,

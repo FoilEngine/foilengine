@@ -45,8 +45,8 @@ describe('pure JSON (ADR 0004)', () => {
   });
 
   it('the state has a schema version', () => {
-    expect(STATE_VERSION).toBe(12);
-    expectTypeOf<GameState['version']>().toEqualTypeOf<12>();
+    expect(STATE_VERSION).toBe(13);
+    expectTypeOf<GameState['version']>().toEqualTypeOf<13>();
   });
 });
 
@@ -92,7 +92,7 @@ describe('event visibility (ADR 0005)', () => {
 
   it('every event type has its private fields declared', () => {
     const types: GameEventType[] = Object.keys(PRIVATE_EVENT_FIELDS) as GameEventType[];
-    expect(types).toHaveLength(52);
+    expect(types).toHaveLength(53);
     expect(PRIVATE_EVENT_FIELDS.CardDrawn).toEqual(['object', 'card']);
   });
 });
@@ -147,6 +147,8 @@ describe('assertNever', () => {
           return 'order triggers';
         case 'FinalizeAbility':
           return 'finalize';
+        case 'Predict':
+          return 'predict';
         case 'AssignCombatDamage':
           return 'assign damage';
         case 'Concede':

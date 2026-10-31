@@ -30,7 +30,7 @@ Game messages (indicative shape):
 | client → server | `game.emote`, `game.chat` | |
 | server → client | `game.snapshot` | the player's view and the sequence number (on connection and on resumption) |
 | server → client | `game.events` | the events filtered for this player, from a sequence number |
-| server → client | `game.decision` | what is expected from the player, with the legal actions |
+| server → client | `game.decision` | what is expected from the player, with the legal actions; it can be a choice during a resolution (ADR 0020), such as `Predict`, which shows the cards looked at to that player only |
 | server → client | `game.rejected` | action refused, with the engine's reason |
 | server → client | `game.ended` | result, link to the replay |
 

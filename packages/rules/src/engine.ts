@@ -4,6 +4,7 @@ import {
   type Action,
   type ActivateAbility,
   assertNever,
+  type CardId,
   type Cost,
   type Decision,
   type GameEvent,
@@ -24,7 +25,8 @@ import {
   placeInOrder,
   playerToOrder,
 } from './abilities/triggers.ts';
-import { passPriority } from './chain/chain.ts';
+import { applyPredict, predictProblem } from './actions/predict.ts';
+import { passPriority, resumeResolution } from './chain/chain.ts';
 import {
   assignDamage,
   assignmentOptions,
@@ -63,6 +65,19 @@ export function pendingDecision(state: GameState): Decision | null {
     case 'mulligan':
       return mulliganDecision(state);
     case 'turn': {
+      // ADR 0020: a resolution waits for a choice; nothing else happens meanwhile (158.3).
+      const resolving = state.resolving?.choice;
+      if (resolving !== undefined) {
+        return {
+          kind: 'Predict',
+          player: resolving.player,
+          cards: resolving.cards.map((object) => ({
+            object,
+            card: state.objects[object]?.card as CardId,
+          })),
+          rule: '437.1',
+        };
+      }
       // 383.3.d: a player orders the triggered abilities they control that triggered together.
       const orderer = playerToOrder(state);
       if (orderer !== null) {
@@ -222,6 +237,10 @@ export function isLegal(state: GameState, action: Action): Legality {
       const turn = checkDecision(decision, 'AssignDamage', action.player);
       return turn.ok ? fromReason(checkAssignment(state, action)) : turn;
     }
+    case 'Predict':
+      return both(checkDecision(decision, 'Predict', action.player), () =>
+        fromReason(predictProblem(draftOf(state), action)),
+      );
     default:
       return assertNever(action);
   }
@@ -301,6 +320,10 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
       }));
     case 'AssignDamage':
       return assignmentOptions(state);
+    case 'Predict':
+      return predictions(decision.cards.map((c) => c.object)).map(
+        ({ recycle, top }): Action => ({ type: 'Predict', player, recycle, top }),
+      );
     default:
       return assertNever(decision);
   }
@@ -349,9 +372,13 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
     case 'OrderTriggers':
     case 'FinalizeAbility':
     case 'AssignCombatDamage':
+    case 'Predict':
     case 'Concede': {
       const draft = draftOf(state);
-      if (action.type === 'FinalizeAbility') {
+      if (action.type === 'Predict') {
+        applyPredict(draft, action);
+        resumeResolution(draft);
+      } else if (action.type === 'FinalizeAbility') {
         const reason = finalizeChosen(draft, action);
         if (reason !== null) throw new IllegalActionError(reason);
       } else if (action.type === 'EndTurn') endTurn(draft);
@@ -513,6 +540,22 @@ function checkOrder(state: GameState, action: OrderTriggers): IllegalReason | nu
         message: `Order all ${count} triggered abilities, each once`,
         rule: '383.3.d',
       };
+}
+
+/**
+ * 437.1.a: every way to recycle some of `cards` and put the others back on top, the orders of the
+ * others capped like the orders of triggered abilities: isLegal accepts any.
+ */
+function predictions(cards: readonly ObjectId[]): { recycle: ObjectId[]; top: ObjectId[] }[] {
+  const result: { recycle: ObjectId[]; top: ObjectId[] }[] = [];
+  for (let mask = 0; mask < 1 << cards.length; mask++) {
+    const recycle = cards.filter((_, i) => (mask & (1 << i)) !== 0);
+    const kept = cards.filter((_, i) => (mask & (1 << i)) === 0);
+    for (const order of orderings(kept.length)) {
+      result.push({ recycle, top: order.map((i) => kept[i] as ObjectId) });
+    }
+  }
+  return result;
 }
 
 /** Every order of `count` items, for legalActions (capped: the decision accepts any order). */
