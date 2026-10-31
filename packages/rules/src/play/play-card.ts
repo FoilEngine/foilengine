@@ -54,8 +54,17 @@ export function timingProblem(state: GameState, definition: CardDefinition): Ill
   return null;
 }
 
-/** Plays the card on the draft. Returns why it is illegal, if it is; the draft is then to be dropped. */
-function playCard(draft: Draft, state: GameState, action: PlayCard): IllegalReason | null {
+/**
+ * Plays the card on the draft. Returns why it is illegal, if it is; the draft is then to be
+ * dropped. With `checkOnly`, stops once legality is decided (step 5, 358): what follows cannot
+ * make the play illegal, and legalActions checks many candidate plays.
+ */
+function playCard(
+  draft: Draft,
+  state: GameState,
+  action: PlayCard,
+  checkOnly = false,
+): IllegalReason | null {
   const player = playerOf(draft, action.player);
   const from = player.zones.hand.includes(action.card)
     ? 'hand'
@@ -130,6 +139,7 @@ function playCard(draft: Draft, state: GameState, action: PlayCard): IllegalReas
   }
   const timing = timingProblem(state, definition);
   if (timing !== null) return timing;
+  if (checkOnly) return null;
 
   // Step 6 (359): finalize.
   finalize(draft, item);
@@ -176,7 +186,7 @@ function enterBoard(
 }
 
 export function checkPlayCard(state: GameState, action: PlayCard): IllegalReason | null {
-  return playCard(draftOf(state), state, action);
+  return playCard(draftOf(state), state, action, true);
 }
 
 export function applyPlayCard(

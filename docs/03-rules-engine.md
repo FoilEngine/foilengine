@@ -113,7 +113,7 @@ The benchmarks are in `packages/spec/bench/` and run with `pnpm bench`. They use
 
 The CI job "Engine benchmarks" checks the budgets. On a pull request, it first benchmarks the base branch on the same runner, then compares the medians with `scripts/compare-bench.ts`: a benchmark more than 20% slower fails the job. The comparison table goes to the job summary.
 
-To keep these budgets, a draft (`draft.ts`) does not copy the objects of the state: it records the objects it changes on top of them, and `stateOf` builds the new table once. `apply` checks a `PlayCard` or a `StandardMove` while applying it, instead of simulating it a first time in `isLegal`.
+To keep these budgets, a draft (`draft.ts`) does not copy the objects of the state: it records the objects it changes on top of them, and `stateOf` builds the new table once. `apply` checks a `PlayCard` or a `StandardMove` while applying it, instead of simulating it a first time in `isLegal`. `isLegal`, and so `legalActions`, checks a `PlayCard` only up to step 5 of the play process (358), where its legality is decided: finalizing it cannot make it illegal.
 
 ## Rules versions
 

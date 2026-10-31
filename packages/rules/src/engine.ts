@@ -272,7 +272,12 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
       .filter((b) => b.controller === player)
       .map((b): PlayLocation => ({ kind: 'battlefield', battlefield: b.object })),
   ];
-  const draft = draftOf(state);
+  // A draft to look for targets, built only if a card has some.
+  let draft: ReturnType<typeof draftOf> | null = null;
+  const lookup = () => {
+    draft ??= draftOf(state);
+    return draft;
+  };
   const actions: Action[] = [];
   for (const card of [...zones.hand, ...zones.championZone]) {
     const object = state.objects[card];
@@ -285,7 +290,7 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
     const candidates: PlayCard[] =
       definition.category === 'unit'
         ? locations.map((location) => ({ type: 'PlayCard', player, card, location, payment }))
-        : targetChoices(draft, definition.targets ?? [], player).map((targets) => ({
+        : targetChoices(lookup(), definition.targets ?? [], player).map((targets) => ({
             type: 'PlayCard',
             player,
             card,
