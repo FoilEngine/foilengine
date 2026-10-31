@@ -118,9 +118,20 @@ export function runTurnStep(draft: Draft, step: TurnStep): void {
     }
     case 'expiration': {
       // 317.2 Expiration Step: an Ending Special Cleanup (317.2.a) that heals all units
-      // (317.2.b), expires "this turn" effects (none yet) and empties every Rune Pool (317.2.d).
+      // (317.2.b), expires "this turn" effects (317.2.c) and empties every Rune Pool (317.2.d).
       const { player, turnNumber } = currentTurn(draft);
       healAllUnits(draft, '317.2.b');
+      // 317.2.c: all "this turn" effects expire simultaneously.
+      if (draft.effects.length > 0) {
+        const expired = draft.effects.filter((effect) => effect.until === 'end-of-turn').length;
+        draft.effects = draft.effects.filter((effect) => effect.until !== 'end-of-turn');
+        emit(draft, {
+          type: 'EffectsExpired',
+          rule: '317.2.c',
+          visibility: { kind: 'public' },
+          count: expired,
+        });
+      }
       emptyRunePools(draft, '317.2.d');
       cleanup(draft);
       if (draft.winner !== null) return;
