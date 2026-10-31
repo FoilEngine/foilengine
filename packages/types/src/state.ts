@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 6;
+export const STATE_VERSION = 7;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -82,24 +82,69 @@ export type CombatState = {
   /** The other player with units there (466.2.c.2). */
   readonly defender: PlayerId;
   /** Step 1, the Combat Showdown (466), or step 2, the Combat Damage Step (467). */
-  readonly step: 'showdown' | 'damage';
+  /** The Combat Showdown (466), the Combat Damage Step (467), then the Resolution Step (468). */
+  readonly step: 'showdown' | 'damage' | 'resolution';
   /** Damage assigned in the Combat Damage Step; null until the player has assigned it. */
   readonly attackerAssignment: readonly DamageAssignment[] | null;
   readonly defenderAssignment: readonly DamageAssignment[] | null;
 };
 
 /** A Showdown in progress (341–348). The turn is then in a Showdown State (343.1). */
+/** An ability on the Chain: ability `index` of the card of `source` (377.3, 383.3). */
+export type ChainAbility = {
+  readonly source: ObjectId;
+  readonly card: CardId;
+  readonly index: number;
+  readonly triggered: boolean;
+};
+
 /**
- * An item on the Chain (328, 329): a card being played. Pending until its play is finalized
- * (329.2, 359.1), then Finalized. The object is the card itself, in the Chain zone (328).
+ * An item on the Chain (328, 329): a card being played, or an ability. Pending until it is
+ * finalized (329.2, 359.1), then Finalized. For a card, `object` is the card itself, in the
+ * Chain zone (328); an ability has no card (377.3.a.1): `object` is an id of its own, and
+ * `ability` says what it is (123: abilities on the Chain are game objects).
  */
 export type ChainItem = {
   readonly object: ObjectId;
   readonly controller: PlayerId;
   readonly status: 'pending' | 'finalized';
-  /** The chosen targets, in the order of the card's `targets` (355.5). */
+  /** The chosen targets, in the order of the card's or the ability's `targets` (355.5). */
   readonly targets: readonly ObjectId[];
+  readonly ability: ChainAbility | null;
 };
+
+/** A triggered ability whose Condition was met, waiting to be put on the Chain (383.3). */
+export type TriggeredAbility = {
+  readonly source: ObjectId;
+  readonly card: CardId;
+  readonly index: number;
+  readonly controller: PlayerId;
+};
+
+/** The steps of a turn that run without a player decision (305, 315–317). */
+export type TurnStep =
+  | 'awaken'
+  | 'beginning'
+  | 'scoring'
+  | 'channel'
+  | 'draw'
+  | 'main'
+  | 'ending'
+  | 'expiration'
+  | 'next-turn';
+
+/**
+ * An Outstanding Task (333): a step that must happen before play goes on, but after the Chain
+ * its predecessors created has resolved (334, 335).
+ */
+export type Task =
+  | { readonly kind: 'turn'; readonly step: TurnStep }
+  /** 468.7: the Combat ends, once what its resolution put on the Chain has resolved (468.6). */
+  | {
+      readonly kind: 'combat-end';
+      readonly battlefield: ObjectId;
+      readonly winner: PlayerId | null;
+    };
 
 /** The Chain (327–340). It exists while it holds an item (330); then the turn is Closed (331.1). */
 export type ChainState = {
@@ -109,6 +154,8 @@ export type ChainState = {
   readonly priority: PlayerId;
   /** Players who passed Priority in sequence since the last item was added (339.1). */
   readonly passes: number;
+  /** The Chain was begun by a triggered ability: Focus does not pass when it empties (340.2.a). */
+  readonly triggered: boolean;
 };
 
 export type ShowdownState = {
@@ -159,6 +206,10 @@ export type GameState = {
   readonly combat: CombatState | null;
   /** The Chain, if it exists (330): the turn is then in a Closed State (309.1). */
   readonly chain: ChainState | null;
+  /** Triggered abilities waiting to be put on the Chain (383.3), in the order they triggered. */
+  readonly triggered: readonly TriggeredAbility[];
+  /** Outstanding Tasks, in order (333). */
+  readonly tasks: readonly Task[];
   readonly stage: GameStage;
   readonly winner: PlayerId | null;
 };

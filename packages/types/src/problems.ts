@@ -24,6 +24,10 @@ export type IllegalCode =
   | 'invalid-target'
   /** The card cannot be played in the current state of the turn (358.4, 309, 308). */
   | 'wrong-timing'
+  /** The ability's source is not a permanent the player controls, or has no such ability (378, 380). */
+  | 'invalid-source'
+  /** The order of triggered abilities is not an order of all of them (383.3.d). */
+  | 'invalid-order'
   /** A rune of the payment cannot be used as requested. */
   | 'invalid-payment'
   /** The resources in the Rune Pool do not cover the cost (358.2). */

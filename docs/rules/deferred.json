@@ -1336,26 +1336,6 @@
       "reason": "Needs teams; no team mode is on the roadmap."
     },
     {
-      "number": "473",
-      "milestone": "M3",
-      "reason": "Scoring does two things; the second, triggering Score abilities (473.2), needs abilities."
-    },
-    {
-      "number": "473.2",
-      "milestone": "M3",
-      "reason": "Conquer and Hold abilities need abilities."
-    },
-    {
-      "number": "473.2.a",
-      "milestone": "M3",
-      "reason": "Conquer and Hold abilities need abilities."
-    },
-    {
-      "number": "473.2.b",
-      "milestone": "M3",
-      "reason": "Conquer and Hold abilities need abilities."
-    },
-    {
       "number": "473.2.c",
       "milestone": "M3",
       "reason": "Conquer and Hold abilities need abilities."

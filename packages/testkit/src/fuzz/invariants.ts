@@ -47,7 +47,10 @@ function locations(state: GameState): { id: ObjectId; where: string }[] {
     for (const id of battlefield.units)
       found.push({ id, where: `battlefield ${battlefield.object}` });
   }
-  for (const item of state.chain?.items ?? []) found.push({ id: item.object, where: 'chain' });
+  // An ability on the Chain has no card, so no object in `objects` (377.3.a.1).
+  for (const item of state.chain?.items ?? []) {
+    if (item.ability === null) found.push({ id: item.object, where: 'chain' });
+  }
   return found;
 }
 
@@ -109,8 +112,9 @@ function hiddenFrom(
       if (!hidden) continue;
       inView.push(...player.zones[zone]);
       // An event may name an object of a deck when it is public where it goes: a rune recycled
-      // to the bottom of its deck (164.2.b). Cards in an opponent's hand or main deck never.
-      if (player.id !== viewer && (zone === 'hand' || zone === 'mainDeck')) {
+      // to the bottom of its deck (164.2.b). Cards in an opponent's hand never, and cards in a
+      // Main Deck never, its owner's included (108.4.e).
+      if ((player.id !== viewer && zone === 'hand') || zone === 'mainDeck') {
         inEvents.push(...player.zones[zone]);
       }
     }

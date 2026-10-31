@@ -394,13 +394,19 @@ function resolveCombat(draft: Draft): void {
     }
   }
 
-  // 468.7: Combat ends; Attacker and Defender designations go with it.
+  // 468.6, 468.7: once what the resolution put on the Chain has resolved, the Combat ends.
+  draft.combat = { ...combat, step: 'resolution' };
+  draft.tasks = [{ kind: 'combat-end', battlefield: battlefield.object, winner }, ...draft.tasks];
+}
+
+/** 468.7: Combat ends; Attacker and Defender designations go with it (468.7.a). */
+export function endCombat(draft: Draft, battlefield: ObjectId, winner: PlayerId | null): void {
   draft.combat = null;
   emit(draft, {
     type: 'CombatEnded',
     rule: '468.7',
     visibility: { kind: 'public' },
-    battlefield: battlefield.object,
+    battlefield,
     winner,
   });
   cleanup(draft);

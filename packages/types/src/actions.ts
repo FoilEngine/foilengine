@@ -46,6 +46,30 @@ export type PlayCard = {
   readonly payment: readonly RuneUse[];
 };
 
+/**
+ * Activates ability `ability` (its index on the card) of `source`, a permanent the player
+ * controls (378, 380). It goes on the Chain (377.3); it chooses one target per target of the
+ * ability (403, 355.5), and pays its cost (404, 405): `payment` adds resources as for a card.
+ */
+export type ActivateAbility = {
+  readonly type: 'ActivateAbility';
+  readonly player: PlayerId;
+  readonly source: ObjectId;
+  readonly ability: number;
+  readonly targets?: readonly ObjectId[];
+  readonly payment: readonly RuneUse[];
+};
+
+/**
+ * Orders the player's triggered abilities that triggered at the same time (383.3.d):
+ * `order` lists the indices of the decision's abilities, the first one going on the Chain first.
+ */
+export type OrderTriggers = {
+  readonly type: 'OrderTriggers';
+  readonly player: PlayerId;
+  readonly order: readonly number[];
+};
+
 /** The player with Priority on a Chain passes it to the next player in turn order (338.1.b). */
 export type PassPriority = {
   readonly type: 'PassPriority';
@@ -94,6 +118,8 @@ export type Action =
   | StandardMove
   | PassFocus
   | PassPriority
+  | ActivateAbility
+  | OrderTriggers
   | AssignCombatDamage
   | Concede;
 

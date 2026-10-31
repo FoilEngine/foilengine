@@ -12,7 +12,7 @@ import { drawCards } from '../actions/draw.ts';
 import { type Draft, draftOf, emit, objectOf, playerOf, renewObject, stateOf } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { shuffle } from '../rng/xoshiro128.ts';
-import { startTurn } from '../turn/turn.ts';
+import { settle } from '../tasks/tasks.ts';
 
 /** 117.1: up to two cards. */
 export const MULLIGAN_MAX = 2;
@@ -100,17 +100,24 @@ export function applyMulligan(
   // in a random order when there are two or more (417.5). Each becomes a new object (124).
   const order = shuffle(draft.rng, action.setAside);
   draft.rng = order.rng;
+  const renewed = new Map<ObjectId, ObjectId>();
   for (const id of order.value as ObjectId[]) {
     const recycled = renewObject(draft, id);
     player.zones.mainDeck.push(recycled.id);
+    renewed.set(id, recycled.id);
+  }
+  // The order of the Main Deck is secret, to its owner too (108.4.e): the events follow the
+  // cards as they were set aside, and the new objects are hidden from every player.
+  for (const id of action.setAside) {
+    const recycled = renewed.get(id) as ObjectId;
     emit(draft, {
       type: 'CardRecycled',
       rule: '117.3',
-      visibility: { kind: 'private', to: [action.player] },
+      visibility: { kind: 'private', to: [] },
       player: action.player,
-      object: recycled.id,
+      object: recycled,
       previousObject: id,
-      card: objectOf(draft, recycled.id).card,
+      card: objectOf(draft, recycled).card,
       from: 'hand',
       to: 'mainDeck',
     });
@@ -131,6 +138,7 @@ export function applyMulligan(
     visibility: { kind: 'public' },
     firstPlayer: first,
   });
-  startTurn(draft, first, 1);
+  draft.tasks = [{ kind: 'turn', step: 'next-turn' }];
+  settle(draft);
   return { state: stateOf(state, draft), events: draft.events };
 }

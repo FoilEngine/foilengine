@@ -3,11 +3,13 @@
 export type {
   Action,
   ActionType,
+  ActivateAbility,
   AssignCombatDamage,
   Concede,
   EndTurn,
   MoveDestination,
   Mulligan,
+  OrderTriggers,
   PassFocus,
   PassPriority,
   PlayCard,
@@ -29,10 +31,19 @@ export type {
   Decision,
   FocusDecision,
   MulliganDecision,
+  OrderTriggersDecision,
   PriorityDecision,
 } from './decisions.ts';
-export type { Instruction, Keyword, TargetSpec } from './effects.ts';
+export type {
+  Ability,
+  AbilityCost,
+  Instruction,
+  Keyword,
+  TargetSpec,
+  Trigger,
+} from './effects.ts';
 export {
+  type AbilityAdded,
   type BattlefieldContested,
   type BattlefieldScored,
   type BattlefieldSelected,
@@ -90,6 +101,7 @@ export type { IllegalCode, IllegalReason, SetupProblem, SetupProblemCode } from 
 export type { DeckList, GameSetup, ModeId, PlayerSetup } from './setup.ts';
 export {
   type BattlefieldState,
+  type ChainAbility,
   type ChainItem,
   type ChainState,
   type CombatState,
@@ -103,7 +115,10 @@ export {
   type RunePool,
   type ShowdownState,
   STATE_VERSION,
+  type Task,
+  type TriggeredAbility,
   type TurnPhase,
+  type TurnStep,
 } from './state.ts';
 export type {
   BattlefieldView,

@@ -1,6 +1,6 @@
 // Draw (414) and Burn Out (432).
 
-import type { PlayerId, RuleNumber } from '@foilengine/types';
+import type { ObjectId, PlayerId, RuleNumber } from '@foilengine/types';
 import { checkVictory } from '../cleanup/cleanup.ts';
 import { type Draft, emit, objectOf, opponentsOf, playerOf, renewObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
@@ -58,21 +58,27 @@ function burnOut(draft: Draft, playerId: PlayerId, repeated: boolean): void {
     );
   }
 
-  const recycled = shuffle(draft.rng, player.zones.trash);
+  const trash = player.zones.trash;
+  const recycled = shuffle(draft.rng, trash);
   draft.rng = recycled.rng;
   player.zones.trash = [];
+  const renewed = new Map<ObjectId, ObjectId>();
   for (const id of recycled.value) {
     const object = renewObject(draft, id);
     player.zones.mainDeck.push(object.id);
+    renewed.set(id, object.id);
+  }
+  // The order of the Main Deck is secret, to its owner too (108.4.e): the events follow the
+  // trash, not the deck, and the new objects are hidden from every player.
+  for (const id of trash) {
     emit(draft, {
       type: 'CardRecycled',
       rule: '432.2.b',
-      // Cards in the trash are public (108.2.d).
-      visibility: { kind: 'public' },
+      visibility: { kind: 'private', to: [] },
       player: playerId,
-      object: object.id,
+      object: renewed.get(id) as ObjectId,
       previousObject: id,
-      card: object.card,
+      card: objectOf(draft, renewed.get(id) as ObjectId).card,
       from: 'trash',
       to: 'mainDeck',
     });

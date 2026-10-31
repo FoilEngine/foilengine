@@ -2,7 +2,13 @@
 // Phases without a player decision run on their own (305); the engine stops when the
 // Turn Player gets Priority in their Main Phase (312.2.a) or when the game ends.
 
-import type { PlayerId, TurnPhase } from '@foilengine/types';
+import {
+  assertNever,
+  type PlayerId,
+  type Task,
+  type TurnPhase,
+  type TurnStep,
+} from '@foilengine/types';
 import { drawCards } from '../actions/draw.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
 import { healAllUnits } from '../combat/combat.ts';
@@ -43,8 +49,106 @@ function enterPhase(draft: Draft, player: PlayerId, turnNumber: number, phase: T
   });
 }
 
-/** Starts a turn and runs it until the Turn Player gets Priority in their Main Phase. */
-export function startTurn(draft: Draft, playerId: PlayerId, turnNumber: number): void {
+/** The Turn Player and the turn number, during a turn. */
+function currentTurn(draft: Draft): { player: PlayerId; turnNumber: number } {
+  const stage = draft.stage;
+  if (stage.kind !== 'turn') throw new EngineInvariantError('No turn in progress');
+  return { player: stage.turnPlayer, turnNumber: stage.turnNumber };
+}
+
+/** Queues the steps of a turn, before any task already outstanding. */
+function queueSteps(draft: Draft, steps: readonly TurnStep[]): void {
+  draft.tasks = [...steps.map((step): Task => ({ kind: 'turn', step })), ...draft.tasks];
+}
+
+/**
+ * Runs one step of the turn. Each step is an Outstanding Task (333.1): the engine runs them one
+ * after the other, and stops when a Chain must be resolved first (334, 335) or when the Turn
+ * Player gets Priority in their Main Phase (312.2.a).
+ */
+export function runTurnStep(draft: Draft, step: TurnStep): void {
+  switch (step) {
+    case 'next-turn':
+      nextTurn(draft);
+      return;
+    case 'awaken':
+      awaken(draft);
+      return;
+    case 'beginning': {
+      // 315.2.a Beginning Step: start-of-phase effects (M3).
+      const { player, turnNumber } = currentTurn(draft);
+      enterPhase(draft, player, turnNumber, 'beginning');
+      return;
+    }
+    case 'scoring': {
+      // 315.2.b Scoring Step: the Turn Player Holds all battlefields they control (315.2.b.2, 471.2).
+      const { player } = currentTurn(draft);
+      for (const battlefield of draft.battlefields) {
+        if (battlefield.controller === player) score(draft, player, battlefield.object, 'hold');
+        if (draft.winner !== null) return;
+      }
+      cleanup(draft);
+      return;
+    }
+    case 'channel':
+      channel(draft);
+      return;
+    case 'draw': {
+      // 315.4 Draw: draw 1 (315.4.b), Burning Out if the Main Deck is empty (315.4.b.1, 315.4.b.2).
+      const { player, turnNumber } = currentTurn(draft);
+      enterPhase(draft, player, turnNumber, 'draw');
+      drawCards(draft, player, 1, '315.4.b');
+      if (draft.winner === null) cleanup(draft);
+      return;
+    }
+    case 'main': {
+      // 316 Main Phase: every Rune Pool empties (316.3, 167), then start-of-phase effects
+      // (316.4, M3). The Turn Player now has Priority in a Neutral Open State (312.2.a).
+      const { player, turnNumber } = currentTurn(draft);
+      enterPhase(draft, player, turnNumber, 'main');
+      emptyRunePools(draft, '316.3');
+      cleanup(draft);
+      return;
+    }
+    case 'ending': {
+      // 317.1 Ending Step: end-of-turn effects (M3).
+      const { player, turnNumber } = currentTurn(draft);
+      enterPhase(draft, player, turnNumber, 'ending');
+      return;
+    }
+    case 'expiration': {
+      // 317.2 Expiration Step: an Ending Special Cleanup (317.2.a) that heals all units
+      // (317.2.b), expires "this turn" effects (none yet) and empties every Rune Pool (317.2.d).
+      const { player, turnNumber } = currentTurn(draft);
+      healAllUnits(draft, '317.2.b');
+      emptyRunePools(draft, '317.2.d');
+      cleanup(draft);
+      if (draft.winner !== null) return;
+      emit(draft, {
+        type: 'TurnEnded',
+        rule: '306',
+        visibility: { kind: 'public' },
+        player,
+        turnNumber,
+      });
+      return;
+    }
+    default:
+      assertNever(step);
+  }
+}
+
+/**
+ * 317.3, 115.1.c: the next player in the looping turn order becomes the Turn Player; after the
+ * mulligans, the First Player takes the first turn (118). Their turn starts (315).
+ */
+function nextTurn(draft: Draft): void {
+  const stage = draft.stage;
+  const previous = stage.kind === 'turn' ? stage : null;
+  const index = previous === null ? -1 : draft.turnOrder.indexOf(previous.turnPlayer);
+  const playerId = draft.turnOrder[(index + 1) % draft.turnOrder.length];
+  if (playerId === undefined) throw new EngineInvariantError('Empty turn order');
+  const turnNumber = (previous?.turnNumber ?? 0) + 1;
   const player = playerOf(draft, playerId);
   player.turnsTaken += 1;
   // 472: a player Scores each battlefield once per turn; a new turn starts a new count.
@@ -56,8 +160,14 @@ export function startTurn(draft: Draft, playerId: PlayerId, turnNumber: number):
     player: playerId,
     turnNumber,
   });
+  draft.stage = { kind: 'turn', turnPlayer: playerId, turnNumber, phase: 'awaken' };
+  queueSteps(draft, ['awaken', 'beginning', 'scoring', 'channel', 'draw', 'main']);
+}
 
-  // 315.1 Awaken: the Turn Player readies all game objects they control (315.1.b, 416.3.a).
+/** 315.1 Awaken: the Turn Player readies all game objects they control (315.1.b, 416.3.a). */
+function awaken(draft: Draft): void {
+  const { player: playerId, turnNumber } = currentTurn(draft);
+  const player = playerOf(draft, playerId);
   // Permanents and runes they control are in their base (107.1.c), and their units at battlefields.
   enterPhase(draft, playerId, turnNumber, 'awaken');
   const controlled = [
@@ -78,69 +188,27 @@ export function startTurn(draft: Draft, playerId: PlayerId, turnNumber: number):
     });
   }
   cleanup(draft); // 319.2
-  if (draft.winner !== null) return;
+}
 
-  // 315.2 Beginning: start-of-phase effects (M3), then the scoring step where the
-  // Turn Player Holds all battlefields they control (315.2.b.2, 471.2).
-  enterPhase(draft, playerId, turnNumber, 'beginning');
-  for (const battlefield of draft.battlefields) {
-    if (battlefield.controller === playerId) score(draft, playerId, battlefield.object, 'hold');
-    if (draft.winner !== null) return;
-  }
-  cleanup(draft);
-  if (draft.winner !== null) return;
-
-  // 315.3 Channel: 2 runes, or as many as possible (315.3.b, 315.3.b.1); in 1v1 the player
-  // going second channels an extra rune during their first Channel Phase (487.7).
+/**
+ * 315.3 Channel: 2 runes, or as many as possible (315.3.b, 315.3.b.1); in 1v1 the player going
+ * second channels an extra rune during their first Channel Phase (487.7).
+ */
+function channel(draft: Draft): void {
+  const { player: playerId, turnNumber } = currentTurn(draft);
+  const player = playerOf(draft, playerId);
   enterPhase(draft, playerId, turnNumber, 'channel');
   const second = draft.turnOrder[1];
   const extra = playerId === second && player.turnsTaken === 1 ? DUEL_SECOND_PLAYER_EXTRA_RUNES : 0;
   channelRunes(draft, playerId, RUNES_PER_CHANNEL, '315.3.b');
   channelRunes(draft, playerId, extra, '487.7');
   cleanup(draft); // 319.2, 319.6
-  if (draft.winner !== null) return;
-
-  // 315.4 Draw: draw 1 (315.4.b), Burning Out if the Main Deck is empty (315.4.b.1, 315.4.b.2).
-  enterPhase(draft, playerId, turnNumber, 'draw');
-  drawCards(draft, playerId, 1, '315.4.b');
-  if (draft.winner !== null) return;
-  cleanup(draft);
-  if (draft.winner !== null) return;
-
-  // 316 Main Phase: every Rune Pool empties (316.3, 167), then start-of-phase effects
-  // (316.4, M3). The Turn Player now has Priority in a Neutral Open State (312.2.a).
-  enterPhase(draft, playerId, turnNumber, 'main');
-  emptyRunePools(draft, '316.3');
-  cleanup(draft);
 }
 
-/** The Turn Player ended their turn (316.9): Ending Phase, then the next turn (317.3). */
+/** The Turn Player ended their turn (316.9): the Ending Phase, then the next turn (317.3). */
 export function endTurn(draft: Draft): void {
-  const stage = draft.stage;
-  if (stage.kind !== 'turn') throw new EngineInvariantError('No turn in progress');
-  const { turnPlayer, turnNumber } = stage;
-
-  // 317 Ending Phase: the Ending Step (317.1, effects in M3), then the Expiration Step (317.2):
-  // an Ending Special Cleanup that heals all units (317.2.b), expires "this turn" effects
-  // (none yet) and empties every Rune Pool (317.2.d, 167).
-  enterPhase(draft, turnPlayer, turnNumber, 'ending');
-  healAllUnits(draft, '317.2.b');
-  emptyRunePools(draft, '317.2.d');
-  cleanup(draft);
-  if (draft.winner !== null) return;
-  emit(draft, {
-    type: 'TurnEnded',
-    rule: '306',
-    visibility: { kind: 'public' },
-    player: turnPlayer,
-    turnNumber,
-  });
-
-  // 317.3, 115.1.c: the next player in the looping turn order becomes the Turn Player.
-  const index = draft.turnOrder.indexOf(turnPlayer);
-  const next = draft.turnOrder[(index + 1) % draft.turnOrder.length];
-  if (next === undefined) throw new EngineInvariantError('Empty turn order');
-  startTurn(draft, next, turnNumber + 1);
+  currentTurn(draft);
+  queueSteps(draft, ['ending', 'expiration', 'next-turn']);
 }
 
 /** Every player's Rune Pool empties; unspent resources are lost (167, 167.1). */

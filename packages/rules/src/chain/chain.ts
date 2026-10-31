@@ -3,9 +3,9 @@
 // task to handle between steps before triggered abilities arrive: each action runs the steps it
 // starts, then the engine waits for the player with Priority (338).
 
-import type { ChainItem, ObjectId, PlayerId } from '@foilengine/types';
+import type { ChainAbility, ChainItem, ObjectId, PlayerId } from '@foilengine/types';
 import { cleanup } from '../cleanup/cleanup.ts';
-import { type Draft, emit, objectOf, playerOf, renewObject } from '../draft.ts';
+import { type Draft, emit, newId, objectOf, playerOf, renewObject } from '../draft.ts';
 import { executeInstructions } from '../effects/instructions.ts';
 import { EngineInvariantError } from '../errors.ts';
 
@@ -34,11 +34,14 @@ export function addToChain(
   const player = playerOf(draft, playerId);
   player.zones[from] = player.zones[from].filter((id) => id !== card);
   const object = renewObject(draft, card);
-  const item: ChainItem = { object: object.id, controller: playerId, status: 'pending', targets };
-  draft.chain =
-    draft.chain === null
-      ? { items: [item], priority: playerId, passes: 0 }
-      : { ...draft.chain, items: [...draft.chain.items, item] };
+  const item: ChainItem = {
+    object: object.id,
+    controller: playerId,
+    status: 'pending',
+    targets,
+    ability: null,
+  };
+  append(draft, item, false);
   emit(draft, {
     type: 'ChainItemAdded',
     rule: '354',
@@ -51,6 +54,46 @@ export function addToChain(
     targets,
   });
   return object.id;
+}
+
+/** Adds an item; a new Chain begins if none exists (330.2). */
+function append(draft: Draft, item: ChainItem, triggered: boolean): void {
+  draft.chain =
+    draft.chain === null
+      ? { items: [item], priority: item.controller, passes: 0, triggered }
+      : { ...draft.chain, items: [...draft.chain.items, item] };
+}
+
+/**
+ * An ability goes on the Chain, Pending: an activated one as it is activated (377.3.a,
+ * 401), a triggered one when it is put there (383.3). It has no card (377.3.a.1): it gets an id
+ * of its own (123).
+ */
+export function addAbility(
+  draft: Draft,
+  playerId: PlayerId,
+  ability: ChainAbility,
+  targets: readonly ObjectId[],
+): ObjectId {
+  const object = newId(draft);
+  append(
+    draft,
+    { object, controller: playerId, status: 'pending', targets, ability },
+    ability.triggered,
+  );
+  emit(draft, {
+    type: 'AbilityAdded',
+    rule: ability.triggered ? '383.3' : '377.3.a',
+    visibility: { kind: 'public' },
+    player: playerId,
+    object,
+    source: ability.source,
+    card: ability.card,
+    index: ability.index,
+    triggered: ability.triggered,
+    targets,
+  });
+  return object;
 }
 
 /** The item of `object` on the Chain. */
@@ -122,40 +165,47 @@ export function passPriority(draft: Draft): void {
 }
 
 /**
- * 340: the newest Finalized Chain Item resolves (340.1). A spell's instructions are executed
- * from top to bottom (158.1), then it goes to its owner's trash (157), a new object (124).
- * No cleanup happens while it resolves (321); one runs once it has (321.1, 319.5).
+ * 340: the newest Finalized Chain Item resolves (340.1). Its instructions are executed from top
+ * to bottom (158.1). A spell then goes to its owner's trash (157), a new object (124); an
+ * ability, which has no card, simply leaves the Chain. No cleanup happens while it resolves
+ * (321); one runs once it has (321.1, 319.5).
  */
 export function resolveNewest(draft: Draft): void {
   const chain = draft.chain;
   const item = chain?.items.at(-1);
   if (chain === null || item === undefined) throw new EngineInvariantError('Nothing to resolve');
   if (item.status !== 'finalized') throw new EngineInvariantError('The newest item is Pending');
-  const object = objectOf(draft, item.object);
   executeInstructions(draft, item);
   removeFromChain(draft, item.object);
-  const owner = playerOf(draft, object.owner);
-  const trashed = renewObject(draft, item.object);
-  owner.zones.trash.push(trashed.id);
+  let card = item.ability?.card;
+  let trashed: ObjectId | null = null;
+  if (item.ability === null) {
+    const object = objectOf(draft, item.object);
+    card = object.card;
+    const renewed = renewObject(draft, item.object);
+    playerOf(draft, object.owner).zones.trash.push(renewed.id);
+    trashed = renewed.id;
+  }
+  if (card === undefined) throw new EngineInvariantError('A Chain item without a card');
   emit(draft, {
     type: 'ChainItemResolved',
     rule: '340.1',
     visibility: { kind: 'public' },
     player: item.controller,
     object: item.object,
-    card: object.card,
-    trashed: trashed.id,
+    card,
+    trashed,
   });
-  afterResolution(draft);
+  afterResolution(draft, chain.triggered);
 }
 
 /**
  * What follows a resolution: a cleanup (321.1, 319.5); then, if the Chain is empty, the turn is
  * Open again (340.2) and, during a Showdown, Focus passes to the next player in turn order
- * (340.2.a, 347.1.b); otherwise the controller of the newest item gains Priority (340.4).
- * Every chain item is a card for now: none was started by a triggered or an Add ability.
+ * (340.2.a, 347.1.b), unless a triggered ability began the Chain (340.2.a, 346.1); otherwise the
+ * controller of the newest item gains Priority (340.4). Add abilities do not exist yet.
  */
-function afterResolution(draft: Draft): void {
+function afterResolution(draft: Draft, beganWithTrigger: boolean): void {
   cleanup(draft);
   if (draft.winner !== null) return;
   if (draft.chain !== null) {
@@ -163,7 +213,7 @@ function afterResolution(draft: Draft): void {
     return;
   }
   const showdown = draft.showdown;
-  if (showdown === null) return;
+  if (showdown === null || beganWithTrigger) return;
   const next = nextInTurnOrder(draft, showdown.focus);
   draft.showdown = { ...showdown, focus: next, passes: 0 };
   emit(draft, {
