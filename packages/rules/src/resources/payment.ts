@@ -3,6 +3,7 @@
 
 import type {
   CardDefinition,
+  CardId,
   Cost,
   Domain,
   GameState,
@@ -11,7 +12,15 @@ import type {
   PlayerId,
   RuneUse,
 } from '@foilengine/types';
-import { type Draft, emit, objectOf, playerOf, renewObject, updateObject } from '../draft.ts';
+import {
+  type Draft,
+  emit,
+  findObject,
+  objectOf,
+  playerOf,
+  renewObject,
+  updateObject,
+} from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { payFromPool } from './rune-pool.ts';
 
@@ -31,7 +40,7 @@ export function powerOfRune(definition: CardDefinition): Domain | 'any' {
 /** Applies the rune uses in order, adding their resources to the pool. Returns why it fails, if it does. */
 export function useRunes(
   draft: Draft,
-  state: GameState,
+  state: Pick<GameState, 'cards'>,
   playerId: PlayerId,
   uses: readonly RuneUse[],
 ): IllegalReason | null {
@@ -130,17 +139,33 @@ export function payCost(draft: Draft, playerId: PlayerId, cost: Cost): IllegalRe
  * before recycling it when Energy is still needed.
  */
 export function autoPayment(state: GameState, playerId: PlayerId, cost: Cost): RuneUse[] | null {
+  return autoPaymentWith(state, (id) => state.objects[id], playerId, cost);
+}
+
+/** autoPayment on a draft, whose objects are read through `objectOf` (draft.ts). */
+export function autoPaymentOnDraft(draft: Draft, playerId: PlayerId, cost: Cost): RuneUse[] | null {
+  return autoPaymentWith(draft, (id) => findObject(draft, id), playerId, cost);
+}
+
+function autoPaymentWith(
+  state: Pick<GameState, 'cards'> & {
+    readonly players: readonly Pick<GameState['players'][number], 'id' | 'runePool' | 'zones'>[];
+  },
+  objectAt: (id: ObjectId) => { readonly card: CardId; readonly exhausted: boolean } | undefined,
+  playerId: PlayerId,
+  cost: Cost,
+): RuneUse[] | null {
   const player = state.players.find((p) => p.id === playerId);
   if (player === undefined) return null;
   const pool = { energy: player.runePool.energy, power: { ...player.runePool.power } };
   const runes = player.zones.base.filter(
-    (id) => state.cards[state.objects[id]?.card as never]?.category === 'rune',
+    (id) => state.cards[objectAt(id)?.card as never]?.category === 'rune',
   );
-  const exhausted = new Set(runes.filter((id) => state.objects[id]?.exhausted === true));
+  const exhausted = new Set(runes.filter((id) => objectAt(id)?.exhausted === true));
   const recycled = new Set<ObjectId>();
   const uses: RuneUse[] = [];
   const domainOf = (id: ObjectId) =>
-    powerOfRune(state.cards[state.objects[id]?.card as never] as CardDefinition);
+    powerOfRune(state.cards[objectAt(id)?.card as never] as CardDefinition);
 
   // Power first: use the pool, then recycle runes of the right domain.
   let energyNeed = Math.max(0, cost.energy - pool.energy);

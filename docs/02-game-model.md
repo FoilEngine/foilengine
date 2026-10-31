@@ -72,7 +72,7 @@ The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 n
 
 ```ts
 type GameState = {
-  version: 8;                       // STATE_VERSION, incremented on every shape change
+  version: 9;                       // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
   rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
@@ -95,11 +95,11 @@ type GameState = {
 
 Each `GameObject` also carries `exhausted` (415, 416); a new object starts ready, since statuses do not follow an object through a zone change (124.1). Units are on the board either in their controller's base or in a battlefield's `units`; a unit's location (146.1) is where its id is listed. Each player also keeps `scoredThisTurn`, the battlefields they Scored this turn (472). Each `GameObject` carries the `damage` marked on it (142). The Chain (327–340) is a Non-Board Zone that exists while it holds an item (330): each item is a card being played, as a new object (124), or an ability, which has no card (377.3.a.1) and gets an id of its own (123); each has its controller, its status (Pending, then Finalized, 329) and its chosen targets. The Chain also records who has Priority, how many players passed in sequence (339.1), and whether a triggered ability began it (340.2.a). While it exists, the turn is Closed (309.1).
 
-`tasks` are the Outstanding Tasks (333): the steps of the turn that run without a decision (awaken, beginning, scoring, channel, draw, main, ending, expiration, next turn) and the end of a combat (468.7). They wait while a Chain must be resolved (334, 335). `triggered` holds the triggered abilities whose Condition was met and that are not on the Chain yet: they wait for the current task to complete, or for their controller to order them (383.3.d). Arriving later: abilities on the Chain, continuous effects (475+), control of units and the other statuses of objects.
+`tasks` are the Outstanding Tasks (333): the steps of the turn that run without a decision (awaken, beginning, scoring, channel, draw, main, ending, expiration, next turn), and the combat result with Control (468.3, 468.5) and the end of a combat (468.7). They wait while a Chain must be resolved (334, 335). `triggered` holds the triggered abilities whose Condition was met and that are not on the Chain yet: they wait for the current task to complete, or for their controller to order them (383.3.d). Arriving later: abilities on the Chain, continuous effects (475+), control of units and the other statuses of objects.
 
 ## Card definitions and effects
 
-`CardDefinition` holds the printed characteristics, and the card's effects as plain JSON (ADR 0019): its `keywords` (806 Action, 813 Reaction for now), the `targets` it chooses as it is played (355.5), a spell's `instructions`, executed from top to bottom when it resolves (158.1), and its `abilities` (361): activated ones with their cost (energy, Power, exhausting the source), keywords, targets and instructions (377), and triggered ones with their Condition (when played, conquers, holds, attacks, defends, 383.4), the choices they make as they are finalized ("you may" first, 383.3.a; targets, 355.5) and instructions. The vocabulary is in `@foilengine/types` (`effects.ts`): `draw` (414) and `deal` (418) for now; it grows with the mechanics, and the engine interprets every building block. Since `cards` is in the state, a game and its replay carry the effects of its cards.
+`CardDefinition` holds the printed characteristics, and the card's effects as plain JSON (ADR 0019): its `keywords` (806 Action, 813 Reaction for now), the `targets` it chooses as it is played (355.5), a spell's `instructions`, executed from top to bottom when it resolves (158.1), and its `abilities` (361): activated ones with their cost (energy, Power, exhausting the source), keywords, targets and instructions (377), and triggered ones with their Condition (when played, conquers, holds, attacks, defends, 383.4; dies, 808), the choices they make as they are finalized ("you may" first, 383.3.a; targets, 355.5; a cost to pay, 383.3.b) and instructions. The `deathknell` keyword (808) marks a card whose ability triggers when it dies. The vocabulary is in `@foilengine/types` (`effects.ts`): `draw` (414) and `deal` (418) for now; it grows with the mechanics, and the engine interprets every building block. Since `cards` is in the state, a game and its replay carry the effects of its cards.
 
 ## The turn
 
@@ -199,7 +199,7 @@ An `Action` is a **player's intent**, serializable, with no reference to JavaScr
 - `StandardMove { units, destination }` (144, 447+)
 - `ActivateAbility { source, ability, targets?, payment }` (377, 399–407)
 - `OrderTriggers { order }`: the order of the player's triggered abilities that triggered together (383.3.d)
-- `FinalizeAbility { perform, targets? }`: the choices for the oldest Pending triggered ability (337.1): decline a "you may" ability (383.3.a.2), or choose its targets
+- `FinalizeAbility { perform, targets?, payment? }`: the choices for the oldest Pending triggered ability (337.1): decline a "you may" ability (383.3.a.2), or choose its targets and pay its cost (383.3.b)
 - `PassPriority` (338.1.b), on a Chain; `PassFocus` (347.2), in a Showdown
 - `EndTurn`
 - `Concede` (649–652): legal for every player at any time (650), so `legalActions` always lists it last while the game goes on

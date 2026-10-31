@@ -1,6 +1,7 @@
 // A Decision is what the engine waits for: who must act, and on what (03-rules-engine.md).
 // It is answered by an Action, never by a callback.
 
+import type { Cost } from './cards.ts';
 import type { TargetSpec } from './effects.ts';
 import type { ObjectId, PlayerId, RuleNumber } from './ids.ts';
 import type { ChainAbility, TriggeredAbility } from './state.ts';
@@ -65,6 +66,8 @@ export type FinalizeAbilityDecision = {
   readonly ability: ChainAbility;
   readonly optional: boolean;
   readonly targets: readonly TargetSpec[];
+  /** The cost to pay to finalize it (383.3.b), if any. */
+  readonly cost: Cost | null;
   readonly rule: RuleNumber;
 };
 

@@ -45,8 +45,8 @@ describe('pure JSON (ADR 0004)', () => {
   });
 
   it('the state has a schema version', () => {
-    expect(STATE_VERSION).toBe(8);
-    expectTypeOf<GameState['version']>().toEqualTypeOf<8>();
+    expect(STATE_VERSION).toBe(9);
+    expectTypeOf<GameState['version']>().toEqualTypeOf<9>();
   });
 });
 

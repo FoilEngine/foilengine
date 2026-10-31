@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 8;
+export const STATE_VERSION = 9;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -141,6 +141,11 @@ export type TurnStep =
  */
 export type Task =
   | { readonly kind: 'turn'; readonly step: TurnStep }
+  /**
+   * 468.3, 468.5: the combat result and Control, once what the Combat Cleanup put on the Chain has
+   * resolved (468.2). `recalled`: the Attackers were recalled (468.1.a.2).
+   */
+  | { readonly kind: 'combat-result'; readonly battlefield: ObjectId; readonly recalled: boolean }
   /** 468.7: the Combat ends, once what its resolution put on the Chain has resolved (468.6). */
   | {
       readonly kind: 'combat-end';

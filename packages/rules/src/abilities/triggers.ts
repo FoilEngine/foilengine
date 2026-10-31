@@ -5,6 +5,7 @@ import type {
   Ability,
   CardDefinition,
   ChainItem,
+  Cost,
   FinalizeAbility,
   GameState,
   IllegalReason,
@@ -16,6 +17,7 @@ import { addAbility, finalize, givePriorityToNewest, removeFromChain } from '../
 import { controllerOf, type Draft, emit, findObject } from '../draft.ts';
 import { isValidTarget, validTargets } from '../effects/targets.ts';
 import { EngineInvariantError } from '../errors.ts';
+import { autoPaymentOnDraft, payCost, useRunes } from '../resources/payment.ts';
 
 /**
  * The Condition `kind` is met for these permanents: each of their triggered abilities with that
@@ -116,7 +118,14 @@ function triggeredAbilityOf(
 }
 
 const needsChoices = (ability: Extract<Ability, { kind: 'triggered' }> | null) =>
-  ability !== null && (ability.optional === true || (ability.targets ?? []).length > 0);
+  ability !== null &&
+  (ability.optional === true || (ability.targets ?? []).length > 0 || ability.cost !== undefined);
+
+/** The cost of a triggered ability, as a card cost (383.3.b). */
+export const costOf = (ability: Extract<Ability, { kind: 'triggered' }>): Cost | null =>
+  ability.cost === undefined
+    ? null
+    : { energy: ability.cost.energy ?? 0, power: ability.cost.power ?? [] };
 
 /**
  * The oldest Pending item, if its controller must make choices to finalize it (337.1): a
@@ -132,7 +141,11 @@ export function pendingChoice(
 }
 
 /** A Pending item leaves the Chain without being finalized (383.3.a.2, 358.5). */
-function removePending(draft: Draft, item: ChainItem, rule: '383.3.a.2' | '355.8'): void {
+function removePending(
+  draft: Draft,
+  item: ChainItem,
+  rule: '383.3.a.2' | '355.8' | '383.3.b.1',
+): void {
   removeFromChain(draft, item.object);
   emit(draft, {
     type: 'ChainItemRemoved',
@@ -153,15 +166,30 @@ export function finalizePending(draft: Draft): void {
   for (const item of draft.chain?.items ?? []) {
     if (item.status !== 'pending') continue;
     const ability = triggeredAbilityOf(draft, item);
-    if (!needsChoices(ability)) {
+    if (!needsChoices(ability) || ability === null) {
       finalize(draft, item.object);
       continue;
     }
-    const impossible = (ability?.targets ?? []).some(
-      (spec) => validTargets(draft, spec, item.controller).length === 0,
-    );
-    if (!impossible) return;
-    removePending(draft, item, '355.8');
+    // Choices that cannot be made: no valid target (355.8, 358.5), or a cost that must be paid
+    // but cannot be (383.3.b.1). A "you may" ability can still be declined.
+    if (
+      (ability.targets ?? []).some(
+        (spec) => validTargets(draft, spec, item.controller).length === 0,
+      )
+    ) {
+      removePending(draft, item, '355.8');
+      continue;
+    }
+    const cost = costOf(ability);
+    if (
+      cost !== null &&
+      ability.optional !== true &&
+      autoPaymentOnDraft(draft, item.controller, cost) === null
+    ) {
+      removePending(draft, item, '383.3.b.1');
+      continue;
+    }
+    return;
   }
   givePriorityToNewest(draft);
 }
@@ -201,6 +229,14 @@ export function finalizeChosen(draft: Draft, action: FinalizeAbility): IllegalRe
         rule: '355.9',
       };
     }
+  }
+  // 383.3.b, 383.3.b.1: its cost is paid to finalize it, runes adding resources first (357.1.a).
+  const cost = costOf(ability);
+  if (cost !== null) {
+    const runes = useRunes(draft, draft, item.controller, action.payment ?? []);
+    if (runes !== null) return runes;
+    const paid = payCost(draft, item.controller, cost);
+    if (paid !== null) return paid;
   }
   const chain = draft.chain;
   if (chain === null) throw new EngineInvariantError('No Chain');
