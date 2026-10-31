@@ -3,6 +3,7 @@
 // interpreter in `rules`, with its rule numbers.
 
 import type { PowerSymbol } from './cards.ts';
+import type { CardId } from './ids.ts';
 
 /** Keywords (800+). Each one arrives with its module. */
 export type Keyword =
@@ -45,18 +46,30 @@ export type TargetSpec = {
   readonly controller?: 'friendly' | 'enemy';
 };
 
+/**
+ * The object an instruction affects: the index of a target of the card or ability (355.5);
+ * `self`, the permanent the ability is on ("kill this"); or `token`, the token an earlier
+ * instruction of the same effect played ("then buff it", a linked instruction, 359.3.e.14).
+ */
+export type InstructionObject = number | 'self' | 'token';
+
 /** An instruction of a spell's rules text, executed from top to bottom (158.1). */
 export type Instruction =
   /** "Draw X." (414.3): its controller draws. */
   | { readonly kind: 'draw'; readonly amount: number }
-  /** "Deal X to [target]." (418): `target` is the index of a target of the card. */
-  | { readonly kind: 'deal'; readonly amount: number; readonly target: number }
+  /** "Deal X to [target]." (418). */
+  | { readonly kind: 'deal'; readonly amount: number; readonly target: InstructionObject }
   /** "Give [target] +X [M] this turn." (479.4): a negative `amount` gives -X [M]. */
-  | { readonly kind: 'give-might'; readonly amount: number; readonly target: number }
+  | { readonly kind: 'give-might'; readonly amount: number; readonly target: InstructionObject }
   /** "Buff [target]." (702.2.a): place a buff on a unit, unless it already has one (702.3.a). */
-  | { readonly kind: 'buff'; readonly target: number }
-  /** "Kill [target]." (429.6): `self` is the permanent the ability is on ("kill this"). */
-  | { readonly kind: 'kill'; readonly target: number | 'self' };
+  | { readonly kind: 'buff'; readonly target: InstructionObject }
+  /** "Kill [target]." (429.6). */
+  | { readonly kind: 'kill'; readonly target: InstructionObject }
+  /**
+   * "Play a [token] into your base." (350.2, 184.2): `token` is the id of a token definition
+   * (`CardDefinition.token`). Its controller plays it, and owns it (182, 183).
+   */
+  | { readonly kind: 'play-token'; readonly token: CardId };
 
 /** The cost of an activated ability (377.1): Energy, Power, and exhausting its source ([E]). */
 export type AbilityCost = {

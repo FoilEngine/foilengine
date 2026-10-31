@@ -49,4 +49,9 @@ export type CardDefinition = {
   readonly instructions?: readonly Instruction[];
   /** The abilities of the card (361), in printed order. */
   readonly abilities?: readonly Ability[];
+  /**
+   * A token, not a card (185.1): the definition of a token that effects play (`play-token`).
+   * It has no cost (185.3.a) and no domain (185.3.b), and is never in a deck.
+   */
+  readonly token?: boolean;
 };

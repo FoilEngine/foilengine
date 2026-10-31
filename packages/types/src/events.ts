@@ -234,6 +234,24 @@ export type UnitKilled = EventBase & {
   readonly card: CardId;
 };
 
+/**
+ * A token was played (350.2): created, it entered its controller's base (184.2) without a cost
+ * (185.3.a.1). See Q-003 in docs/rules/questions.md for when it enters.
+ */
+export type TokenPlayed = EventBase & {
+  readonly type: 'TokenPlayed';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+  readonly card: CardId;
+};
+
+/** A token put into a Non-Board Zone other than the Chain ceased to exist (186.1). */
+export type TokenCeasedToExist = EventBase & {
+  readonly type: 'TokenCeasedToExist';
+  readonly object: ObjectId;
+  readonly card: CardId;
+};
+
 /** Units were healed: their damage was cleared (419). */
 export type UnitsHealed = EventBase & {
   readonly type: 'UnitsHealed';
@@ -437,6 +455,8 @@ export type GameEvent =
   | DamageAssigned
   | DamageDealt
   | UnitKilled
+  | TokenPlayed
+  | TokenCeasedToExist
   | UnitsHealed
   | UnitsRecalled
   | CombatEnded
@@ -491,6 +511,8 @@ export const PRIVATE_EVENT_FIELDS = {
   DamageAssigned: [],
   DamageDealt: [],
   UnitKilled: [],
+  TokenPlayed: [],
+  TokenCeasedToExist: [],
   UnitsHealed: [],
   UnitsRecalled: [],
   CombatEnded: [],
