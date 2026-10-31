@@ -109,8 +109,9 @@ function hiddenFrom(
       if (!hidden) continue;
       inView.push(...player.zones[zone]);
       // An event may name an object of a deck when it is public where it goes: a rune recycled
-      // to the bottom of its deck (164.2.b). Cards in an opponent's hand or main deck never.
-      if (player.id !== viewer && (zone === 'hand' || zone === 'mainDeck')) {
+      // to the bottom of its deck (164.2.b). Cards in an opponent's hand never, and cards in a
+      // Main Deck never, its owner's included (108.4.e).
+      if ((player.id !== viewer && zone === 'hand') || zone === 'mainDeck') {
         inEvents.push(...player.zones[zone]);
       }
     }
