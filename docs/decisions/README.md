@@ -53,3 +53,4 @@ The other options and why we do not keep them.
 | 0015 | Free project under the Legal Jibber Jabber policy | Accepted |
 | 0016 | Code license | Accepted (AGPL-3.0-only) |
 | 0017 | Toolchain, repository checks and M0 decisions | Accepted |
+| 0018 | Deferred rules in the coverage report | Accepted |
