@@ -53,7 +53,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [ ] Spells (153–159), Action and Reaction timing (806, 813), showdowns with spells.
 - [ ] Passive, replacement, activated and triggered abilities (360+), the order of simultaneous triggers.
 - [ ] Layers (475–482) and `characteristics()`.
-- [ ] Gear and attachment (147–152, 716).
+- [ ] Gear and attachment (147–152, 716). Playing gear, gear abilities, Equip, Attach and Detach, Might Bonus and Effect Text keywords, the recall of gear: done. Quick-Draw (819), abilities in Effect Text and killing or targeting gear remain.
 - [ ] Tokens (179–187). Played into the base, linked instructions, 186.1: done (provisional decision Q-003). Other locations ("here", 184.2), "Create" (440), Replace (439) and the copy (446) remain.
 - [ ] The `cards` DSL and one module per keyword of section 800.
 - [ ] Manual mode (`ManualOverride`).
