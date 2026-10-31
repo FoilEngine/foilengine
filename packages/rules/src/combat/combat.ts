@@ -12,6 +12,7 @@ import type {
   ObjectId,
   PlayerId,
 } from '@foilengine/types';
+import { trigger } from '../abilities/triggers.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
 import {
   battlefieldOf,
@@ -53,7 +54,9 @@ const sumMight = (draft: Draft, units: readonly ObjectId[]) =>
 /**
  * 323.12, 466: a Combat begins at a battlefield where it is staged. It opens with a Combat
  * Showdown (463.3, 466.2); the player who applied Contested is the Attacker and gains Focus
- * (466.2.c.1, 466.2.c.1.a), the other player is the Defender (466.2.c.2).
+ * (466.2.c.1, 466.2.c.1.a), the other player is the Defender (466.2.c.2). Their units there
+ * gain the same designation (466.2.c.3), and their Attack and Defend abilities trigger (383.4.e,
+ * 383.4.f); they go on the Combat Chain once this task is complete (466.2.d).
  */
 export function startCombat(draft: Draft, battlefieldId: ObjectId): void {
   const battlefield = battlefieldOf(draft, battlefieldId);
@@ -64,6 +67,8 @@ export function startCombat(draft: Draft, battlefieldId: ObjectId): void {
   }
   battlefield.combatStaged = false;
   battlefield.showdownStaged = false;
+  const attackers = unitsOf(draft, battlefieldId, attacker);
+  const defenders = unitsOf(draft, battlefieldId, defender);
   draft.combat = {
     battlefield: battlefieldId,
     attacker,
@@ -71,6 +76,8 @@ export function startCombat(draft: Draft, battlefieldId: ObjectId): void {
     step: 'showdown',
     attackerAssignment: null,
     defenderAssignment: null,
+    attackers,
+    defenders,
   };
   emit(draft, {
     type: 'CombatStarted',
@@ -88,6 +95,25 @@ export function startCombat(draft: Draft, battlefieldId: ObjectId): void {
     battlefield: battlefieldId,
     focus: attacker,
   });
+  trigger(draft, 'attack', attackers);
+  trigger(draft, 'defend', defenders);
+}
+
+/**
+ * 323.2: during a Combat, units at its battlefield without a designation, or with the wrong one,
+ * get their controller's (323.2.a, 323.2.b); units elsewhere lose theirs (323.2.c). Returns
+ * whether anything changed.
+ */
+export function updateDesignations(draft: Draft): boolean {
+  const combat = draft.combat;
+  if (combat === null || combat.step === 'resolution') return false;
+  const attackers = unitsOf(draft, combat.battlefield, combat.attacker);
+  const defenders = unitsOf(draft, combat.battlefield, combat.defender);
+  const same = (a: readonly ObjectId[], b: readonly ObjectId[]) =>
+    a.length === b.length && a.every((id, i) => id === b[i]);
+  if (same(attackers, combat.attackers) && same(defenders, combat.defenders)) return false;
+  draft.combat = { ...combat, attackers, defenders };
+  return true;
 }
 
 /** 348.1: the Combat Showdown closed; proceed with the Combat Damage Step (467). */

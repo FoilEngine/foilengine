@@ -8,7 +8,7 @@
 // Combat (466.2.c.3). Step 5 recalls gear and misplaced runes, which cannot exist yet. Step 10a
 // needs a unit to arrive during a non-combat Showdown, which needs spells (M3).
 
-import { killLethalUnits, startCombat } from '../combat/combat.ts';
+import { killLethalUnits, startCombat, updateDesignations } from '../combat/combat.ts';
 import { type Draft, emit, playersAt } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { DUEL_VICTORY_SCORE } from '../modes/duel.ts';
@@ -33,6 +33,9 @@ function cleanupOnce(draft: Draft): boolean {
 
   // 1 (323.1).
   if (checkVictory(draft, '323.1')) return true;
+
+  // 2 (323.2): Attacker and Defender designations follow the units of the Combat.
+  if (updateDesignations(draft)) changed = true;
 
   // 3a (323.4): units with lethal damage are killed.
   if (killLethalUnits(draft)) changed = true;

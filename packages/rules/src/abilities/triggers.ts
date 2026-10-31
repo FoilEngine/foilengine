@@ -1,9 +1,20 @@
 // Triggered abilities (382–386): when their Condition is met, they wait to be put on the Chain
 // (383.3), which happens once the current task is complete (334.1, 334.2).
 
-import type { CardDefinition, ObjectId, PlayerId, Trigger } from '@foilengine/types';
-import { addAbility, finalize, givePriorityToNewest } from '../chain/chain.ts';
-import { controllerOf, type Draft, findObject } from '../draft.ts';
+import type {
+  Ability,
+  CardDefinition,
+  ChainItem,
+  FinalizeAbility,
+  GameState,
+  IllegalReason,
+  ObjectId,
+  PlayerId,
+  Trigger,
+} from '@foilengine/types';
+import { addAbility, finalize, givePriorityToNewest, removeFromChain } from '../chain/chain.ts';
+import { controllerOf, type Draft, emit, findObject } from '../draft.ts';
+import { isValidTarget, validTargets } from '../effects/targets.ts';
 import { EngineInvariantError } from '../errors.ts';
 
 /**
@@ -25,20 +36,28 @@ export function trigger(draft: Draft, kind: Trigger['kind'], sources: readonly O
   }
 }
 
-/** Turn order, starting with the Turn Player (303.2.a, 383.3.d.1). */
-function fromTurnPlayer(draft: Draft): PlayerId[] {
+/**
+ * The order in which players put their triggered abilities on the Chain: turn order, starting
+ * with the Turn Player (303.2.a, 383.3.d.1); on the Combat Chain, the Attacker first, then the
+ * other players in turn order, then the Defender (466.2.d.1).
+ */
+function placingOrder(draft: Pick<Draft, 'stage' | 'turnOrder' | 'combat'>): PlayerId[] {
   const stage = draft.stage;
   const first = stage.kind === 'turn' ? draft.turnOrder.indexOf(stage.turnPlayer) : 0;
-  return draft.turnOrder.map(
+  const order = draft.turnOrder.map(
     (_, i) => draft.turnOrder[(first + i) % draft.turnOrder.length] as PlayerId,
   );
+  const combat = draft.combat;
+  if (combat === null || combat.step !== 'showdown') return order;
+  const others = order.filter((p) => p !== combat.attacker && p !== combat.defender);
+  return [combat.attacker, ...others, combat.defender];
 }
 
 /** The player who must order several simultaneous triggered abilities now (383.3.d), if any. */
 export function playerToOrder(
-  draft: Pick<Draft, 'triggered' | 'stage' | 'turnOrder'>,
+  draft: Pick<Draft, 'triggered' | 'stage' | 'turnOrder' | 'combat'>,
 ): PlayerId | null {
-  for (const player of fromTurnPlayer(draft as Draft)) {
+  for (const player of placingOrder(draft)) {
     const mine = draft.triggered.filter((t) => t.controller === player);
     if (mine.length > 1) return player;
     if (mine.length === 1) return null;
@@ -47,12 +66,11 @@ export function playerToOrder(
 }
 
 /**
- * 383.3.d.1: starting with the Turn Player and in turn order, each player puts their triggered
- * abilities on the Chain, Pending. A player with several chooses their order (383.3.d): this
- * stops at them and returns false.
+ * 383.3.d.1, 466.2.d.1: each player in turn puts their triggered abilities on the Chain, Pending.
+ * A player with several chooses their order (383.3.d): this stops at them and returns false.
  */
 export function placeTriggered(draft: Draft): boolean {
-  for (const player of fromTurnPlayer(draft)) {
+  for (const player of placingOrder(draft)) {
     const mine = draft.triggered.filter((t) => t.controller === player);
     if (mine.length > 1) return false;
     for (const ability of mine) putOnChain(draft, ability);
@@ -85,13 +103,111 @@ function putOnChain(draft: Draft, ability: Draft['triggered'][number]): void {
   );
 }
 
+/** The triggered ability of a Pending item, with the choices it needs at finalization. */
+function triggeredAbilityOf(
+  state: Pick<GameState, 'cards'>,
+  item: ChainItem,
+): Extract<Ability, { kind: 'triggered' }> | null {
+  if (item.ability === null || !item.ability.triggered) return null;
+  const ability = (state.cards[item.ability.card] as CardDefinition).abilities?.[
+    item.ability.index
+  ];
+  return ability?.kind === 'triggered' ? ability : null;
+}
+
+const needsChoices = (ability: Extract<Ability, { kind: 'triggered' }> | null) =>
+  ability !== null && (ability.optional === true || (ability.targets ?? []).length > 0);
+
 /**
- * 337.1: Pending items are finalized in the order they were added. Triggered abilities have no
- * choice to make yet, so nothing stops them. Then their controllers act (337.4).
+ * The oldest Pending item, if its controller must make choices to finalize it (337.1): a
+ * triggered ability that says "you may" first (383.3.a) or chooses targets (355.5).
+ */
+export function pendingChoice(
+  state: Pick<GameState, 'cards' | 'chain'>,
+): { item: ChainItem; ability: Extract<Ability, { kind: 'triggered' }> } | null {
+  const item = state.chain?.items.find((i) => i.status === 'pending');
+  if (item === undefined) return null;
+  const ability = triggeredAbilityOf(state, item);
+  return ability !== null && needsChoices(ability) ? { item, ability } : null;
+}
+
+/** A Pending item leaves the Chain without being finalized (383.3.a.2, 358.5). */
+function removePending(draft: Draft, item: ChainItem, rule: '383.3.a.2' | '355.8'): void {
+  removeFromChain(draft, item.object);
+  emit(draft, {
+    type: 'ChainItemRemoved',
+    rule,
+    visibility: { kind: 'public' },
+    player: item.controller,
+    object: item.object,
+  });
+}
+
+/**
+ * 337.1: Pending items are finalized in the order they were added. One whose controller must make
+ * choices stops this until they have made them (a decision); one that has no valid choice for a
+ * target cannot be put on the Chain (355.8): its play is cancelled (358.5). Once none is Pending,
+ * the controller of the newest item gains Priority (337.4).
  */
 export function finalizePending(draft: Draft): void {
   for (const item of draft.chain?.items ?? []) {
-    if (item.status === 'pending') finalize(draft, item.object);
+    if (item.status !== 'pending') continue;
+    const ability = triggeredAbilityOf(draft, item);
+    if (!needsChoices(ability)) {
+      finalize(draft, item.object);
+      continue;
+    }
+    const impossible = (ability?.targets ?? []).some(
+      (spec) => validTargets(draft, spec, item.controller).length === 0,
+    );
+    if (!impossible) return;
+    removePending(draft, item, '355.8');
   }
   givePriorityToNewest(draft);
+}
+
+/**
+ * The controller of the oldest Pending triggered ability makes its choices (337.1): declining a
+ * "you may" ability removes it (383.3.a.2); otherwise its targets are chosen (355.5) and must be
+ * valid (355.9), and it is finalized. Returns why the choices are illegal, if they are.
+ */
+export function finalizeChosen(draft: Draft, action: FinalizeAbility): IllegalReason | null {
+  const choice = pendingChoice(draft);
+  if (choice === null) {
+    return { code: 'wrong-action', message: 'No ability waits for choices', rule: '337.1' };
+  }
+  const { item, ability } = choice;
+  if (!action.perform) {
+    if (ability.optional !== true) {
+      return { code: 'wrong-action', message: 'This ability is not optional', rule: '383.3.a' };
+    }
+    removePending(draft, item, '383.3.a.2');
+    return null;
+  }
+  const specs = ability.targets ?? [];
+  const targets = action.targets ?? [];
+  if (targets.length !== specs.length) {
+    return {
+      code: 'invalid-target',
+      message: `The ability needs ${specs.length} target(s), ${targets.length} given`,
+      rule: '355.8',
+    };
+  }
+  for (const [index, spec] of specs.entries()) {
+    if (!isValidTarget(draft, spec, targets[index] as ObjectId, item.controller)) {
+      return {
+        code: 'invalid-target',
+        message: `${targets[index]} is not a valid target`,
+        rule: '355.9',
+      };
+    }
+  }
+  const chain = draft.chain;
+  if (chain === null) throw new EngineInvariantError('No Chain');
+  draft.chain = {
+    ...chain,
+    items: chain.items.map((i) => (i.object === item.object ? { ...i, targets } : i)),
+  };
+  finalize(draft, item.object);
+  return null;
 }

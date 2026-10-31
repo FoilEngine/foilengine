@@ -25,7 +25,11 @@ export function settle(draft: Draft): void {
     }
     if (draft.chain !== null) {
       // FEPR (336): finalize what is Pending (337), then the player with Priority acts (338).
-      if (draft.chain.items.some((item) => item.status === 'pending')) finalizePending(draft);
+      // If nothing is left on the Chain (items removed at finalization), play goes on.
+      if (draft.chain.items.some((item) => item.status === 'pending')) {
+        finalizePending(draft);
+        if (draft.chain === null) continue;
+      }
       return;
     }
     const [task, ...rest] = draft.tasks;

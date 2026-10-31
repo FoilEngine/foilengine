@@ -16,7 +16,12 @@ import {
   type TargetSpec,
 } from '@foilengine/types';
 import { activate, checkActivate } from './abilities/activate.ts';
-import { placeInOrder, playerToOrder } from './abilities/triggers.ts';
+import {
+  finalizeChosen,
+  pendingChoice,
+  placeInOrder,
+  playerToOrder,
+} from './abilities/triggers.ts';
 import { passPriority } from './chain/chain.ts';
 import {
   assignDamage,
@@ -62,6 +67,19 @@ export function pendingDecision(state: GameState): Decision | null {
           player: orderer,
           abilities: state.triggered.filter((t) => t.controller === orderer),
           rule: '383.3.d',
+        };
+      }
+      // 337.1: the controller of the oldest Pending triggered ability makes its choices.
+      const choice = pendingChoice(state);
+      if (choice !== null && choice.item.ability !== null) {
+        return {
+          kind: 'FinalizeAbility',
+          player: choice.item.controller,
+          item: choice.item.object,
+          ability: choice.item.ability,
+          optional: choice.ability.optional === true,
+          targets: choice.ability.targets ?? [],
+          rule: '337.1',
         };
       }
       // 312.2.c, 312.2.d: on a Chain, the player it gave Priority to acts, in any phase.
@@ -182,6 +200,10 @@ export function isLegal(state: GameState, action: Action): Legality {
       return both(checkDecision(decision, 'OrderTriggers', action.player), () =>
         fromReason(checkOrder(state, action)),
       );
+    case 'FinalizeAbility':
+      return both(checkDecision(decision, 'FinalizeAbility', action.player), () =>
+        fromReason(finalizeChosen(draftOf(state), action)),
+      );
     case 'PassPriority':
       return both(checkDecision(decision, 'Priority', action.player), () =>
         state.chain === null
@@ -238,6 +260,23 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
         ...activatableAbilities(state, player),
         { type: 'PassFocus', player },
       ];
+    case 'FinalizeAbility': {
+      // 383.3.a: decline a "you may" ability; or choose valid targets (355.5, 355.9).
+      const decline: Action[] = decision.optional
+        ? [{ type: 'FinalizeAbility', player, perform: false }]
+        : [];
+      return [
+        ...targetChoices(draftOf(state), decision.targets, player).map(
+          (targets): Action => ({
+            type: 'FinalizeAbility',
+            player,
+            perform: true,
+            ...(targets.length === 0 ? {} : { targets }),
+          }),
+        ),
+        ...decline,
+      ];
+    }
     case 'OrderTriggers':
       return orderings(decision.abilities.length).map((order) => ({
         type: 'OrderTriggers',
@@ -292,10 +331,14 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
     case 'PassFocus':
     case 'PassPriority':
     case 'OrderTriggers':
+    case 'FinalizeAbility':
     case 'AssignCombatDamage':
     case 'Concede': {
       const draft = draftOf(state);
-      if (action.type === 'EndTurn') endTurn(draft);
+      if (action.type === 'FinalizeAbility') {
+        const reason = finalizeChosen(draft, action);
+        if (reason !== null) throw new IllegalActionError(reason);
+      } else if (action.type === 'EndTurn') endTurn(draft);
       else if (action.type === 'PassFocus') passFocus(draft);
       else if (action.type === 'PassPriority') passPriority(draft);
       else if (action.type === 'OrderTriggers') placeInOrder(draft, action.player, action.order);
