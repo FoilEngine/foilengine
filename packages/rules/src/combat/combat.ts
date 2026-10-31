@@ -11,6 +11,7 @@ import type {
   PlayerId,
 } from '@foilengine/types';
 import { trigger } from '../abilities/triggers.ts';
+import { killPermanents } from '../actions/kill.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
 import {
   battlefieldOf,
@@ -20,7 +21,6 @@ import {
   objectOf,
   playerOf,
   playersAt,
-  renewObject,
   updateObject,
 } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
@@ -367,58 +367,21 @@ function dealIfAssigned(draft: Draft): void {
 
 /** 323.4: units with lethal damage are killed and put in their owners' trash (429). Returns whether any was. */
 export function killLethalUnits(draft: Draft): boolean {
-  let killed = false;
-  const locations: { list: ObjectId[]; set: (next: ObjectId[]) => void }[] = [
-    ...draft.players.map((player) => ({
-      list: player.zones.base,
-      set: (next: ObjectId[]) => {
-        player.zones.base = next;
-      },
-    })),
-    ...draft.battlefields.map((b) => ({
-      list: b.units,
-      set: (next: ObjectId[]) => {
-        b.units = next;
-      },
-    })),
+  const locations = [
+    ...draft.players.map((player) => player.zones.base),
+    ...draft.battlefields.map((b) => b.units),
   ];
   // 323.4: every unit with lethal damage is killed at the same time: which ones is decided on the
   // board as it is, before any of them leaves it (a dying unit's passive ability still counts).
   // 142.4.b, 143.2.b: non-zero damage equal to or greater than its Might. Only damaged units can
   // die: the board is read only if there are some.
-  const damaged = locations.map((location) =>
-    location.list.filter((id) => objectOf(draft, id).damage > 0),
-  );
-  if (damaged.every((units) => units.length === 0)) return false;
+  const damaged = locations.flatMap((list) => list.filter((id) => objectOf(draft, id).damage > 0));
+  if (damaged.length === 0) return false;
   const reader = readerOfDraft(draft);
-  const dying = damaged.map((units) =>
-    units.filter((id) => objectOf(draft, id).damage >= mightWith(reader, id)),
-  );
-  // 808.1.d.2, 383.2.c.3: abilities that trigger on their source's death are processed just
-  // before it goes to the trash, while what they need about it can still be noted.
-  for (const units of dying) trigger(draft, 'dies', units);
-  for (const [index, location] of locations.entries()) {
-    const units = dying[index] ?? [];
-    if (units.length === 0) continue;
-    location.set(location.list.filter((id) => !units.includes(id)));
-    for (const unit of units) {
-      // 429.2: from the board to its owner's trash; a Non-Board Zone, so a new object (124).
-      const owner = objectOf(draft, unit).owner;
-      const dead = renewObject(draft, unit);
-      playerOf(draft, owner).zones.trash.push(dead.id);
-      emit(draft, {
-        type: 'UnitKilled',
-        rule: '323.4',
-        visibility: { kind: 'public' },
-        player: owner,
-        unit,
-        object: dead.id,
-        card: dead.card,
-      });
-      killed = true;
-    }
-  }
-  return killed;
+  const dying = damaged.filter((id) => objectOf(draft, id).damage >= mightWith(reader, id));
+  if (dying.length === 0) return false;
+  killPermanents(draft, dying, '323.4');
+  return true;
 }
 
 /** Heals every damaged unit on the board (419). */

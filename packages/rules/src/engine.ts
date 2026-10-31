@@ -398,6 +398,31 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
             payment,
             ...(targets.length === 0 ? {} : { targets }),
           }));
+    // 805: a unit with Accelerate may also be played paying [1][C] more, to enter ready.
+    const domains = definition.domains;
+    if (
+      definition.category === 'unit' &&
+      (definition.keywords ?? []).includes('accelerate') &&
+      domains.length <= 1
+    ) {
+      const total = {
+        energy: definition.cost.energy + 1,
+        power: [...definition.cost.power, domains[0] ?? ('any' as const)],
+      };
+      const accelerated = autoPayment(state, player, total);
+      if (accelerated !== null) {
+        for (const location of locations) {
+          candidates.push({
+            type: 'PlayCard',
+            player,
+            card,
+            location,
+            accelerate: true,
+            payment: accelerated,
+          });
+        }
+      }
+    }
     for (const action of candidates) {
       if (checkPlayCard(state, action) === null) actions.push(action);
     }

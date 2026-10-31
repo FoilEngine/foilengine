@@ -9,7 +9,8 @@ import {
   type TargetSpec,
 } from '@foilengine/types';
 import { drawCards } from '../actions/draw.ts';
-import { type Draft, emit, objectOf, updateObject } from '../draft.ts';
+import { killPermanents } from '../actions/kill.ts';
+import { type Draft, emit, locationOf, objectOf, updateObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { isValidTarget } from './targets.ts';
 
@@ -86,6 +87,17 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
           visibility: { kind: 'public' },
           unit: target,
         });
+        break;
+      }
+      case 'kill': {
+        // 429.1.a.1, 429.6: "Kill [target]", or "kill this" for the permanent the ability is on;
+        // one that is no longer on the board is unaffected.
+        const target =
+          instruction.target === 'self'
+            ? (item.ability?.source ?? null)
+            : legal(instruction.target);
+        if (target === null || locationOf(draft, target) === null) break;
+        killPermanents(draft, [target], '429.1.a.1');
         break;
       }
       default:
