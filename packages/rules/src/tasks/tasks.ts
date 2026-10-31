@@ -5,7 +5,7 @@
 
 import { assertNever, type Task } from '@foilengine/types';
 import { finalizePending, placeTriggered } from '../abilities/triggers.ts';
-import { endCombat } from '../combat/combat.ts';
+import { endCombat, resolveCombatResult } from '../combat/combat.ts';
 import type { Draft } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { runTurnStep } from '../turn/turn.ts';
@@ -43,6 +43,9 @@ function runTask(draft: Draft, task: Task): void {
   switch (task.kind) {
     case 'turn':
       runTurnStep(draft, task.step);
+      return;
+    case 'combat-result':
+      resolveCombatResult(draft, task.battlefield, task.recalled);
       return;
     case 'combat-end':
       endCombat(draft, task.battlefield, task.winner);

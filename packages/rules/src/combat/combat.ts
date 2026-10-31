@@ -320,6 +320,9 @@ export function killLethalUnits(draft: Draft): boolean {
     if (dying.length === 0) continue;
     location.set(location.list.filter((id) => !dying.includes(id)));
     for (const unit of dying) {
+      // 808.1.d.2, 383.2.c.3: its abilities that trigger on its own death are processed just
+      // before it goes to the trash, while what they need about it can still be noted.
+      trigger(draft, 'dies', [unit]);
       // 429.2: from the board to its owner's trash; a Non-Board Zone, so a new object (124).
       const owner = objectOf(draft, unit).owner;
       const dead = renewObject(draft, unit);
@@ -376,6 +379,25 @@ function resolveCombat(draft: Draft): void {
     recalled = true;
   }
 
+  // 468.2: what the damage and the Combat Cleanup put on the Chain resolves first; then the
+  // combat result.
+  draft.combat = { ...combat, step: 'resolution' };
+  draft.tasks = [
+    { kind: 'combat-result', battlefield: battlefield.object, recalled },
+    ...draft.tasks,
+  ];
+}
+
+/** 468.3 and 468.5: the combat result, then Control of the battlefield. */
+export function resolveCombatResult(
+  draft: Draft,
+  battlefieldId: ObjectId,
+  recalled: boolean,
+): void {
+  const combat = draft.combat;
+  if (combat === null) throw new EngineInvariantError('No Combat in progress');
+  const battlefield = battlefieldOf(draft, battlefieldId);
+
   // 468.3: the combat result.
   const present = [...playersAt(draft, battlefield)];
   const [only] = present;
@@ -420,8 +442,7 @@ function resolveCombat(draft: Draft): void {
     }
   }
 
-  // 468.6, 468.7: once what the resolution put on the Chain has resolved, the Combat ends.
-  draft.combat = { ...combat, step: 'resolution' };
+  // 468.4, 468.6, 468.7: once what the resolution put on the Chain has resolved, the Combat ends.
   draft.tasks = [{ kind: 'combat-end', battlefield: battlefield.object, winner }, ...draft.tasks];
 }
 

@@ -17,6 +17,7 @@ import {
 } from '@foilengine/types';
 import { activate, checkActivate } from './abilities/activate.ts';
 import {
+  costOf,
   finalizeChosen,
   pendingChoice,
   placeInOrder,
@@ -79,6 +80,7 @@ export function pendingDecision(state: GameState): Decision | null {
           ability: choice.item.ability,
           optional: choice.ability.optional === true,
           targets: choice.ability.targets ?? [],
+          cost: costOf(choice.ability),
           rule: '337.1',
         };
       }
@@ -265,6 +267,9 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
       const decline: Action[] = decision.optional
         ? [{ type: 'FinalizeAbility', player, perform: false }]
         : [];
+      // 383.3.b: performing it means paying its cost, if it has one.
+      const payment = decision.cost === null ? [] : autoPayment(state, player, decision.cost);
+      if (payment === null) return decline;
       return [
         ...targetChoices(draftOf(state), decision.targets, player).map(
           (targets): Action => ({
@@ -272,6 +277,7 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
             player,
             perform: true,
             ...(targets.length === 0 ? {} : { targets }),
+            ...(payment.length === 0 ? {} : { payment }),
           }),
         ),
         ...decline,
