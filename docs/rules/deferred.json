@@ -241,16 +241,6 @@
       "reason": "End of turn effects need abilities."
     },
     {
-      "number": "317.2.b",
-      "milestone": "M3",
-      "reason": "Without abilities, a unit never keeps damage until the end of the turn: combat heals all units (468.1.a.1). Damage from spells arrives with M3."
-    },
-    {
-      "number": "317.2.c",
-      "milestone": "M3",
-      "reason": "\"This turn\" effects need abilities."
-    },
-    {
       "number": "317.2.e",
       "milestone": "M3",
       "reason": "The FEPR process arrives with the chain."

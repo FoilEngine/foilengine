@@ -87,6 +87,8 @@ Card effects (`cards`) may only change the state by calling these atomic actions
 
 An object's characteristics (might, keywords, cost…) are never stored "computed" in the state. They are derived on read by `characteristics(state, objectId)`, which starts from the printed values and applies the continuous effects in layer order (475–482). The result may be cached per state version, but the source of truth remains the list of effects.
 
+Implemented so far (`layers/characteristics.ts`): the Might of units in the Arithmetic layer (479.4), from the passive abilities of permanents on the board (363–365: "I have +1 [M]", "Other friendly units have +1 [M]"), the continuous effects of spells and abilities in `state.effects` ("Give a unit +2 [M] this turn", which expire in the Expiration Step, 317.2.c), and buffs (+1 each, 703; at most one per unit, 702.3). Combat damage, lethal damage and the views use this Might; below 0 it is treated as 0 where 143.2.c says so. Still to come: copy, trait- and ability-altering effects (479.1–479.3), conditions ("while", "if", 364.3), limits and snapshots (479.4.b), and dependencies (480, 481).
+
 ## Player choices
 
 When the rules require a choice (targets, order of simultaneous triggers, mode, payment, mulligan), the engine stops and exposes a `Decision` through `pendingDecision`. The next action must answer that decision. There is never a callback or a promise in the engine: every choice is an action.
