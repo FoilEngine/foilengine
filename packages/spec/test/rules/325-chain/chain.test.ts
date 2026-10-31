@@ -81,6 +81,7 @@ describe('327–340 The Chain', () => {
         '337.4',
         '312.2.c',
         '330',
+        '329.2',
         '331',
         '331.1',
         '309.1',
@@ -94,10 +95,23 @@ describe('327–340 The Chain', () => {
         const [added] = ofType(t.events, 'ChainItemAdded');
         t.expect(added).toMatchObject({ player: A, previousObject: card, card: 'test:insight' });
         t.expect(ofType(t.events, 'ChainItemFinalized')).toMatchObject([{ object: added?.object }]);
+        // 329.2: Pending until legality is checked, after the payment.
+        const types = t.events.map((e) => e.type);
+        t.expect(types.indexOf('ChainItemAdded')).toBeLessThan(types.indexOf('ResourcesPaid'));
+        t.expect(types.indexOf('ResourcesPaid')).toBeLessThan(types.indexOf('ChainItemFinalized'));
         t.expect(t.state.chain).toEqual({
-          items: [{ object: added?.object, controller: A, status: 'finalized', targets: [] }],
+          items: [
+            {
+              object: added?.object,
+              controller: A,
+              status: 'finalized',
+              targets: [],
+              ability: null,
+            },
+          ],
           priority: A,
           passes: 0,
+          triggered: false,
         });
         // Nothing resolved yet: no card was drawn.
         t.expect(ofType(t.events, 'CardDrawn')).toEqual([]);
@@ -144,6 +158,9 @@ describe('327–340 The Chain', () => {
         '158.1',
         '414.2.b',
         '335',
+        '338',
+        '339',
+        '340',
       ],
       setup: insightOnChain,
       check: (t) => {
@@ -188,6 +205,8 @@ describe('327–340 The Chain', () => {
         '340.4',
         '418.1.b',
         '321.1',
+        '326',
+        '326.1',
       ],
       setup: () => act(insightOnChain(), pass(A)).state,
       check: (t) => {
@@ -236,6 +255,7 @@ describe('806 Action, and spells in Showdowns', () => {
         '308.1.a',
         '313.1.a',
         '347.1.a',
+        '326.2',
       ],
       setup: showdown,
       check: (t) => {
@@ -252,7 +272,7 @@ describe('806 Action, and spells in Showdowns', () => {
   );
 
   scenario('rule 340.2.a: when the Chain of a Showdown is empty, Focus passes to the next player', {
-    rules: ['340.2.a', '346', '347.1.b', '313.3'],
+    rules: ['340.2.a', '346', '347.1.b', '313.3', '335.1'],
     setup: () => {
       const state = showdown();
       const [unit] = state.battlefields[0]?.units ?? [];
