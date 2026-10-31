@@ -23,6 +23,8 @@ export type VisibleObject = {
   readonly buffs: number;
   /** A unit's Might on the board, after continuous effects (143.2.a: its Effective Might). */
   readonly might: number | null;
+  /** The cards Attached to it (719), public like it (148.1.a.2). Absent when there are none. */
+  readonly attached?: readonly VisibleObject[];
 };
 
 /** A Chain Item as every player sees it (108.1.b): a card, or an ability (which has no card). */
@@ -69,6 +71,8 @@ export type BattlefieldView = {
   readonly showdownStaged: boolean;
   readonly combatStaged: boolean;
   readonly units: readonly VisibleObject[];
+  /** Unattached gear here, until the next cleanup recalls it (459.1). */
+  readonly gear: readonly VisibleObject[];
 };
 
 export type SelfView = {

@@ -23,7 +23,12 @@ export type Keyword =
    * 816: "At the start of this permanent's controller's Beginning Phase, before scoring, kill
    * this": a card with Temporary also has that triggered ability (a `beginning` trigger).
    */
-  | 'temporary';
+  | 'temporary'
+  /**
+   * 818: "Equip [Cost]", short for "[Cost]: Attach this gear to a unit you control" (818.1.c.2):
+   * a card with Equip also has that activated ability (an `attach` instruction).
+   */
+  | 'equip';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b): Assault X, "While I am an attacker, I have +X [M]"
@@ -69,7 +74,9 @@ export type Instruction =
    * "Play a [token] into your base." (350.2, 184.2): `token` is the id of a token definition
    * (`CardDefinition.token`). Its controller plays it, and owns it (182, 183).
    */
-  | { readonly kind: 'play-token'; readonly token: CardId };
+  | { readonly kind: 'play-token'; readonly token: CardId }
+  /** "Attach this to [target]." (435): the permanent the ability is on becomes Attached to it. */
+  | { readonly kind: 'attach'; readonly target: InstructionObject };
 
 /** The cost of an activated ability (377.1): Energy, Power, and exhausting its source ([E]). */
 export type AbilityCost = {
