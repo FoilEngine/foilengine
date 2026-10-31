@@ -404,6 +404,62 @@ export const TEST_CARDS = {
     ],
     text: 'Predict 2, then draw 1.',
   }),
+  /** Hunt 1 (823): "When I conquer or hold, my controller gains 1 XP." */
+  tracker: card('test:tracker', 'unit', {
+    name: 'Tracker',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: [{ keyword: 'hunt', value: 1 }],
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'conquer' },
+        instructions: [{ kind: 'gain-xp', amount: 1 }],
+      },
+      {
+        kind: 'triggered',
+        trigger: { kind: 'hold' },
+        instructions: [{ kind: 'gain-xp', amount: 1 }],
+      },
+    ],
+    text: '[Hunt]',
+  }),
+  /** Level (824), a passive Dependent Ability: "[Level 1][>] I have +2 [M]." */
+  veteran: card('test:veteran', 'unit', {
+    name: 'Veteran',
+    cost: { energy: 1, power: [] },
+    might: 1,
+    keywords: ['level'],
+    abilities: [
+      { kind: 'passive', affects: 'self', might: 2, requires: [{ kind: 'level', xp: 1 }] },
+    ],
+    text: '[Level 1][>] I have +2 [M].',
+  }),
+  /**
+   * Level (824), a triggered and an activated Dependent Ability: "[Level 1][>] When you play me,
+   * draw 1." and "[Level 1][>] [1], [E]: Draw 1."
+   */
+  mentor: card('test:mentor', 'unit', {
+    name: 'Mentor',
+    cost: { energy: 1, power: [] },
+    might: 1,
+    keywords: ['level'],
+    abilities: [
+      {
+        kind: 'triggered',
+        requires: [{ kind: 'level', xp: 1 }],
+        trigger: { kind: 'played' },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+      {
+        kind: 'activated',
+        requires: [{ kind: 'level', xp: 1 }],
+        cost: { energy: 1, exhaustSelf: true },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: '[Level 1][>] When you play me, draw 1. [Level 1][>] [1], [E]: Draw 1.',
+  }),
   /** A gear with an activated ability (151): "[1], [E]: Draw 1." It must enter ready (149.1). */
   lantern: card('test:lantern', 'gear', {
     name: 'Lantern',
@@ -537,6 +593,9 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.ambusher,
   TEST_CARDS.warder,
   TEST_CARDS.seer,
+  TEST_CARDS.tracker,
+  TEST_CARDS.veteran,
+  TEST_CARDS.mentor,
 ];
 
 /** The test gear, for decks that exercise them. */
