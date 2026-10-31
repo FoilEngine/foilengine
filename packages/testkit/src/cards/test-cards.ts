@@ -198,6 +198,64 @@ export const TEST_CARDS = {
     ],
     text: '[Reaction][>] [1]: Draw 1.',
   }),
+  /** A Play Effect with a target, chosen as it is finalized (355.5). */
+  sniper: card('test:sniper', 'unit', {
+    name: 'Sniper',
+    cost: { energy: 2, power: [] },
+    might: 1,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'played' },
+        targets: [{ kind: 'unit', controller: 'enemy' }],
+        instructions: [{ kind: 'deal', amount: 1, target: 0 }],
+      },
+    ],
+    text: 'When you play me, deal 1 to an enemy unit.',
+  }),
+  /** A Play Effect that says "you may" first (383.3.a). */
+  scholar: card('test:scholar', 'unit', {
+    name: 'Scholar',
+    cost: { energy: 2, power: [] },
+    might: 1,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'played' },
+        optional: true,
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'When you play me, you may draw 1.',
+  }),
+  /** An Attack trigger (383.4.e). */
+  charger: card('test:charger', 'unit', {
+    name: 'Charger',
+    cost: { energy: 2, power: [] },
+    might: 3,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'attack' },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'When I attack, draw 1.',
+  }),
+  /** A Defend trigger (383.4.f). */
+  guard: card('test:guard', 'unit', {
+    name: 'Guard',
+    cost: { energy: 2, power: [] },
+    might: 3,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'defend' },
+        instructions: [{ kind: 'draw', amount: 1 }],
+      },
+    ],
+    text: 'When I defend, draw 1.',
+  }),
 } as const;
 
 /** The test units with abilities, for decks that exercise them. */
@@ -207,6 +265,10 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.keeper,
   TEST_CARDS.slinger,
   TEST_CARDS.sage,
+  TEST_CARDS.sniper,
+  TEST_CARDS.scholar,
+  TEST_CARDS.charger,
+  TEST_CARDS.guard,
 ];
 
 /** The test spells, for decks that exercise the Chain. */
@@ -261,14 +323,14 @@ export function testDeckWithSpells(): DeckList {
 }
 
 /**
- * A legal 1v1 deck with spells and units with abilities: the test champion, Vanilla 1 to 21, and
+ * A legal 1v1 deck with spells and units with abilities: the test champion, Vanilla 1 to 13, and
  * two of each test spell and each test unit with abilities (40 cards).
  */
 export function testDeckWithAbilities(): DeckList {
   return testDeck({
     mainDeck: [
       TEST_CARDS.champion.id,
-      ...TEST_CARDS.vanillas.slice(0, 21).map((unit) => unit.id),
+      ...TEST_CARDS.vanillas.slice(0, 13).map((unit) => unit.id),
       ...[...TEST_SPELLS, ...TEST_ABILITY_UNITS].flatMap((c) => [c.id, c.id]),
     ],
   });
