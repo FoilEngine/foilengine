@@ -59,6 +59,8 @@ export const TEST_CARDS = {
   }),
   rune: card('test:rune-fury', 'rune', { name: 'Fury Rune' }),
   calmRune: card('test:rune-calm', 'rune', { name: 'Calm Rune', domains: ['calm'] }),
+  /** No domain: recycling it adds [A], Power of any domain (164.2.b, 135.2.e.6.b). Not a Basic Rune. */
+  domainlessRune: card('test:rune-domainless', 'rune', { name: 'Domainless Rune', domains: [] }),
   /** Costs one Calm Power: needs a Calm rune. */
   calmUnit: card('test:calm-unit', 'unit', {
     name: 'Calm Unit',
@@ -88,6 +90,7 @@ export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = O
     TEST_CARDS.champion,
     TEST_CARDS.rune,
     TEST_CARDS.calmRune,
+    TEST_CARDS.domainlessRune,
     TEST_CARDS.calmUnit,
     TEST_CARDS.anyUnit,
     ...TEST_CARDS.battlefields,

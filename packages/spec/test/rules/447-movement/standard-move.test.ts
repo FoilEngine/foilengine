@@ -3,12 +3,15 @@ import type { ObjectId } from '@foilengine/types';
 import { describe, expect } from 'vitest';
 import {
   A,
+  act,
   afterConquest,
+  B,
   battlefield,
   endTurn,
   move,
   ofType,
   playCheap,
+  turnFive,
   turnThree,
   unitsInBase,
   v,
@@ -128,6 +131,77 @@ describe('144 Standard Move, 447–455 Movement', () => {
       t.act(move(A, [first], battlefield(t.state, 0)));
       t.expectDecision({ kind: 'Focus', player: A });
       t.expectIllegal(move(A, [second], battlefield(t.state, 1)), 'wrong-action');
+    },
+  });
+
+  scenario(
+    "rule 144: units have a Standard Move, usable any time in their controller's Main Phase",
+    {
+      rules: [
+        '144',
+        '144.1',
+        '144.1.a',
+        '144.4',
+        '107.1.b',
+        '107.2.b',
+        '448.1',
+        '449',
+        '449.1',
+        '449.2',
+      ],
+      // A's turn 5: two ready units at the first battlefield, Vanilla 6 ready in base.
+      setup: turnFive,
+      check: (t) => {
+        const target = battlefield(t.state, 0);
+        const [u1, u2] = (t.state.battlefields[0]?.units ?? []) as [ObjectId, ObjectId];
+        const [v6] = unitsInBase(t.state, A) as [ObjectId];
+        // Two Standard Moves in the same Main Phase, from a battlefield (origin) to the base
+        // (destination): both are Locations.
+        for (const unit of [u1, u2]) {
+          t.act(move(A, [unit], 'base'));
+          t.expect(ofType(t.events, 'UnitsMoved')).toMatchObject([
+            { units: [unit], battlefield: null },
+          ]);
+          t.expect(t.state.battlefields[0]?.units).not.toContain(unit);
+          t.expect(t.player('A').zones.base).toContain(unit);
+        }
+        // From the base to a battlefield.
+        t.act(move(A, [v6], target));
+        t.expect(ofType(t.events, 'UnitsMoved')).toMatchObject([
+          { units: [v6], battlefield: target },
+        ]);
+        t.expect(t.player('A').zones.base).not.toContain(v6);
+        t.expect(t.state.battlefields[0]?.units).toEqual([v6]);
+      },
+    },
+  );
+
+  scenario('rule 144.3.b: units moving together may come from different origins', {
+    rules: ['144.3.b', '448.3.a', '448.3.b'],
+    setup: () => {
+      // A's turn 5: Vanilla 6 conquers the second battlefield; then A's turn 7, everything ready.
+      let state = turnFive();
+      const [v6] = unitsInBase(state, A) as [ObjectId];
+      state = act(
+        state,
+        move(A, [v6], battlefield(state, 1)),
+        { type: 'PassFocus', player: A },
+        { type: 'PassFocus', player: B },
+      ).state;
+      return endTurn(endTurn(state).state).state;
+    },
+    check: (t) => {
+      const [fromFirst] = (t.state.battlefields[0]?.units ?? []) as [ObjectId];
+      const [fromSecond] = (t.state.battlefields[1]?.units ?? []) as [ObjectId];
+      t.act(move(A, [fromFirst, fromSecond], 'base'));
+      t.expect(ofType(t.events, 'UnitsMoved')).toMatchObject([
+        { units: [fromFirst, fromSecond], battlefield: null },
+      ]);
+      // 448.3.a, 448.3.b: each unit is now at its destination, and nowhere else.
+      for (const unit of [fromFirst, fromSecond]) {
+        t.expect(t.player('A').zones.base.filter((id) => id === unit)).toHaveLength(1);
+        t.expect(t.state.battlefields.some((b) => b.units.includes(unit))).toBe(false);
+      }
     },
   });
 });

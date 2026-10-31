@@ -94,7 +94,7 @@ async function main(argv: readonly string[]): Promise<number> {
     } else {
       const t = report.totals;
       console.log(
-        `${report.rulesVersion}: ${report.ruleCount} rules — ${t.covered} covered, ${t.stale} stale, ${t.question} question, ${t['not-applicable']} not-applicable, ${t.exercised} exercised, ${t.uncovered} uncovered`,
+        `${report.rulesVersion}: ${report.ruleCount} rules — ${t.covered} covered, ${t.stale} stale, ${t.question} question, ${t['not-applicable']} not-applicable, ${t.deferred} deferred, ${t.exercised} exercised, ${t.uncovered} uncovered`,
       );
       if (pinsWritten) console.log('✓ Pins written to packages/spec/rule-pins.json');
       for (const [kind, list] of problems) console.error(`✗ ${kind}: ${list.join(', ')}`);

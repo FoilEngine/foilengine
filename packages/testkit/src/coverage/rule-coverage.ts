@@ -8,6 +8,7 @@ export type RuleStatus =
   | 'stale'
   | 'question'
   | 'not-applicable'
+  | 'deferred'
   | 'exercised'
   | 'uncovered';
 
@@ -16,9 +17,14 @@ export const RULE_STATUSES: readonly RuleStatus[] = [
   'stale',
   'question',
   'not-applicable',
+  'deferred',
   'exercised',
   'uncovered',
 ];
+
+/** Where a deferred rule will be implemented: a roadmap milestone, or no milestone yet. */
+export const DEFERRAL_MILESTONES = ['M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'unplanned'] as const;
+export type DeferralMilestone = (typeof DEFERRAL_MILESTONES)[number];
 
 /** A test of `@foilengine/spec`, as reported by Vitest. */
 export type ScenarioResult = {
@@ -29,6 +35,12 @@ export type ScenarioResult = {
 };
 
 export type NotApplicableRule = { readonly number: string; readonly reason: string };
+/** A rule that depends on something a later milestone brings (docs/rules/deferred.json). */
+export type DeferredRule = {
+  readonly number: string;
+  readonly milestone: DeferralMilestone;
+  readonly reason: string;
+};
 export type OpenQuestion = { readonly id: string; readonly rules: readonly string[] };
 
 /** Fingerprint of each covered rule's text when its scenarios were written or last reviewed. */
@@ -43,6 +55,7 @@ export type CoverageInput = {
   /** Rules that produced events while games were played. */
   readonly exercised: ReadonlySet<string>;
   readonly notApplicable: readonly NotApplicableRule[];
+  readonly deferred: readonly DeferredRule[];
   readonly openQuestions: readonly OpenQuestion[];
   readonly pins: RulePins;
 };
@@ -52,7 +65,7 @@ export type RuleCoverageEntry = {
   readonly status: RuleStatus;
   /** Titles of the passing scenarios dedicated to this rule. */
   readonly scenarios: readonly string[];
-  /** Why the rule is not-applicable, or which question it waits for. */
+  /** Why the rule is not-applicable or deferred (`M3: …`), or which question it waits for. */
   readonly note: string | null;
 };
 
@@ -67,8 +80,10 @@ export type CoverageProblems = {
   readonly regressions: readonly string[];
   /** Covered rules not pinned yet: run `pnpm test:rules --pin`. */
   readonly unpinned: readonly string[];
-  /** Rule numbers quoted by scenarios or pins that do not exist in this version. */
+  /** Rule numbers quoted by scenarios, pins or the rule lists that do not exist in this version. */
   readonly unknownRules: readonly string[];
+  /** Rules listed in more than one of not-applicable and deferred, or listed but covered. */
+  readonly misclassified: readonly string[];
 };
 
 export type RuleCoverageReport = {
@@ -94,6 +109,7 @@ const emptyTotals = (): Record<RuleStatus, number> => ({
   stale: 0,
   question: 0,
   'not-applicable': 0,
+  deferred: 0,
   exercised: 0,
   uncovered: 0,
 });
@@ -122,6 +138,15 @@ export function ruleCoverage(input: CoverageInput): RuleCoverageReport {
     for (const rule of question.rules) questions.set(rule, question.id);
   }
   const notApplicable = new Map(input.notApplicable.map((rule) => [rule.number, rule.reason]));
+  const deferred = new Map(
+    input.deferred.map((rule) => [rule.number, `${rule.milestone}: ${rule.reason}`]),
+  );
+  const misclassified = new Set<string>();
+  for (const number of [...notApplicable.keys(), ...deferred.keys()]) {
+    if (!known.has(number)) unknownRules.add(number);
+    if (notApplicable.has(number) && deferred.has(number)) misclassified.add(number);
+    if (passing.has(number)) misclassified.add(number);
+  }
 
   const stale: string[] = [];
   const regressions: string[] = [];
@@ -147,12 +172,16 @@ export function ruleCoverage(input: CoverageInput): RuleCoverageReport {
       if (pin !== undefined) regressions.push(rule.number);
       const question = questions.get(rule.number);
       const reason = notApplicable.get(rule.number);
+      const later = deferred.get(rule.number);
       if (question !== undefined) {
         status = 'question';
         note = question;
       } else if (reason !== undefined) {
         status = 'not-applicable';
         note = reason;
+      } else if (later !== undefined) {
+        status = 'deferred';
+        note = later;
       } else {
         status = input.exercised.has(rule.number) ? 'exercised' : 'uncovered';
       }
@@ -179,6 +208,7 @@ export function ruleCoverage(input: CoverageInput): RuleCoverageReport {
       regressions,
       unpinned,
       unknownRules: [...unknownRules].sort(compareRuleNumbers),
+      misclassified: [...misclassified].sort(compareRuleNumbers),
     },
     rules,
   };
@@ -238,7 +268,7 @@ export function renderCoverageMarkdown(report: RuleCoverageReport): string {
   const lines = [
     `# Rule coverage — ${report.rulesVersion}`,
     '',
-    `${report.ruleCount} rules: ${report.totals.covered} covered (${percent(report.totals.covered)}), ${report.totals.exercised} exercised, ${report.totals.uncovered} uncovered.`,
+    `${report.ruleCount} rules: ${report.totals.covered} covered (${percent(report.totals.covered)}), ${report.totals.deferred} deferred to a later milestone, ${report.totals.exercised} exercised, ${report.totals.uncovered} uncovered.`,
     '',
     `| Section | ${RULE_STATUSES.join(' | ')} |`,
     `| --- | ${RULE_STATUSES.map(() => '---').join(' | ')} |`,

@@ -196,3 +196,15 @@ export function beforeCombat(aSends: 'both' | 'vanilla-1'): GameState {
   ).state;
   return endTurn(state).state;
 }
+
+/**
+ * After A's conquest of the first battlefield on turn 3, A also plays Vanilla 6 to their base.
+ * Returns B's turn 4, Main Phase.
+ */
+export function turnFour(): GameState {
+  const conquered = afterConquest().state;
+  return endTurn(playPaid(conquered, A, 'test:vanilla-6').state).state;
+}
+
+/** A's turn 5: two units at the first battlefield (Held this turn), Vanilla 6 ready in base. */
+export const turnFive = (): GameState => endTurn(turnFour()).state;

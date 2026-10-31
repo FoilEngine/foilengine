@@ -9,7 +9,7 @@ We need to be able to test each rule and know which ones are tested.
 
 ## Decision
 
-Each scenario quotes the exact Core Rules number of the rule. The Core Rules are indexed from the PDF, and a report gives each rule its status (`covered`, `exercised`, `uncovered`, `stale`, `not-applicable`, `question`). An ambiguous rule goes into `docs/rules/questions.md`, never guessed.
+Each scenario quotes the exact Core Rules number of the rule. The Core Rules are indexed from the PDF, and a report gives each rule its status (`covered`, `exercised`, `uncovered`, `stale`, `not-applicable`, `question`). An ambiguous rule goes into `docs/rules/questions.md`, never guessed. ADR 0018 adds a seventh status, `deferred`, for rules that need a later milestone.
 
 ## Consequences
 

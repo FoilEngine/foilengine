@@ -1,0 +1,1574 @@
+{
+  "rules": [
+    {
+      "number": "107.1.c.1",
+      "milestone": "M3",
+      "reason": "Attached permanents arrive with gear and attachment."
+    },
+    {
+      "number": "107.3",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.a",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.b",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.b.1",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.b.2",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.c",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.d",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.e",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.3.f",
+      "milestone": "M3",
+      "reason": "Facedown Zones arrive with Hide (422) and hidden cards."
+    },
+    {
+      "number": "107.4.b",
+      "milestone": "M3",
+      "reason": "Only effects that refer to locations can observe it."
+    },
+    {
+      "number": "107.4.d.1",
+      "milestone": "M3",
+      "reason": "Effects that add legends arrive with abilities."
+    },
+    {
+      "number": "107.4.d.2",
+      "milestone": "M3",
+      "reason": "Effects that add legends arrive with abilities."
+    },
+    {
+      "number": "108.1",
+      "milestone": "M3",
+      "reason": "The Chain arrives with M3."
+    },
+    {
+      "number": "108.1.a",
+      "milestone": "M3",
+      "reason": "The Chain arrives with M3."
+    },
+    {
+      "number": "108.1.b",
+      "milestone": "M3",
+      "reason": "The Chain arrives with M3."
+    },
+    {
+      "number": "108.3.c",
+      "milestone": "M3",
+      "reason": "Returning a champion to this zone needs effects."
+    },
+    {
+      "number": "108.3.c.1",
+      "milestone": "M3",
+      "reason": "Returning a champion to this zone needs effects."
+    },
+    {
+      "number": "108.6.b",
+      "milestone": "M3",
+      "reason": "Banishing needs spells and effects."
+    },
+    {
+      "number": "108.6.c",
+      "milestone": "M3",
+      "reason": "Banishing needs spells and effects."
+    },
+    {
+      "number": "108.7.f",
+      "milestone": "M3",
+      "reason": "Targeting a hand needs spells and effects."
+    },
+    {
+      "number": "115.1.a",
+      "milestone": "M8",
+      "reason": "The 1v1 mode (487) does not specify the First Player; Tournament Rules 407 (Play First Rule) arrives with matchmaking. Until then 115 applies: a fair random method."
+    },
+    {
+      "number": "144.1.b",
+      "milestone": "M3",
+      "reason": "Closed States arrive with the chain."
+    },
+    {
+      "number": "144.4.a.1",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "144.4.c",
+      "milestone": "M3",
+      "reason": "Ganking is a keyword (810)."
+    },
+    {
+      "number": "161.1.a",
+      "milestone": "M3",
+      "reason": "Only effects that refer to permanents can observe it."
+    },
+    {
+      "number": "164.1",
+      "milestone": "M4",
+      "reason": "The six Basic Runes are real cards: card data arrives with M4."
+    },
+    {
+      "number": "168",
+      "milestone": "M3",
+      "reason": "Add abilities other than the Basic Runes' arrive with abilities (430)."
+    },
+    {
+      "number": "194.1",
+      "milestone": "M3",
+      "reason": "One of the listed ways, spells and abilities (194.1.c), needs M3."
+    },
+    {
+      "number": "194.1.c",
+      "milestone": "M3",
+      "reason": "Needs spells and abilities."
+    },
+    {
+      "number": "194.3.a",
+      "milestone": "M3",
+      "reason": "Card effects that alter the Victory Score arrive with abilities; the 1v1 mode keeps 8 (487.3)."
+    },
+    {
+      "number": "194.4",
+      "milestone": "M3",
+      "reason": "Losing points needs effects."
+    },
+    {
+      "number": "194.4.a",
+      "milestone": "M3",
+      "reason": "Losing points needs effects."
+    },
+    {
+      "number": "194.4.b",
+      "milestone": "M3",
+      "reason": "Losing points needs effects."
+    },
+    {
+      "number": "195.1",
+      "milestone": "M3",
+      "reason": "Effects that make a player lose need abilities."
+    },
+    {
+      "number": "315.2.a",
+      "milestone": "M3",
+      "reason": "Beginning Step effects need abilities."
+    },
+    {
+      "number": "315.2.a.1",
+      "milestone": "M3",
+      "reason": "Beginning Step effects need abilities."
+    },
+    {
+      "number": "315.2.b.3",
+      "milestone": "unplanned",
+      "reason": "Needs teams; no team mode is on the roadmap."
+    },
+    {
+      "number": "316.2",
+      "milestone": "M3",
+      "reason": "One of the two tasks, start of Main Phase effects (316.4), needs abilities."
+    },
+    {
+      "number": "316.3",
+      "milestone": "M3",
+      "reason": "Implemented, but a Rune Pool is always empty when the Main Phase starts without effects: pools also empty at the end of every turn (167). Effects that add resources before it arrive with M3."
+    },
+    {
+      "number": "316.4",
+      "milestone": "M3",
+      "reason": "Start of Main Phase effects need abilities."
+    },
+    {
+      "number": "316.5.b.1",
+      "milestone": "unplanned",
+      "reason": "Needs teams; no team mode is on the roadmap."
+    },
+    {
+      "number": "316.7.c",
+      "milestone": "M3",
+      "reason": "Other sources of combat (spells, effects) arrive with M3."
+    },
+    {
+      "number": "316.7.d",
+      "milestone": "unplanned",
+      "reason": "With two players a combat is always between two players; the rule matters with more."
+    },
+    {
+      "number": "316.8.b.1.a",
+      "milestone": "M3",
+      "reason": "Units can only become present during a showdown through spells or abilities (same as 323.13)."
+    },
+    {
+      "number": "316.8.c",
+      "milestone": "M3",
+      "reason": "Playing cards and abilities in a showdown needs Action and Reaction timing."
+    },
+    {
+      "number": "317.1",
+      "milestone": "M3",
+      "reason": "The Ending Step only runs effects."
+    },
+    {
+      "number": "317.1.a",
+      "milestone": "M3",
+      "reason": "End of turn effects need abilities."
+    },
+    {
+      "number": "317.1.b",
+      "milestone": "M3",
+      "reason": "End of turn effects need abilities."
+    },
+    {
+      "number": "317.2.b",
+      "milestone": "M3",
+      "reason": "Without abilities, a unit never keeps damage until the end of the turn: combat heals all units (468.1.a.1). Damage from spells arrives with M3."
+    },
+    {
+      "number": "317.2.c",
+      "milestone": "M3",
+      "reason": "\"This turn\" effects need abilities."
+    },
+    {
+      "number": "317.2.e",
+      "milestone": "M3",
+      "reason": "The FEPR process arrives with the chain."
+    },
+    {
+      "number": "317.2.f",
+      "milestone": "M3",
+      "reason": "The FEPR process arrives with the chain."
+    },
+    {
+      "number": "319",
+      "milestone": "M3",
+      "reason": "Some of the listed times need the chain (319.1, 319.3–319.5): the full list is tested with it."
+    },
+    {
+      "number": "319.1",
+      "milestone": "M3",
+      "reason": "Open and Closed States arrive with the chain."
+    },
+    {
+      "number": "319.3",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "319.4",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "319.5",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "319.7",
+      "milestone": "M3",
+      "reason": "No M2 action changes a status on its own: paying and moving also make objects enter the board or move (319.6, 319.8). Exhaust and ready effects arrive with abilities."
+    },
+    {
+      "number": "320",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "320.1",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "321",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "321.1",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "322",
+      "milestone": "M3",
+      "reason": "No scenario found where a second cleanup changes the outcome without abilities: it needs a step that causes a change an earlier step handles, such as a unit killed by an effect."
+    },
+    {
+      "number": "322.1",
+      "milestone": "M3",
+      "reason": "Same as 322."
+    },
+    {
+      "number": "323",
+      "milestone": "M3",
+      "reason": "Some of the listed cleanup tasks need M3 (323.2, 323.6, 323.13): the full list is tested with them."
+    },
+    {
+      "number": "323.2",
+      "milestone": "M3",
+      "reason": "Unit designations only matter to effects, and units can only arrive during combat through spells or abilities."
+    },
+    {
+      "number": "323.2.a",
+      "milestone": "M3",
+      "reason": "Units can only arrive during combat through spells or abilities."
+    },
+    {
+      "number": "323.2.b",
+      "milestone": "M3",
+      "reason": "Needs control changes or effects."
+    },
+    {
+      "number": "323.2.c",
+      "milestone": "M3",
+      "reason": "Needs effects that move units during combat."
+    },
+    {
+      "number": "323.6",
+      "milestone": "M3",
+      "reason": "Gear, runes at battlefields and permanents in another player's base only come from effects."
+    },
+    {
+      "number": "323.6.a",
+      "milestone": "M3",
+      "reason": "Hidden cards arrive with Hide (422)."
+    },
+    {
+      "number": "323.7.a",
+      "milestone": "M3",
+      "reason": "A showdown stays staged only while the state is not Neutral Open, which needs the chain."
+    },
+    {
+      "number": "323.9",
+      "milestone": "M3",
+      "reason": "Units can only leave before a staged combat opens through spells or abilities."
+    },
+    {
+      "number": "323.10",
+      "milestone": "M3",
+      "reason": "Contested battlefields always end in a showdown or combat without abilities; units can only leave earlier through spells or abilities."
+    },
+    {
+      "number": "323.10.a",
+      "milestone": "M3",
+      "reason": "Same as 323.10."
+    },
+    {
+      "number": "323.13",
+      "milestone": "M3",
+      "reason": "A unit can only join a non-combat showdown through spells or abilities."
+    },
+    {
+      "number": "324.2",
+      "milestone": "M3",
+      "reason": "No event of a special cleanup has a visible consequence without abilities."
+    },
+    {
+      "number": "342",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "342.1",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "343.1.b",
+      "milestone": "M3",
+      "reason": "Abilities arrive with M3."
+    },
+    {
+      "number": "346",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "346.1",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "347",
+      "milestone": "M3",
+      "reason": "One of the two options, playing a card or an ability (347.1), needs Action and Reaction timing."
+    },
+    {
+      "number": "347.1",
+      "milestone": "M3",
+      "reason": "Playing a card or an ability during a showdown needs Action and Reaction timing."
+    },
+    {
+      "number": "347.1.a",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "347.1.b",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "350.1",
+      "milestone": "M3",
+      "reason": "The full process of play goes through the chain."
+    },
+    {
+      "number": "350.2",
+      "milestone": "M3",
+      "reason": "Tokens arrive with M3."
+    },
+    {
+      "number": "351.2",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "352",
+      "milestone": "M3",
+      "reason": "Pending and Finalized items belong to the chain."
+    },
+    {
+      "number": "352.1",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "352.2",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "353",
+      "milestone": "M3",
+      "reason": "The process of play goes through the chain; M2 plays a unit in one step."
+    },
+    {
+      "number": "354",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "354.1",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "354.2",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "354.3",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "354.4",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "355.1",
+      "milestone": "M3",
+      "reason": "\"As I am played\" choices need abilities."
+    },
+    {
+      "number": "355.1.a",
+      "milestone": "M3",
+      "reason": "Optional additional costs need abilities."
+    },
+    {
+      "number": "355.2.b",
+      "milestone": "M3",
+      "reason": "Permissions to play elsewhere need effects."
+    },
+    {
+      "number": "355.3",
+      "milestone": "M3",
+      "reason": "Modes belong to spells and abilities."
+    },
+    {
+      "number": "355.4",
+      "milestone": "M3",
+      "reason": "Move effects need spells and abilities."
+    },
+    {
+      "number": "355.4.a",
+      "milestone": "M3",
+      "reason": "Move effects need spells and abilities."
+    },
+    {
+      "number": "355.5",
+      "milestone": "M3",
+      "reason": "Choices of game objects belong to spells and abilities."
+    },
+    {
+      "number": "355.5.a",
+      "milestone": "M3",
+      "reason": "Needs spells and abilities."
+    },
+    {
+      "number": "355.5.b",
+      "milestone": "M3",
+      "reason": "Needs spells and abilities."
+    },
+    {
+      "number": "355.6",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.7",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.8",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.a",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.a.1",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.a.2",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.a.3",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.a.4",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.a.5",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.b",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.9.c",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.a",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.a.1",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.b",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.c",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.c.1",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.d",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.d.1",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.d.2",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.e",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.f",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.10.g",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.11",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.11.a",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.11.b",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.11.b.1",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.12",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.13",
+      "milestone": "M3",
+      "reason": "Targeting needs spells and abilities."
+    },
+    {
+      "number": "355.14",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.a",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.b",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.c",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.d",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.e",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.f",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.g",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.h",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.h.1",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.14.i",
+      "milestone": "M3",
+      "reason": "Splitting damage needs spells and abilities."
+    },
+    {
+      "number": "355.15",
+      "milestone": "M3",
+      "reason": "Changing choices needs spells and abilities (750)."
+    },
+    {
+      "number": "355.16",
+      "milestone": "M3",
+      "reason": "Choices that lead to illegal actions need costs and effects."
+    },
+    {
+      "number": "355.17",
+      "milestone": "M3",
+      "reason": "Mandatory requirements come from effects."
+    },
+    {
+      "number": "355.17.a",
+      "milestone": "M3",
+      "reason": "Mandatory requirements come from effects."
+    },
+    {
+      "number": "355.17.b",
+      "milestone": "M3",
+      "reason": "Restrictions on choices come from effects."
+    },
+    {
+      "number": "355.18",
+      "milestone": "M3",
+      "reason": "Needs spells and abilities."
+    },
+    {
+      "number": "356.1",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.1.a",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.1.b",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.1.b.1",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.1.b.2",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.1.b.3",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.1.c",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.2",
+      "milestone": "M3",
+      "reason": "Additional costs come from abilities."
+    },
+    {
+      "number": "356.2.a",
+      "milestone": "M3",
+      "reason": "Additional costs come from abilities."
+    },
+    {
+      "number": "356.2.a.1",
+      "milestone": "M3",
+      "reason": "Additional costs come from abilities."
+    },
+    {
+      "number": "356.2.a.2",
+      "milestone": "M3",
+      "reason": "Deflect is a keyword (809)."
+    },
+    {
+      "number": "356.2.b",
+      "milestone": "M3",
+      "reason": "Additional costs come from abilities."
+    },
+    {
+      "number": "356.2.b.1",
+      "milestone": "M3",
+      "reason": "Additional costs come from abilities."
+    },
+    {
+      "number": "356.3",
+      "milestone": "M3",
+      "reason": "Cost increases come from effects."
+    },
+    {
+      "number": "356.4",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.a",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.b",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.c",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.c.1",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.c.2",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.d",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.d.1",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.e",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.f",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.f.1",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.4.g",
+      "milestone": "M3",
+      "reason": "Discounts come from effects."
+    },
+    {
+      "number": "356.5",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.5.a",
+      "milestone": "M3",
+      "reason": "Cost modifications come from effects."
+    },
+    {
+      "number": "356.6",
+      "milestone": "M3",
+      "reason": "Costs only go down through effects."
+    },
+    {
+      "number": "356.7",
+      "milestone": "M3",
+      "reason": "Non-standard costs come from abilities."
+    },
+    {
+      "number": "357.2",
+      "milestone": "M3",
+      "reason": "Non-standard costs come from abilities."
+    },
+    {
+      "number": "357.2.a",
+      "milestone": "M3",
+      "reason": "Replacement effects need abilities."
+    },
+    {
+      "number": "357.3",
+      "milestone": "M3",
+      "reason": "Non-standard costs come from abilities."
+    },
+    {
+      "number": "358.1",
+      "milestone": "M3",
+      "reason": "Choices to check come from spells and abilities."
+    },
+    {
+      "number": "358.3",
+      "milestone": "M3",
+      "reason": "An illegal outcome needs spells, or more than two players."
+    },
+    {
+      "number": "358.3.a",
+      "milestone": "M3",
+      "reason": "Needs effects that prevent game actions."
+    },
+    {
+      "number": "358.3.b",
+      "milestone": "M3",
+      "reason": "Needs triggers and the chain."
+    },
+    {
+      "number": "359.1",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "359.2",
+      "milestone": "M3",
+      "reason": "Permanents leave the chain: M2 plays a unit in one step."
+    },
+    {
+      "number": "359.2.a",
+      "milestone": "M3",
+      "reason": "Passive abilities arrive with M3."
+    },
+    {
+      "number": "359.2.b",
+      "milestone": "M3",
+      "reason": "Rules text arrives with abilities."
+    },
+    {
+      "number": "359.2.d",
+      "milestone": "M3",
+      "reason": "Gear arrives with M3."
+    },
+    {
+      "number": "359.3",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.a",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.b",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.c",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.d",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.1",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.2",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.2.a",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.3",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.4",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.5",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.6",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.7",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.8",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.9",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.9.a",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.10",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.11",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.12",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.12.a",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.13",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.14",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.14.a",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.14.b",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.14.c",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.15",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.e.16",
+      "milestone": "M3",
+      "reason": "Spells arrive with M3."
+    },
+    {
+      "number": "359.3.f",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "359.3.f.1",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "359.3.f.2",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "359.3.f.2.a",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "359.3.f.3",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "359.3.f.3.a",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "359.3.f.3.b",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "359.3.f.4",
+      "milestone": "M3",
+      "reason": "Referents belong to abilities."
+    },
+    {
+      "number": "448",
+      "milestone": "M3",
+      "reason": "Discretionary and Limited actions (411) only differ for effects that cause moves."
+    },
+    {
+      "number": "448.3.c",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "449.2.a",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "449.2.b",
+      "milestone": "unplanned",
+      "reason": "Needs teams; no team mode is on the roadmap."
+    },
+    {
+      "number": "449.2.c",
+      "milestone": "M3",
+      "reason": "Moves required by effects need abilities."
+    },
+    {
+      "number": "451",
+      "milestone": "M3",
+      "reason": "Moves caused by spells and abilities."
+    },
+    {
+      "number": "451.1",
+      "milestone": "M3",
+      "reason": "Moves caused by spells and abilities."
+    },
+    {
+      "number": "451.2",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "457",
+      "milestone": "M3",
+      "reason": "Recalls only happen through effects, or at the end of a combat where both sides survive (468.1.a.2), which needs abilities."
+    },
+    {
+      "number": "458",
+      "milestone": "M3",
+      "reason": "Same as 457."
+    },
+    {
+      "number": "458.1",
+      "milestone": "M3",
+      "reason": "Same as 457."
+    },
+    {
+      "number": "458.2",
+      "milestone": "M3",
+      "reason": "Same as 457."
+    },
+    {
+      "number": "458.3",
+      "milestone": "M3",
+      "reason": "Same as 457."
+    },
+    {
+      "number": "459",
+      "milestone": "M3",
+      "reason": "Gear arrives with M3."
+    },
+    {
+      "number": "459.1",
+      "milestone": "M3",
+      "reason": "Gear arrives with M3."
+    },
+    {
+      "number": "460",
+      "milestone": "M3",
+      "reason": "Same as 457."
+    },
+    {
+      "number": "460.1",
+      "milestone": "M3",
+      "reason": "Same as 457."
+    },
+    {
+      "number": "462.1",
+      "milestone": "M3",
+      "reason": "A unit can only join a non-combat showdown through spells or abilities (same as 323.13)."
+    },
+    {
+      "number": "463.1",
+      "milestone": "M3",
+      "reason": "A single Standard Move stages at most one combat; several need effects."
+    },
+    {
+      "number": "463.2",
+      "milestone": "M3",
+      "reason": "Units can only leave before a staged combat opens through spells or abilities."
+    },
+    {
+      "number": "464",
+      "milestone": "unplanned",
+      "reason": "With two players a combat is always between two players; the rule matters with more."
+    },
+    {
+      "number": "464.1",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "464.2",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "464.2.a",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "464.2.b",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "464.3",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "466.2.a",
+      "milestone": "M3",
+      "reason": "Some of the listed tasks need abilities and the chain (466.2.b, 466.2.d)."
+    },
+    {
+      "number": "466.2.b",
+      "milestone": "M3",
+      "reason": "Start of combat effects need abilities."
+    },
+    {
+      "number": "466.2.c.1.b",
+      "milestone": "M3",
+      "reason": "A showdown is only ongoing when a combat opens if a unit joined it through spells or abilities."
+    },
+    {
+      "number": "466.2.c.3",
+      "milestone": "M3",
+      "reason": "Unit designations only matter to effects."
+    },
+    {
+      "number": "466.2.c.3.a",
+      "milestone": "M3",
+      "reason": "Units can only arrive during combat through spells or abilities."
+    },
+    {
+      "number": "466.2.d",
+      "milestone": "M3",
+      "reason": "Needs triggers and the chain."
+    },
+    {
+      "number": "466.2.d.1",
+      "milestone": "M3",
+      "reason": "Needs triggers and the chain."
+    },
+    {
+      "number": "466.2.e",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "466.2.f",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "467.2.c.2",
+      "milestone": "M3",
+      "reason": "Abilities that change the order of assignment (Tank, Backline)."
+    },
+    {
+      "number": "467.2.c.4.a",
+      "milestone": "M3",
+      "reason": "Needs replacement effects."
+    },
+    {
+      "number": "467.2.c.5",
+      "milestone": "M3",
+      "reason": "Needs passive abilities and replacement effects."
+    },
+    {
+      "number": "467.2.c.6",
+      "milestone": "M3",
+      "reason": "Assignment requirements come from abilities."
+    },
+    {
+      "number": "467.2.c.7",
+      "milestone": "M3",
+      "reason": "Assignment requirements come from abilities."
+    },
+    {
+      "number": "467.2.c.8",
+      "milestone": "M3",
+      "reason": "Assignment requirements come from abilities."
+    },
+    {
+      "number": "467.2.c.9",
+      "milestone": "M3",
+      "reason": "Assignment requirements come from abilities."
+    },
+    {
+      "number": "467.2.c.10",
+      "milestone": "M3",
+      "reason": "Units that cannot be dealt damage need abilities."
+    },
+    {
+      "number": "467.3",
+      "milestone": "M3",
+      "reason": "Needs the FEPR process."
+    },
+    {
+      "number": "468.1.a.2",
+      "milestone": "M3",
+      "reason": "Without abilities, one side of a combat is always destroyed, so attackers and defenders never both remain."
+    },
+    {
+      "number": "468.2",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "468.3.b",
+      "milestone": "M3",
+      "reason": "The engine reports the winner of a combat; losing a combat only matters to abilities (\"when I lose a combat\")."
+    },
+    {
+      "number": "468.3.d.1",
+      "milestone": "M3",
+      "reason": "Without abilities, both players never keep units after combat damage."
+    },
+    {
+      "number": "468.4",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "468.5.c",
+      "milestone": "M3",
+      "reason": "Hidden cards arrive with Hide (422)."
+    },
+    {
+      "number": "468.6",
+      "milestone": "M3",
+      "reason": "Needs the chain."
+    },
+    {
+      "number": "468.7.b",
+      "milestone": "M3",
+      "reason": "End of combat effects need abilities."
+    },
+    {
+      "number": "468.7.c",
+      "milestone": "M3",
+      "reason": "\"This combat\" effects need abilities."
+    },
+    {
+      "number": "470.2",
+      "milestone": "M3",
+      "reason": "Card text that scores points arrives with abilities."
+    },
+    {
+      "number": "470.3",
+      "milestone": "M3",
+      "reason": "Card text that refers to scoring arrives with abilities."
+    },
+    {
+      "number": "471.1.a",
+      "milestone": "unplanned",
+      "reason": "Needs teams; no team mode is on the roadmap."
+    },
+    {
+      "number": "473",
+      "milestone": "M3",
+      "reason": "Scoring does two things; the second, triggering Score abilities (473.2), needs abilities."
+    },
+    {
+      "number": "473.2",
+      "milestone": "M3",
+      "reason": "Conquer and Hold abilities need abilities."
+    },
+    {
+      "number": "473.2.a",
+      "milestone": "M3",
+      "reason": "Conquer and Hold abilities need abilities."
+    },
+    {
+      "number": "473.2.b",
+      "milestone": "M3",
+      "reason": "Conquer and Hold abilities need abilities."
+    },
+    {
+      "number": "473.2.c",
+      "milestone": "M3",
+      "reason": "Conquer and Hold abilities need abilities."
+    },
+    {
+      "number": "487.6",
+      "milestone": "M8",
+      "reason": "Matches (best of 1 or 3) arrive with matchmaking; the engine plays one game."
+    },
+    {
+      "number": "651.2",
+      "milestone": "unplanned",
+      "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
+    },
+    {
+      "number": "651.4",
+      "milestone": "unplanned",
+      "reason": "Needs teams; no team mode is on the roadmap."
+    },
+    {
+      "number": "652",
+      "milestone": "unplanned",
+      "reason": "With two players a concession ends the game (651.1); the removal of a player needs more."
+    },
+    {
+      "number": "652.1",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.2",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.2.a",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.2.b",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.2.c",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.3",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.4",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.a",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.a.1",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.b",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.b.1",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.b.2",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.c",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.c.1",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    },
+    {
+      "number": "652.5.c.2",
+      "milestone": "unplanned",
+      "reason": "Same as 652."
+    }
+  ]
+}

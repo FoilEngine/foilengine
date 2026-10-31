@@ -1,3 +1,124 @@
 {
-  "rules": []
+  "rules": [
+    {
+      "number": "104",
+      "reason": "Section title."
+    },
+    {
+      "number": "105",
+      "reason": "Section title."
+    },
+    {
+      "number": "107",
+      "reason": "Section title."
+    },
+    {
+      "number": "107.1",
+      "reason": "Section title."
+    },
+    {
+      "number": "107.2",
+      "reason": "Section title."
+    },
+    {
+      "number": "108",
+      "reason": "Section title."
+    },
+    {
+      "number": "108.2",
+      "reason": "Section title."
+    },
+    {
+      "number": "108.2.c",
+      "reason": "Physical handling: players may reorder their trash; the engine keeps one order, which reveals nothing (the trash is public, 108.2.d)."
+    },
+    {
+      "number": "108.3",
+      "reason": "Section title."
+    },
+    {
+      "number": "108.4",
+      "reason": "Section title."
+    },
+    {
+      "number": "108.5",
+      "reason": "Section title."
+    },
+    {
+      "number": "108.6",
+      "reason": "Section title."
+    },
+    {
+      "number": "108.6.d",
+      "reason": "Physical handling: players may reorder their banishment; the engine keeps one order, which reveals nothing (the banishment is public, 108.6.e)."
+    },
+    {
+      "number": "108.7",
+      "reason": "Section title."
+    },
+    {
+      "number": "108.7.d",
+      "reason": "Physical handling: players may reorder their hand; the engine keeps one order, shown only to the owner."
+    },
+    {
+      "number": "160",
+      "reason": "Section title."
+    },
+    {
+      "number": "163.1.b",
+      "reason": "Definition with no effect of its own: Energy is a plain amount (163.1.a is tested)."
+    },
+    {
+      "number": "164",
+      "reason": "Section title."
+    },
+    {
+      "number": "165",
+      "reason": "Section title."
+    },
+    {
+      "number": "166.3",
+      "reason": "Advice on physical trackers."
+    },
+    {
+      "number": "193",
+      "reason": "Section title."
+    },
+    {
+      "number": "318",
+      "reason": "Section title."
+    },
+    {
+      "number": "341",
+      "reason": "Section title."
+    },
+    {
+      "number": "349",
+      "reason": "Section title."
+    },
+    {
+      "number": "447",
+      "reason": "Section title."
+    },
+    {
+      "number": "456",
+      "reason": "Section title."
+    },
+    {
+      "number": "461",
+      "reason": "Section title."
+    },
+    {
+      "number": "465",
+      "reason": "Section title."
+    },
+    {
+      "number": "469",
+      "reason": "Section title."
+    },
+    {
+      "number": "649",
+      "reason": "Section title."
+    }
+  ]
 }

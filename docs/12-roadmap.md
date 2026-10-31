@@ -2,6 +2,8 @@
 
 Each milestone has verifiable acceptance criteria. We only move to the next one when all of them are met. Boxes are checked in this file as the work progresses.
 
+When a criterion says that the rules of some sections are covered, it means that each of them has the status `covered`, `not-applicable`, `question` (with an open entry in `rules/questions.md`), or `deferred` to a later milestone in `rules/deferred.json` (ADR 0018). Each milestone starts by taking back the rules deferred to it.
+
 The order is driven by dependencies: the engine first, tested, then everything that builds on it. Observability arrives early, because we build on it from the first server.
 
 ## M0 — Tooling
@@ -34,7 +36,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [x] The rune pool, energy and power, payment and automatic payment (160–168).
 - [x] Playing a unit (349–359, without abilities).
 - [x] Standard move (144, 447+).
-- [ ] Fixed-point cleanups (318–324).
+- [x] Fixed-point cleanups (318–324), the steps reachable without abilities; the others are deferred to M3.
 - [x] Showdowns without spells (341–348) and combat (461–468).
 - [x] Hold and conquer, the final point (469–474), victory (193–196), conceding (649–652).
 - [x] The 1v1 mode (487), with its first-turn process: the player going second channels an extra rune during their first Channel Phase (487.7, see Q-001).
@@ -42,10 +44,11 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [x] Fuzzer and invariants (`06-testing.md`), 10,000 games without a violation.
 - [x] Engine benchmarks and budgets in CI.
 
-**Accepted when**: 10,000 random games run to the end without an invariant violation, every rule of the sections above is `covered`, and the replay of every game is deterministic.
+**Accepted when**: 10,000 random games run to the end without an invariant violation, every rule of the sections above is covered, and the replay of every game is deterministic.
 
 ## M3 — The chain, abilities and keywords
 
+- [ ] The rules deferred to M3 (`rules/deferred.json`), among them the cleanup steps that need the chain or abilities (319.1, 319.3–319.5, 320–322, 323.2, 323.6, 323.7.a, 323.9, 323.10, 323.13, 324.2).
 - [ ] The chain and the HOT FEPR process (325–340), with one name per step in the code.
 - [ ] Spells (153–159), Action and Reaction timing (806, 813), showdowns with spells.
 - [ ] Passive, replacement, activated and triggered abilities (360+), the order of simultaneous triggers.
@@ -55,7 +58,7 @@ The goal: a real game end to end, with vanilla units, runes and battlefields wit
 - [ ] The `cards` DSL and one module per keyword of section 800.
 - [ ] Manual mode (`ManualOverride`).
 
-**Accepted when**: every keyword has its scenarios, the fuzzer runs with test cards covering every keyword, and the sections above are `covered`.
+**Accepted when**: every keyword has its scenarios, the fuzzer runs with test cards covering every keyword, and the sections above are covered.
 
 ## M4 — The real cards
 

@@ -60,7 +60,11 @@ Riot also publishes rules patch notes: quote them in `changes/<version>.md`.
 
 ## Rules that do not apply to the engine
 
-`not-applicable.json` lists the rules with no effect on the engine (definitions, advice), each with its reason: `{ "rules": [{ "number": "…", "reason": "…" }] }`. The rule coverage report gives them the `not-applicable` status. The list starts empty: a rule is added only after it was read and judged, never by default.
+`not-applicable.json` lists the rules with no effect on the engine (definitions, advice), each with its reason: `{ "rules": [{ "number": "…", "reason": "…" }] }`. The rule coverage report gives them the `not-applicable` status. A rule is added only after it was read and judged, never by default.
+
+## Rules deferred to a later milestone
+
+`deferred.json` lists the rules that the engine cannot implement or test yet, because they need something a later milestone brings (ADR 0018): `{ "rules": [{ "number": "…", "milestone": "M3", "reason": "…" }] }`. `milestone` is a roadmap milestone (`M3` to `M9`), or `unplanned` when no milestone plans it yet (multiplayer and team modes). The reason says what is missing. A lead-in rule whose list holds a deferred item is deferred too. When a rule gets its scenario, remove it from the list: the coverage report fails otherwise. Each milestone starts by taking back the rules deferred to it.
 
 ## Open questions
 
