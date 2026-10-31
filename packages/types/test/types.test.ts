@@ -45,8 +45,8 @@ describe('pure JSON (ADR 0004)', () => {
   });
 
   it('the state has a schema version', () => {
-    expect(STATE_VERSION).toBe(14);
-    expectTypeOf<GameState['version']>().toEqualTypeOf<14>();
+    expect(STATE_VERSION).toBe(15);
+    expectTypeOf<GameState['version']>().toEqualTypeOf<15>();
   });
 });
 
@@ -149,6 +149,8 @@ describe('assertNever', () => {
           return 'finalize';
         case 'Predict':
           return 'predict';
+        case 'Weaponmaster':
+          return 'weaponmaster';
         case 'AssignCombatDamage':
           return 'assign damage';
         case 'Concede':

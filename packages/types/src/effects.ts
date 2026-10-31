@@ -45,7 +45,18 @@ export type Keyword =
    * 824: "[Level N][>] [Text]", "While you have N or more XP, this card gains [Text]": a Dependent
    * Keyword (727); its ability carries the condition (`AbilityCondition` `level`).
    */
-  | 'level';
+  | 'level'
+  /**
+   * 819: short for "[Reaction]" and "When you play this, attach it to a unit you control"
+   * (819.1.d): a card with Quick-Draw also has Reaction and that triggered ability, as data.
+   */
+  | 'quick-draw'
+  /**
+   * 821: a Play Effect, "When you play me, you may choose a card you control with the Equipment
+   * tag; pay the cost of its Equip ability, reduced by [A], to attach it to this unit" (821.1.c):
+   * a card with Weaponmaster also has that ability (a `weaponmaster` instruction).
+   */
+  | 'weaponmaster';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b, 809.1.b): Assault X, "While I am an attacker, I have
@@ -101,6 +112,12 @@ export type Instruction =
    * the resolution (ADR 0020).
    */
   | { readonly kind: 'predict'; readonly amount: number }
+  /**
+   * Weaponmaster's effect (821.1.c): its controller may choose an Equipment they control and pay
+   * its Equip cost reduced by [A] to attach it to the permanent the ability is on. A choice during
+   * the resolution (ADR 0020).
+   */
+  | { readonly kind: 'weaponmaster' }
   /** "Gain X XP." (730.1): its controller gains XP. */
   | { readonly kind: 'gain-xp'; readonly amount: number }
   /** "Attach this to [target]." (435): the permanent the ability is on becomes Attached to it. */
