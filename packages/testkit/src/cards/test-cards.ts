@@ -35,6 +35,7 @@ const card = (
     abilities?: Ability[];
     effectText?: CardDefinition['effectText'];
     mightBonus?: number;
+    repeat?: Cost;
     text?: string;
   } = {},
 ): CardDefinition => ({
@@ -52,6 +53,7 @@ const card = (
   ...(options.abilities === undefined ? {} : { abilities: options.abilities }),
   ...(options.effectText === undefined ? {} : { effectText: options.effectText }),
   ...(options.mightBonus === undefined ? {} : { mightBonus: options.mightBonus }),
+  ...(options.repeat === undefined ? {} : { repeat: options.repeat }),
   text: options.text ?? '',
 });
 
@@ -508,6 +510,30 @@ export const TEST_CARDS = {
     ],
     text: '[Disarm]',
   }),
+  /** Repeat [1] (820): "Deal 1 to a unit.", executed a second time if Repeat is paid. */
+  volley: card('test:volley', 'spell', {
+    name: 'Volley',
+    cost: { energy: 1, power: [] },
+    keywords: ['repeat'],
+    repeat: { energy: 1, power: [] },
+    targets: [{ kind: 'unit' }],
+    instructions: [{ kind: 'deal', amount: 1, target: 0 }],
+    text: '[Repeat] [1] Deal 1 to a unit.',
+  }),
+  /** Deploy (830): played to a battlefield, not recalled; "When an opponent holds here, kill this." */
+  mine: card('test:mine', 'gear', {
+    name: 'Mine',
+    cost: { energy: 1, power: [] },
+    keywords: ['deploy'],
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'opponent-holds-here' },
+        instructions: [{ kind: 'kill', target: 'self' }],
+      },
+    ],
+    text: '[Deploy]',
+  }),
   /** Hunt 1 (823): "When I conquer or hold, my controller gains 1 XP." */
   tracker: card('test:tracker', 'unit', {
     name: 'Tracker',
@@ -708,7 +734,12 @@ export const TEST_ABILITY_UNITS = [
 ];
 
 /** The test gear, for decks that exercise them. */
-export const TEST_GEAR = [TEST_CARDS.lantern, TEST_CARDS.blade, TEST_CARDS.holster];
+export const TEST_GEAR = [
+  TEST_CARDS.lantern,
+  TEST_CARDS.blade,
+  TEST_CARDS.holster,
+  TEST_CARDS.mine,
+];
 
 /** The test spells, for decks that exercise the Chain. */
 export const TEST_SPELLS = [
@@ -721,6 +752,7 @@ export const TEST_SPELLS = [
   TEST_CARDS.bless,
   TEST_CARDS.muster,
   TEST_CARDS.glimpse,
+  TEST_CARDS.volley,
 ];
 
 /** Every test card, keyed by id. */
