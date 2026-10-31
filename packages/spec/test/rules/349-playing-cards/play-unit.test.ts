@@ -54,25 +54,42 @@ describe('349–359 Playing a unit', () => {
     },
   });
 
-  scenario('rule 124: a played unit leaves the hand, a Non-Board Zone, and becomes a new object', {
-    rules: ['124'],
-    setup: firstMainPhase(),
-    check: (t) => {
-      const card = inHand(t.state, 'test:vanilla-1');
-      const [rune] = baseRunes(t.state);
-      t.act({
-        type: 'PlayCard',
-        player: A,
-        card,
-        location: { kind: 'base' },
-        payment: [{ rune: rune as ObjectId, use: 'exhaust' }],
-      });
-      const [played] = ofType(t.events, 'CardPlayed');
-      t.expect(played?.object).not.toBe(card);
-      t.expect(t.state.objects[card]).toBeUndefined();
-      t.expect(t.state.objects[played?.object as ObjectId]?.previousObjectId).toBe(card);
+  scenario(
+    'rule 124: a played unit goes from the hand to the Chain, then to the board: a new object each time',
+    {
+      rules: ['124', '328', '354', '337.2', '352', '352.1', '352.2', '359.2'],
+      setup: firstMainPhase(),
+      check: (t) => {
+        const card = inHand(t.state, 'test:vanilla-1');
+        const [rune] = baseRunes(t.state);
+        t.act({
+          type: 'PlayCard',
+          player: A,
+          card,
+          location: { kind: 'base' },
+          payment: [{ rune: rune as ObjectId, use: 'exhaust' }],
+        });
+        const [onChain] = ofType(t.events, 'ChainItemAdded');
+        const [played] = ofType(t.events, 'CardPlayed');
+        t.expect(onChain).toMatchObject({ previousObject: card, from: 'hand' });
+        // Pending, then Finalized (352), then it resolves at once: it leaves the Chain and becomes
+        // a game object on the board (337.2, 359.2).
+        t.expect(
+          t.events
+            .map((e) => e.type)
+            .filter((type) =>
+              ['ChainItemAdded', 'ChainItemFinalized', 'CardPlayed'].includes(type),
+            ),
+        ).toEqual(['ChainItemAdded', 'ChainItemFinalized', 'CardPlayed']);
+        t.expect(t.state.chain).toBeNull();
+        t.expect(t.state.objects[card]).toBeUndefined();
+        t.expect(t.state.objects[onChain?.object as ObjectId]).toBeUndefined();
+        t.expect(t.state.objects[played?.object as ObjectId]?.previousObjectId).toBe(
+          onChain?.object,
+        );
+      },
     },
-  });
+  );
 
   scenario(
     'rule 355.2.a: a unit cannot be played to a battlefield its controller does not control',
