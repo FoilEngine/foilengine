@@ -107,11 +107,13 @@ function itemOf(draft: Draft, object: ObjectId): ChainItem {
 export function finalize(draft: Draft, object: ObjectId): void {
   const chain = draft.chain;
   if (chain === null) throw new EngineInvariantError('No Chain');
-  itemOf(draft, object);
+  const item = itemOf(draft, object);
   draft.chain = {
     ...chain,
     items: chain.items.map((i) => (i.object === object ? { ...i, status: 'finalized' } : i)),
   };
+  // 812.1.c: a card finalized by its controller this turn, for Legion.
+  if (item.ability === null) playerOf(draft, item.controller).finalizedThisTurn.push(object);
   emit(draft, {
     type: 'ChainItemFinalized',
     rule: '359.1',

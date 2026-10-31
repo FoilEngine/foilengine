@@ -203,7 +203,7 @@ export function effectOf(
   const ability = (draft.cards[item.ability.card] as CardDefinition).abilities?.[
     item.ability.index
   ];
-  if (ability === undefined || ability.kind === 'passive') {
+  if (ability === undefined || ability.kind === 'passive' || ability.kind === 'discount') {
     throw new EngineInvariantError(
       `${item.ability.card} has no ability ${item.ability.index} that uses the Chain`,
     );

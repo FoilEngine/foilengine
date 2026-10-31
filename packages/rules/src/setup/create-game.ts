@@ -46,6 +46,7 @@ export function createGame(setup: GameSetup, seed: Seed): CreateGameResult {
       turnsTaken: 0,
       runePool: emptyPool(),
       xp: 0,
+      finalizedThisTurn: [],
       scoredThisTurn: [],
       zones: emptyZones(),
     })),

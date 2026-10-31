@@ -173,8 +173,12 @@ function nextTurn(draft: Draft): void {
   const turnNumber = (previous?.turnNumber ?? 0) + 1;
   const player = playerOf(draft, playerId);
   player.turnsTaken += 1;
-  // 472: a player Scores each battlefield once per turn; a new turn starts a new count.
-  for (const p of draft.players) p.scoredThisTurn = [];
+  // 472: a player Scores each battlefield once per turn; a new turn starts a new count. So does
+  // the list of cards finalized this turn (812.1.c).
+  for (const p of draft.players) {
+    p.scoredThisTurn = [];
+    p.finalizedThisTurn = [];
+  }
   emit(draft, {
     type: 'TurnStarted',
     rule: '315',

@@ -12,13 +12,13 @@ import type {
 import { addAbility, finalize, givePriorityToNewest } from '../chain/chain.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
 import {
+  conditionContext,
   controllerOf,
   type Draft,
   draftOf,
   emit,
   findObject,
   locationOf,
-  playerOf,
   topMostOf,
   updateObject,
 } from '../draft.ts';
@@ -103,7 +103,13 @@ export function activate(
     );
   }
   // 727.1.c.3: an ability of a Dependent Keyword is activated only while it is Active.
-  if (!conditionsMet(ability.requires, action.player, (p) => playerOf(draft, p).xp)) {
+  if (
+    !conditionsMet(
+      ability.requires,
+      action.player,
+      conditionContext(draft, source.previousObjectId),
+    )
+  ) {
     return illegal('invalid-source', `${definition.name}'s ability is Inactive`, '727.1.b');
   }
 

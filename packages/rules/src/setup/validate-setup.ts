@@ -75,7 +75,9 @@ function missingTokens(setup: GameSetup): CardId[] {
   for (const definition of Object.values(setup.cards)) {
     const lists = [
       definition.instructions ?? [],
-      ...(definition.abilities ?? []).map((a) => (a.kind === 'passive' ? [] : a.instructions)),
+      ...(definition.abilities ?? []).map((a) =>
+        a.kind === 'passive' || a.kind === 'discount' ? [] : a.instructions,
+      ),
     ];
     for (const instruction of lists.flat()) {
       if (instruction.kind === 'play-token' && setup.cards[instruction.token]?.token !== true) {

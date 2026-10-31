@@ -12,10 +12,12 @@ import type {
   PlayCard,
   PlayerId,
 } from '@foilengine/types';
+import { type ConditionContext, conditionsMet } from '../abilities/conditions.ts';
 import { trigger } from '../abilities/triggers.ts';
 import { addToChain, finalize, givePriorityToNewest, removeFromChain } from '../chain/chain.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
 import {
+  conditionContext,
   type Draft,
   draftOf,
   emit,
@@ -65,6 +67,29 @@ export function timingProblem(
     );
   }
   return null;
+}
+
+/**
+ * 356.4, 356.4.a, 356.4.b: the Energy discount of the card being played, from its own discount
+ * abilities that are Active (727.1.c.2), e.g. "[Legion][>] I cost [2] less".
+ */
+export function discountOf(
+  definition: CardDefinition,
+  controller: PlayerId,
+  context: ConditionContext,
+): number {
+  let energy = 0;
+  for (const ability of definition.abilities ?? []) {
+    if (ability.kind === 'discount' && conditionsMet(ability.requires, controller, context)) {
+      energy += ability.energy;
+    }
+  }
+  return energy;
+}
+
+/** 356.4.d, 356.6: a discount of the total Energy cost, never below 0. */
+export function discounted(cost: Cost, energy: number): Cost {
+  return energy === 0 ? cost : { energy: Math.max(0, cost.energy - energy), power: cost.power };
 }
 
 /**
@@ -170,8 +195,9 @@ function playCard(
   // (356.2.b); runes add resources first (357.1.a), then the pool pays it (357.1).
   const runes = useRunes(draft, state, action.player, action.payment);
   if (runes !== null) return runes;
-  // Deflect is a mandatory additional cost of the targets chosen (809.1.d, 356.2.a.2).
-  const total = withDeflect(
+  // Deflect is a mandatory additional cost of the targets chosen (809.1.d, 356.2.a.2); discounts
+  // apply last (356.4).
+  const withAdditional = withDeflect(
     draft,
     action.player,
     extra === null
@@ -181,6 +207,10 @@ function playCard(
           power: [...definition.cost.power, ...extra.power],
         },
     targets,
+  );
+  const total = discounted(
+    withAdditional,
+    discountOf(definition, action.player, conditionContext(draft, item)),
   );
   const paid = payCost(draft, action.player, total);
   if (paid !== null) return paid; // 358.2
