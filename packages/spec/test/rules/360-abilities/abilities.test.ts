@@ -530,3 +530,117 @@ describe('383.4.e, 383.4.f Attack and Defend triggers', () => {
     },
   );
 });
+
+describe('808 Deathknell, and costs of triggered abilities (383.3.b)', () => {
+  scenario(
+    'rule 808.1.c: a Deathknell ability triggers when its unit dies, and resolves before the combat result',
+    {
+      rules: [
+        '808.1.c',
+        '808',
+        '808.1',
+        '808.1.a',
+        '808.1.b',
+        '808.1.b.1',
+        '808.1.c.1',
+        '808.1.d',
+        '429.1.a.2',
+        '468.2',
+      ],
+      // A's Martyr (Might 1) holds the first battlefield; B's Vanilla 2 (Might 2) attacks it on
+      // turn 4, and both pass: B must assign damage.
+      setup: () => {
+        let state = start(['Martyr', v(1), v(2), v(3)]);
+        state = act(state, play(state, A, 'test:martyr')).state;
+        state = endTurn(state).state;
+        state = act(state, play(state, B, 'test:vanilla-2')).state;
+        state = endTurn(state).state;
+        state = endTurn(conquer(state).state).state;
+        const [attacker] = unitsInBase(state, B) as [ObjectId];
+        return act(
+          state,
+          move(B, [attacker], battlefield(state, 0)),
+          { type: 'PassFocus', player: B },
+          { type: 'PassFocus', player: A },
+        ).state;
+      },
+      check: (t) => {
+        const [martyr] = t.state.combat?.defenders ?? [];
+        const [attacker] = t.state.combat?.attackers ?? [];
+        t.act(
+          {
+            type: 'AssignCombatDamage',
+            player: B,
+            assignment: [{ unit: martyr as ObjectId, amount: 2 }],
+          },
+          {
+            type: 'AssignCombatDamage',
+            player: A,
+            assignment: [{ unit: attacker as ObjectId, amount: 1 }],
+          },
+        );
+        t.expect(ofType(t.events, 'UnitKilled')).toMatchObject([{ unit: martyr }]);
+        t.expect(ofType(t.events, 'AbilityAdded')).toMatchObject([
+          { player: A, source: martyr, card: 'test:martyr', triggered: true },
+        ]);
+        // 468.2: the combat result waits for the Chain.
+        t.expect(ofType(t.events, 'CombatEnded')).toEqual([]);
+        t.expect(t.state.combat).toMatchObject({ step: 'resolution' });
+        t.act(pass(A), pass(B));
+        const types = t.events.map((e) => e.type);
+        t.expect(types.indexOf('CardDrawn')).toBeLessThan(types.indexOf('ControlEstablished'));
+        t.expect(ofType(t.events, 'CombatEnded')).toMatchObject([{ winner: B }]);
+      },
+    },
+  );
+
+  scenario('rule 383.3.b: a cost within a triggered ability is paid as it is finalized', {
+    rules: ['383.3.b'],
+    // Bounty, played on turn 1, conquers the first battlefield on turn 3 with runes to spare.
+    setup: () => readyOnTurnThree('Bounty'),
+    check: (t) => {
+      const [bounty] = unitsInBase(t.state, A) as [ObjectId];
+      t.act(
+        move(A, [bounty], battlefield(t.state, 0)),
+        { type: 'PassFocus', player: A },
+        { type: 'PassFocus', player: B },
+      );
+      t.expectDecision({
+        kind: 'FinalizeAbility',
+        player: A,
+        optional: true,
+        cost: { energy: 1, power: [] },
+      });
+      const payment = autoPayment(t.state, A, { energy: 1, power: [] }) ?? [];
+      t.act({ type: 'FinalizeAbility', player: A, perform: true, payment });
+      t.expect(ofType(t.events, 'ResourcesPaid')).toMatchObject([
+        { player: A, resources: { energy: 1, power: {} } },
+      ]);
+      t.expect(t.state.chain?.items[0]?.status).toBe('finalized');
+      t.act(pass(A), pass(B));
+      t.expect(ofType(t.events, 'CardDrawn')).toMatchObject([{ player: A }]);
+    },
+  });
+
+  scenario(
+    'rule 383.3.b.1: a triggered ability whose cost cannot be paid is not put on the Chain',
+    {
+      rules: ['383.3.b.1'],
+      // Turn 1: A plays Vanilla 1 with one rune, then Toll with the other: nothing is left for Toll's
+      // ability.
+      setup: () => {
+        const state = start([v(1), 'Toll', v(2), v(3)]);
+        return act(state, play(state, A, 'test:vanilla-1')).state;
+      },
+      check: (t) => {
+        t.act(play(t.state, A, 'test:toll'));
+        const [added] = ofType(t.events, 'AbilityAdded');
+        t.expect(ofType(t.events, 'ChainItemRemoved')).toMatchObject([
+          { object: added?.object, rule: '383.3.b.1' },
+        ]);
+        t.expect(ofType(t.events, 'CardDrawn')).toEqual([]);
+        t.expect(t.state.chain).toBeNull();
+      },
+    },
+  );
+});
