@@ -296,6 +296,16 @@ export type XpGained = EventBase & {
   readonly xp: number;
 };
 
+/** A gear was killed: it went from the board to its owner's trash as a new object (429, 148.1.a.4). */
+export type GearKilled = EventBase & {
+  readonly type: 'GearKilled';
+  readonly player: PlayerId;
+  readonly gear: ObjectId;
+  /** The new object in the trash. */
+  readonly object: ObjectId;
+  readonly card: CardId;
+};
+
 /** Units were healed: their damage was cleared (419). */
 export type UnitsHealed = EventBase & {
   readonly type: 'UnitsHealed';
@@ -507,6 +517,7 @@ export type GameEvent =
   | Predicted
   | XpGained
   | ObjectEmpowered
+  | GearKilled
   | UnitsHealed
   | UnitsRecalled
   | CombatEnded
@@ -569,6 +580,7 @@ export const PRIVATE_EVENT_FIELDS = {
   Predicted: [],
   XpGained: [],
   ObjectEmpowered: [],
+  GearKilled: [],
   UnitsHealed: [],
   UnitsRecalled: [],
   CombatEnded: [],

@@ -83,6 +83,7 @@ export {
   type GameWon,
   type GearAttached,
   type GearDetached,
+  type GearKilled,
   type GearRecalled,
   type MightGiven,
   type MulliganTaken,

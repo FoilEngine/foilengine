@@ -29,6 +29,14 @@ export function score(
     (unit) => controllerOf(draft, unit) === playerId,
   );
   trigger(draft, method, present);
+  // 830.1.b: "When an opponent holds here": the permanents of other players there.
+  if (method === 'hold') {
+    const here = battlefieldOf(draft, battlefield);
+    const others = [...here.units, ...here.gear].filter(
+      (id) => controllerOf(draft, id) !== playerId,
+    );
+    trigger(draft, 'opponent-holds-here', others);
+  }
 
   // 473.1.b: a Conquer by a player 1 point or less from the Victory Score gives the Final Point
   // only if they Scored every battlefield this turn; otherwise they draw a card instead (473.1.b.1).

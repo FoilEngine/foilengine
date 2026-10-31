@@ -36,6 +36,8 @@ export type ChainItemView = {
   readonly controller: PlayerId;
   readonly status: 'pending' | 'finalized';
   readonly targets: readonly ObjectId[];
+  /** The targets of the execution paid with Repeat (820.2), if it was paid. */
+  readonly repeat?: readonly ObjectId[];
 };
 
 /** The Chain as every player sees it. */

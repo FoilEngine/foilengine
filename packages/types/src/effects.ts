@@ -72,7 +72,17 @@ export type Keyword =
    * 828: "[Empowered][>] [Text]", "While I have the Empowered status, this card gains [Text]": a
    * Dependent Keyword (727); its ability carries the condition (`empowered`).
    */
-  | 'empowered';
+  | 'empowered'
+  /**
+   * 820: "Repeat [Cost]": an optional additional cost; if paid, the instructions are executed one
+   * additional time (820.1.d). The cost is `CardDefinition.repeat`.
+   */
+  | 'repeat'
+  /**
+   * 830: gear played only to a battlefield, any one (830.1.b, 830.1.b.1), not recalled in cleanups
+   * (830.1.b.3); its "When an opponent holds here, kill this" is a triggered ability, as data.
+   */
+  | 'deploy';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b, 809.1.b): Assault X, "While I am an attacker, I have
@@ -166,6 +176,8 @@ export type Trigger =
   | { readonly kind: 'dies' }
   /** "When I become Empowered" (828.1.d). */
   | { readonly kind: 'empowered' }
+  /** "When an opponent holds here" (830.1.b): another player Holds the battlefield it is at. */
+  | { readonly kind: 'opponent-holds-here' }
   | { readonly kind: 'beginning' };
 
 /**

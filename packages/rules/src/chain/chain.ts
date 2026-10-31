@@ -30,6 +30,7 @@ export function addToChain(
   card: ObjectId,
   from: 'hand' | 'championZone',
   targets: readonly ObjectId[],
+  repeat?: readonly ObjectId[],
 ): ObjectId {
   const player = playerOf(draft, playerId);
   player.zones[from] = player.zones[from].filter((id) => id !== card);
@@ -40,6 +41,7 @@ export function addToChain(
     status: 'pending',
     targets,
     ability: null,
+    ...(repeat === undefined ? {} : { repeat }),
   };
   append(draft, item, false);
   emit(draft, {

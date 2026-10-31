@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 17;
+export const STATE_VERSION = 18;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -146,6 +146,8 @@ export type ChainItem = {
   /** The chosen targets, in the order of the card's or the ability's `targets` (355.5). */
   readonly targets: readonly ObjectId[];
   readonly ability: ChainAbility | null;
+  /** Repeat paid (820.1.d): the targets of the additional execution. Absent otherwise. */
+  readonly repeat?: readonly ObjectId[];
 };
 
 /** A triggered ability whose Condition was met, waiting to be put on the Chain (383.3). */

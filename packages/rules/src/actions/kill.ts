@@ -4,7 +4,16 @@
 
 import type { ObjectId } from '@foilengine/types';
 import { trigger } from '../abilities/triggers.ts';
-import { type Draft, emit, locationOf, objectOf, playerOf, renewObject } from '../draft.ts';
+import {
+  type Draft,
+  emit,
+  locationOf,
+  objectOf,
+  playerOf,
+  renewObject,
+  setAttached,
+  topMostOf,
+} from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { detachAll } from './attach.ts';
 import { ceaseIfToken } from './play-token.ts';
@@ -23,26 +32,47 @@ export function killPermanents(
     detachAll(draft, unit);
     const location = locationOf(draft, unit);
     if (location === null) throw new EngineInvariantError(`${unit} is not on the board`);
-    if (location.kind === 'base') {
+    // An Attached gear leaves its Top-Most Card (148.1.a.4, 436); others leave their zone.
+    const top = topMostOf(draft, unit);
+    if (top !== null) {
+      setAttached(
+        draft,
+        top,
+        (objectOf(draft, top).attached ?? []).filter((id) => id !== unit),
+      );
+    } else if (location.kind === 'base') {
       const base = playerOf(draft, location.player).zones;
       base.base = base.base.filter((id) => id !== unit);
     } else {
       location.battlefield.units = location.battlefield.units.filter((id) => id !== unit);
+      location.battlefield.gear = location.battlefield.gear.filter((id) => id !== unit);
     }
     // 429.2: directly to its owner's trash; a Non-Board Zone, so a new object (124).
     const owner = objectOf(draft, unit).owner;
     const dead = renewObject(draft, unit);
     const trash = playerOf(draft, owner).zones.trash;
     trash.push(dead.id);
-    emit(draft, {
-      type: 'UnitKilled',
-      rule,
-      visibility: { kind: 'public' },
-      player: owner,
-      unit,
-      object: dead.id,
-      card: dead.card,
-    });
+    if (draft.cards[dead.card]?.category === 'gear') {
+      emit(draft, {
+        type: 'GearKilled',
+        rule,
+        visibility: { kind: 'public' },
+        player: owner,
+        gear: unit,
+        object: dead.id,
+        card: dead.card,
+      });
+    } else {
+      emit(draft, {
+        type: 'UnitKilled',
+        rule,
+        visibility: { kind: 'public' },
+        player: owner,
+        unit,
+        object: dead.id,
+        card: dead.card,
+      });
+    }
     ceaseIfToken(draft, dead.id, trash);
   }
 }

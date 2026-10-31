@@ -144,7 +144,15 @@ function playCard(
 
   // Step 1 (354): the card goes on the Chain, Pending.
   const targets = action.targets ?? [];
-  const item = addToChain(draft, action.player, action.card, from, targets);
+  const repeated = action.repeat?.targets ?? [];
+  const item = addToChain(
+    draft,
+    action.player,
+    action.card,
+    from,
+    targets,
+    action.repeat === undefined ? undefined : repeated,
+  );
 
   // Step 2 (355): choices. A unit chooses where it enters (355.2): the base, or a battlefield
   // its player controls (355.2.a). A spell has no location; it chooses its targets (355.5).
@@ -167,8 +175,22 @@ function playCard(
       battlefield = target.object;
     }
   } else if (definition.category === 'gear') {
-    // 148.1.a.1, 149.2: gear can only be played to its player's base.
-    if (location !== undefined && location.kind !== 'base') {
+    if ((definition.keywords ?? []).includes('deploy')) {
+      // 830.1.b, 830.1.b.1: with Deploy, only to a battlefield, any battlefield.
+      const target =
+        location?.kind === 'battlefield'
+          ? draft.battlefields.find((b) => b.object === location.battlefield)
+          : undefined;
+      if (target === undefined) {
+        return illegal(
+          'invalid-location',
+          'Gear with Deploy is played to a battlefield',
+          '830.1.b',
+        );
+      }
+      battlefield = target.object;
+    } else if (location !== undefined && location.kind !== 'base') {
+      // 148.1.a.1, 149.2: gear can only be played to its player's base.
       return illegal('invalid-location', 'Gear can only be played to your base', '149.2');
     }
   } else if (location !== undefined) {
@@ -190,6 +212,20 @@ function playCard(
     return illegal('card-not-playable', `${definition.name} has no Accelerate`, '805.1.a');
   }
   if (extra !== null && 'code' in extra) return extra;
+  // 820.1.c.1: Repeat, an optional additional cost of a spell, with targets of its own (820.2).
+  if (action.repeat !== undefined) {
+    if (definition.repeat === undefined || definition.category !== 'spell') {
+      return illegal('card-not-playable', `${definition.name} has no Repeat`, '820.1.a');
+    }
+    if (repeated.length !== specs.length) {
+      return illegal(
+        'invalid-target',
+        `The repeated execution needs ${specs.length} target(s), ${repeated.length} given`,
+        '820.2',
+      );
+    }
+  }
+  const repeatCost = action.repeat === undefined ? null : (definition.repeat as Cost);
 
   // Steps 3 and 4 (356, 357): the total cost is the printed cost plus the additional costs paid
   // (356.2.b); runes add resources first (357.1.a), then the pool pays it (357.1).
@@ -197,16 +233,21 @@ function playCard(
   if (runes !== null) return runes;
   // Deflect is a mandatory additional cost of the targets chosen (809.1.d, 356.2.a.2); discounts
   // apply last (356.4).
+  // Deflect counts each time a target is chosen, the repeated execution's included (809.1.c).
+  const additional = [extra, repeatCost].filter((c): c is Cost => c !== null);
   const withAdditional = withDeflect(
     draft,
     action.player,
-    extra === null
+    additional.length === 0
       ? definition.cost
-      : {
-          energy: definition.cost.energy + extra.energy,
-          power: [...definition.cost.power, ...extra.power],
-        },
-    targets,
+      : additional.reduce(
+          (total, cost) => ({
+            energy: total.energy + cost.energy,
+            power: [...total.power, ...cost.power],
+          }),
+          definition.cost,
+        ),
+    [...targets, ...repeated],
   );
   const total = discounted(
     withAdditional,
@@ -217,10 +258,12 @@ function playCard(
 
   // Step 5 (358): check legality. Targets (358.1, 355.9), timing (358.4). If a check fails,
   // the whole play is undone (358.5): the caller drops the draft.
-  for (const [index, spec] of specs.entries()) {
-    const target = targets[index] as ObjectId;
-    if (!isValidTarget(draft, spec, target, action.player)) {
-      return illegal('invalid-target', `${target} is not a valid target`, '355.9');
+  for (const chosen of action.repeat === undefined ? [targets] : [targets, repeated]) {
+    for (const [index, spec] of specs.entries()) {
+      const target = chosen[index] as ObjectId;
+      if (!isValidTarget(draft, spec, target, action.player)) {
+        return illegal('invalid-target', `${target} is not a valid target`, '355.9');
+      }
     }
   }
   const timing = timingProblem(
@@ -292,7 +335,9 @@ function enterBoard(
   else {
     const target = draft.battlefields.find((b) => b.object === battlefield);
     if (target === undefined) throw new EngineInvariantError(`Unknown battlefield ${battlefield}`);
-    target.units.push(unit.id);
+    // A gear at a battlefield is among its gear, not its units (152.2, 830.1.b).
+    if (draft.cards[unit.card]?.category === 'gear') target.gear.push(unit.id);
+    else target.units.push(unit.id);
   }
   emit(draft, {
     type: 'CardPlayed',
