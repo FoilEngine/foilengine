@@ -40,12 +40,15 @@ export type AbilityCost = {
 
 /**
  * The Condition of a triggered ability (383.2.a). For now, the named ones on a permanent about
- * itself: "When you play me" (383.4.a), "When I conquer" (383.4.c), "When I hold" (383.4.d).
+ * itself: "When you play me" (383.4.a), "When I conquer" (383.4.c), "When I hold" (383.4.d),
+ * "When I attack" (383.4.e), "When I defend" (383.4.f).
  */
 export type Trigger =
   | { readonly kind: 'played' }
   | { readonly kind: 'conquer' }
-  | { readonly kind: 'hold' };
+  | { readonly kind: 'hold' }
+  | { readonly kind: 'attack' }
+  | { readonly kind: 'defend' };
 
 /** An ability of a card (361). Passive and replacement abilities arrive with the layers. */
 export type Ability =
@@ -58,11 +61,14 @@ export type Ability =
       readonly instructions: readonly Instruction[];
     }
   /**
-   * "When …" (383): put on the Chain when its Condition is met (383.3). Choices at finalization
-   * (targets, "you may", 383.3.a) arrive later.
+   * "When …" (383): put on the Chain when its Condition is met (383.3). Its controller makes its
+   * choices as it is finalized: whether to perform it when it says "you may" first (`optional`,
+   * 383.3.a), and its targets (355.5).
    */
   | {
       readonly kind: 'triggered';
       readonly trigger: Trigger;
+      readonly optional?: boolean;
+      readonly targets?: readonly TargetSpec[];
       readonly instructions: readonly Instruction[];
     };

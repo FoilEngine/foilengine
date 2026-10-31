@@ -396,11 +396,6 @@
       "reason": "Abilities arrive with M3."
     },
     {
-      "number": "346.1",
-      "milestone": "M3",
-      "reason": "Needs the chain."
-    },
-    {
       "number": "347",
       "milestone": "M3",
       "reason": "One of the two options, playing a card or an ability (347.1), needs Action and Reaction timing."
@@ -1201,29 +1196,9 @@
       "reason": "A showdown is only ongoing when a combat opens if a unit joined it through spells or abilities."
     },
     {
-      "number": "466.2.c.3",
-      "milestone": "M3",
-      "reason": "Unit designations only matter to effects."
-    },
-    {
       "number": "466.2.c.3.a",
       "milestone": "M3",
       "reason": "Units can only arrive during combat through spells or abilities."
-    },
-    {
-      "number": "466.2.d",
-      "milestone": "M3",
-      "reason": "Needs triggers and the chain."
-    },
-    {
-      "number": "466.2.d.1",
-      "milestone": "M3",
-      "reason": "Needs triggers and the chain."
-    },
-    {
-      "number": "466.2.e",
-      "milestone": "M3",
-      "reason": "Needs the chain."
     },
     {
       "number": "466.2.f",

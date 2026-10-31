@@ -383,3 +383,150 @@ describe('376–381, 399–407 Activated abilities', () => {
     },
   });
 });
+
+describe('337.1 Choices as a triggered ability is finalized', () => {
+  scenario(
+    'rule 383.3.a: a triggered ability that says "you may" first is performed or not as it is finalized',
+    {
+      rules: ['383.3.a', '383.3.a.1', '383.3.a.2'],
+      setup: () => start(['Scholar', v(1), v(2), v(3)]),
+      check: (t) => {
+        t.act(play(t.state, A, 'test:scholar'));
+        const [added] = ofType(t.events, 'AbilityAdded');
+        t.expectDecision({
+          kind: 'FinalizeAbility',
+          player: A,
+          item: added?.object as ObjectId,
+          optional: true,
+        });
+        // Declined: it leaves the Chain and is considered not to have triggered.
+        const hand = t.player('A').zones.hand.length;
+        t.act({ type: 'FinalizeAbility', player: A, perform: false });
+        t.expect(ofType(t.events, 'ChainItemRemoved')).toMatchObject([
+          { object: added?.object, rule: '383.3.a.2' },
+        ]);
+        t.expect(t.state.chain).toBeNull();
+        t.expect(t.player('A').zones.hand).toHaveLength(hand);
+        t.expectDecision({ kind: 'Priority', player: A, rule: '312.2.a' });
+      },
+    },
+  );
+
+  scenario('rule 383.3.a.1: a "you may" ability that is performed resolves as usual', {
+    rules: ['383.3.a.1'],
+    setup: () => start(['Scholar', v(1), v(2), v(3)]),
+    check: (t) => {
+      t.act(play(t.state, A, 'test:scholar'), {
+        type: 'FinalizeAbility',
+        player: A,
+        perform: true,
+      });
+      t.expect(t.state.chain?.items[0]?.status).toBe('finalized');
+      const hand = t.player('A').zones.hand.length;
+      t.act(pass(A), pass(B));
+      t.expect(t.player('A').zones.hand).toHaveLength(hand + 1);
+    },
+  });
+
+  scenario('rule 355.5: a triggered ability chooses its targets as it is finalized', {
+    rules: ['355.5', '355.9.b'],
+    // B played Vanilla 1 on turn 2; A plays Sniper on turn 3.
+    setup: () => {
+      let state = start([v(1), 'Sniper', v(2), v(3)]);
+      state = endTurn(state).state;
+      state = act(state, play(state, B, 'test:vanilla-1')).state;
+      state = endTurn(state).state;
+      return act(state, play(state, A, 'test:sniper')).state;
+    },
+    check: (t) => {
+      const [enemy] = unitsInBase(t.state, B) as [ObjectId];
+      const [sniper] = unitsInBase(t.state, A).filter(
+        (u) => t.state.objects[u]?.card === 'test:sniper',
+      );
+      t.expectDecision({ kind: 'FinalizeAbility', player: A, optional: false });
+      // "an enemy unit": A's own Sniper is not a valid target.
+      t.actIllegal(
+        { type: 'FinalizeAbility', player: A, perform: true, targets: [sniper as ObjectId] },
+        'invalid-target',
+      );
+      t.act({ type: 'FinalizeAbility', player: A, perform: true, targets: [enemy] });
+      t.expect(t.state.chain?.items[0]).toMatchObject({ status: 'finalized', targets: [enemy] });
+      t.act(pass(A), pass(B));
+      t.expect(ofType(t.events, 'UnitKilled')).toMatchObject([{ unit: enemy }]);
+    },
+  });
+
+  scenario('rule 355.8: a triggered ability with no valid target cannot be put on the Chain', {
+    rules: ['355.8', '358.5'],
+    // B has no unit: Sniper's ability has nothing to target.
+    setup: () => {
+      let state = start([v(1), 'Sniper', v(2), v(3)]);
+      state = endTurn(endTurn(state).state).state;
+      return state;
+    },
+    check: (t) => {
+      t.act(play(t.state, A, 'test:sniper'));
+      const [added] = ofType(t.events, 'AbilityAdded');
+      t.expect(ofType(t.events, 'ChainItemRemoved')).toMatchObject([
+        { object: added?.object, rule: '355.8' },
+      ]);
+      t.expect(ofType(t.events, 'DamageDealt')).toEqual([]);
+      t.expect(t.state.chain).toBeNull();
+      t.expectDecision({ kind: 'Priority', player: A, rule: '312.2.a' });
+    },
+  });
+});
+
+describe('383.4.e, 383.4.f Attack and Defend triggers', () => {
+  scenario(
+    "rule 383.4.e: when a combat begins, Attack and Defend abilities go on the Combat Chain, the Attacker's first",
+    {
+      rules: [
+        '383.4.e',
+        '383.4.e.1',
+        '383.4.e.2',
+        '383.4.e.3',
+        '383.4.f',
+        '383.4.f.1',
+        '383.4.f.2',
+        '383.4.f.3',
+        '466.2.c.3',
+        '466.2.d',
+        '466.2.d.1',
+        '466.2.e',
+        '346.1',
+      ],
+      // A plays Guard on turn 1 and conquers the first battlefield with it on turn 3; B plays
+      // Charger on turn 2. B's turn 4: Charger is ready.
+      setup: () => {
+        let state = start(['Guard', v(1), v(2), v(3)], ['Charger', v(1), v(2), v(3)]);
+        state = act(state, play(state, A, 'test:guard')).state;
+        state = endTurn(state).state;
+        state = act(state, play(state, B, 'test:charger')).state;
+        state = endTurn(state).state;
+        return endTurn(conquer(state).state).state;
+      },
+      check: (t) => {
+        const [charger] = unitsInBase(t.state, B) as [ObjectId];
+        const [guard] = t.state.battlefields[0]?.units ?? [];
+        t.act(move(B, [charger], battlefield(t.state, 0)));
+        // 466.2.c.3: each side's units get their designation.
+        t.expect(t.state.combat).toMatchObject({ attackers: [charger], defenders: [guard] });
+        // 466.2.d.1: the Attacker's ability first, the Defender's last; the state is Closed (466.2.e).
+        t.expect(ofType(t.events, 'AbilityAdded').map((e) => [e.player, e.source])).toEqual([
+          [B, charger],
+          [A, guard],
+        ]);
+        t.expect(t.state.chain).toMatchObject({ triggered: true, priority: A });
+        // Guard's resolves first, then Charger's.
+        t.act(pass(A), pass(B));
+        t.expect(ofType(t.events, 'CardDrawn').map((e) => e.player)).toEqual([A]);
+        t.act(pass(B), pass(A));
+        t.expect(ofType(t.events, 'CardDrawn').map((e) => e.player)).toEqual([B]);
+        // 346.1: the Chain was begun by triggered abilities: Focus stays with the Attacker.
+        t.expect(ofType(t.events, 'FocusPassed')).toEqual([]);
+        t.expectDecision({ kind: 'Focus', player: B });
+      },
+    },
+  );
+});

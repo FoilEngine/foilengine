@@ -70,6 +70,18 @@ export type OrderTriggers = {
   readonly order: readonly number[];
 };
 
+/**
+ * Finalizes the oldest Pending triggered ability, which its controller must make choices for
+ * (337.1): `perform: false` declines a "you may" ability (383.3.a.2); otherwise `targets` holds
+ * one target per target of the ability (355.5).
+ */
+export type FinalizeAbility = {
+  readonly type: 'FinalizeAbility';
+  readonly player: PlayerId;
+  readonly perform: boolean;
+  readonly targets?: readonly ObjectId[];
+};
+
 /** The player with Priority on a Chain passes it to the next player in turn order (338.1.b). */
 export type PassPriority = {
   readonly type: 'PassPriority';
@@ -120,6 +132,7 @@ export type Action =
   | PassPriority
   | ActivateAbility
   | OrderTriggers
+  | FinalizeAbility
   | AssignCombatDamage
   | Concede;
 

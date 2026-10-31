@@ -1,8 +1,9 @@
 // A Decision is what the engine waits for: who must act, and on what (03-rules-engine.md).
 // It is answered by an Action, never by a callback.
 
+import type { TargetSpec } from './effects.ts';
 import type { ObjectId, PlayerId, RuleNumber } from './ids.ts';
-import type { TriggeredAbility } from './state.ts';
+import type { ChainAbility, TriggeredAbility } from './state.ts';
 
 /** The player must choose which cards, if any, to set aside (117.1). */
 export type MulliganDecision = {
@@ -53,9 +54,24 @@ export type OrderTriggersDecision = {
   readonly rule: RuleNumber;
 };
 
+/**
+ * The controller of the oldest Pending triggered ability makes its choices to finalize it (337.1):
+ * whether to perform it if it is `optional` (383.3.a), and its `targets` (355.5).
+ */
+export type FinalizeAbilityDecision = {
+  readonly kind: 'FinalizeAbility';
+  readonly player: PlayerId;
+  readonly item: ObjectId;
+  readonly ability: ChainAbility;
+  readonly optional: boolean;
+  readonly targets: readonly TargetSpec[];
+  readonly rule: RuleNumber;
+};
+
 export type Decision =
   | MulliganDecision
   | PriorityDecision
   | FocusDecision
   | AssignDamageDecision
-  | OrderTriggersDecision;
+  | OrderTriggersDecision
+  | FinalizeAbilityDecision;
