@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 9;
+export const STATE_VERSION = 10;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -26,6 +26,20 @@ export type GameObject = {
   readonly exhausted: boolean;
   /** Damage marked on a unit (142); a new object has none. */
   readonly damage: number;
+  /** Buffs on a unit (701): at most one (702.3); a new object has none (705). */
+  readonly buffs: number;
+};
+
+/**
+ * A continuous effect created by a spell or an ability (476): for now, a change of a unit's Might
+ * for this turn, applied in the Arithmetic layer (479.4). `timestamp` orders effects of the same
+ * layer (482). "This turn" effects expire in the Expiration Step (317.2.c).
+ */
+export type ContinuousEffect = {
+  readonly timestamp: number;
+  readonly target: ObjectId;
+  readonly might: number;
+  readonly until: 'end-of-turn';
 };
 
 export type PlayerZones = { readonly [Z in PlayerZoneId]: readonly ObjectId[] };
@@ -218,6 +232,8 @@ export type GameState = {
   readonly triggered: readonly TriggeredAbility[];
   /** Outstanding Tasks, in order (333). */
   readonly tasks: readonly Task[];
+  /** Continuous effects created by spells and abilities, oldest first (476, 482). */
+  readonly effects: readonly ContinuousEffect[];
   readonly stage: GameStage;
   readonly winner: PlayerId | null;
 };

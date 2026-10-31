@@ -324,6 +324,25 @@ export type ChainItemResolved = EventBase & {
   readonly trashed: ObjectId | null;
 };
 
+/** A unit got a buff (702.2.a). */
+export type UnitBuffed = EventBase & {
+  readonly type: 'UnitBuffed';
+  readonly unit: ObjectId;
+};
+
+/** A unit got +X or -X [M] until the end of the turn (479.4). */
+export type MightGiven = EventBase & {
+  readonly type: 'MightGiven';
+  readonly unit: ObjectId;
+  readonly amount: number;
+};
+
+/** All "this turn" effects expired (317.2.c). */
+export type EffectsExpired = EventBase & {
+  readonly type: 'EffectsExpired';
+  readonly count: number;
+};
+
 /** A turn began (301, 315). */
 export type TurnStarted = EventBase & {
   readonly type: 'TurnStarted';
@@ -427,7 +446,10 @@ export type GameEvent =
   | PriorityPassed
   | ChainItemResolved
   | AbilityAdded
-  | ChainItemRemoved;
+  | ChainItemRemoved
+  | UnitBuffed
+  | MightGiven
+  | EffectsExpired;
 
 export type GameEventType = GameEvent['type'];
 
@@ -479,6 +501,9 @@ export const PRIVATE_EVENT_FIELDS = {
   ChainItemResolved: [],
   AbilityAdded: [],
   ChainItemRemoved: [],
+  UnitBuffed: [],
+  MightGiven: [],
+  EffectsExpired: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */

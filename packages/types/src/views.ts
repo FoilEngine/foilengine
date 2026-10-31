@@ -20,6 +20,9 @@ export type VisibleObject = {
   readonly owner: PlayerId;
   readonly exhausted: boolean;
   readonly damage: number;
+  readonly buffs: number;
+  /** A unit's Might on the board, after continuous effects (143.2.a: its Effective Might). */
+  readonly might: number | null;
 };
 
 /** A Chain Item as every player sees it (108.1.b): a card, or an ability (which has no card). */
