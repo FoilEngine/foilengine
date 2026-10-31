@@ -40,6 +40,7 @@ export type {
 } from './decisions.ts';
 export type {
   Ability,
+  AbilityCondition,
   AbilityCost,
   Instruction,
   InstructionObject,
@@ -111,6 +112,7 @@ export {
   type UnitsRecalled,
   type Visibility,
   type VisibleEvent,
+  type XpGained,
 } from './events.ts';
 export type { CardId, ObjectId, PlayerId, RuleNumber, RulesVersion, Seed } from './ids.ts';
 export type { Json } from './json.ts';

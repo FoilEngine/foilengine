@@ -134,6 +134,21 @@ export function executeInstructions(
         attach(draft, source, target);
         break;
       }
+      case 'gain-xp': {
+        // 730.1: its controller gains XP.
+        if (instruction.amount < 1) break;
+        const player = playerOf(draft, item.controller);
+        player.xp += instruction.amount;
+        emit(draft, {
+          type: 'XpGained',
+          rule: '730.1',
+          visibility: { kind: 'public' },
+          player: item.controller,
+          amount: instruction.amount,
+          xp: player.xp,
+        });
+        break;
+      }
       case 'predict': {
         // 437.1, 437.1.a: its controller looks at the top cards of their Main Deck, as many as
         // there are (437.4), without burning out (437.4.a), then chooses (ADR 0020).

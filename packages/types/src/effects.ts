@@ -40,16 +40,22 @@ export type Keyword =
    * 817: "When this is played, Predict" (817.1.b): a card with Vision also has that triggered
    * ability (a `played` trigger with a `predict` instruction).
    */
-  | 'vision';
+  | 'vision'
+  /**
+   * 824: "[Level N][>] [Text]", "While you have N or more XP, this card gains [Text]": a Dependent
+   * Keyword (727); its ability carries the condition (`AbilityCondition` `level`).
+   */
+  | 'level';
 
 /**
  * A keyword with a value (807.1.b, 814.1.b, 809.1.b): Assault X, "While I am an attacker, I have
  * +X [M]" (807.1.c); Shield X, "While I am a defender, I have +X [M]" (814.1.c); Deflect X,
  * "Spells and abilities an opponent controls that target me cost X Power of any domain more for
- * each time they choose me" (809.1.c, 809.1.c.1).
+ * each time they choose me" (809.1.c, 809.1.c.1); Hunt X, "When I conquer or hold, my controller
+ * gains X XP" (823.1.c.1): a card with Hunt also has those triggered abilities (`gain-xp`).
  */
 export type ValuedKeyword = {
-  readonly keyword: 'assault' | 'shield' | 'deflect';
+  readonly keyword: 'assault' | 'shield' | 'deflect' | 'hunt';
   readonly value: number;
 };
 
@@ -95,6 +101,8 @@ export type Instruction =
    * the resolution (ADR 0020).
    */
   | { readonly kind: 'predict'; readonly amount: number }
+  /** "Gain X XP." (730.1): its controller gains XP. */
+  | { readonly kind: 'gain-xp'; readonly amount: number }
   /** "Attach this to [target]." (435): the permanent the ability is on becomes Attached to it. */
   | { readonly kind: 'attach'; readonly target: InstructionObject };
 
@@ -122,6 +130,12 @@ export type Trigger =
   | { readonly kind: 'beginning' };
 
 /**
+ * The Condition of a Dependent Keyword (727.1.a): its ability is Inactive until the Condition is
+ * met (727.1.b). Level N: its controller has N or more XP (824.1.b.1, 824.1.c).
+ */
+export type AbilityCondition = { readonly kind: 'level'; readonly xp: number };
+
+/**
  * A Passive Ability of a permanent, active while it is on the board (363–365): a statement of fact
  * that changes the Might of `affects` (479.4). Conditions ("while", "if", 364.3) arrive later.
  */
@@ -130,6 +144,8 @@ export type PassiveAbility = {
   /** "I have …", or "Other friendly units have …" (units its controller controls). */
   readonly affects: 'self' | 'other-friendly-units';
   readonly might: number;
+  /** Dependent Keywords: all their Conditions must be met for it to apply (727.1.b.3, 727.1.c.2). */
+  readonly requires?: readonly AbilityCondition[];
 };
 
 /** An ability of a card (361). Replacement abilities arrive later. */
@@ -138,6 +154,8 @@ export type Ability =
   /** "[cost]: [effect]" (377.1): activated by its controller, it uses the Chain (377.3). */
   | {
       readonly kind: 'activated';
+      /** Dependent Keywords: activated only while met (727.1.c.3). */
+      readonly requires?: readonly AbilityCondition[];
       readonly cost: AbilityCost;
       readonly keywords?: readonly Keyword[];
       readonly targets?: readonly TargetSpec[];
@@ -150,6 +168,8 @@ export type Ability =
    */
   | {
       readonly kind: 'triggered';
+      /** Dependent Keywords: it triggers only while met (727.1.c.1). */
+      readonly requires?: readonly AbilityCondition[];
       readonly trigger: Trigger;
       readonly optional?: boolean;
       readonly cost?: Pick<AbilityCost, 'energy' | 'power'>;

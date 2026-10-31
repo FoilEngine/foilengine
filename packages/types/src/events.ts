@@ -281,6 +281,14 @@ export type Predicted = EventBase & {
   readonly count: number;
 };
 
+/** A player gained XP (730.1); `xp` is their new total. */
+export type XpGained = EventBase & {
+  readonly type: 'XpGained';
+  readonly player: PlayerId;
+  readonly amount: number;
+  readonly xp: number;
+};
+
 /** Units were healed: their damage was cleared (419). */
 export type UnitsHealed = EventBase & {
   readonly type: 'UnitsHealed';
@@ -490,6 +498,7 @@ export type GameEvent =
   | GearDetached
   | GearRecalled
   | Predicted
+  | XpGained
   | UnitsHealed
   | UnitsRecalled
   | CombatEnded
@@ -550,6 +559,7 @@ export const PRIVATE_EVENT_FIELDS = {
   GearDetached: [],
   GearRecalled: [],
   Predicted: [],
+  XpGained: [],
   UnitsHealed: [],
   UnitsRecalled: [],
   CombatEnded: [],

@@ -49,6 +49,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
         id: player.id,
         points: player.points,
         runePool: player.runePool,
+        xp: player.xp,
         scoredThisTurn: player.scoredThisTurn,
         zones,
       };
@@ -63,6 +64,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
       id: self.id,
       points: self.points,
       runePool: self.runePool,
+      xp: self.xp,
       scoredThisTurn: self.scoredThisTurn,
       zones: ownZones,
     },

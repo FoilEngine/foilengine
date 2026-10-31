@@ -18,12 +18,14 @@ import {
   emit,
   findObject,
   locationOf,
+  playerOf,
   topMostOf,
   updateObject,
 } from '../draft.ts';
 import { withDeflect } from '../effects/deflect.ts';
 import { isValidTarget } from '../effects/targets.ts';
 import { payCost, useRunes } from '../resources/payment.ts';
+import { conditionsMet } from './conditions.ts';
 
 const illegal = (
   code: IllegalReason['code'],
@@ -99,6 +101,10 @@ export function activate(
       `${definition.name} has no activated ability ${action.ability}`,
       '377',
     );
+  }
+  // 727.1.c.3: an ability of a Dependent Keyword is activated only while it is Active.
+  if (!conditionsMet(ability.requires, action.player, (p) => playerOf(draft, p).xp)) {
+    return illegal('invalid-source', `${definition.name}'s ability is Inactive`, '727.1.b');
   }
 
   // 402, 377.3.a: the ability goes on the Chain, Pending.

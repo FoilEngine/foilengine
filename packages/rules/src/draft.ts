@@ -37,6 +37,7 @@ export type DraftPlayer = {
   points: number;
   turnsTaken: number;
   runePool: ReturnType<typeof copyPool>;
+  xp: number;
   scoredThisTurn: ObjectId[];
   zones: MutableZones;
 };
@@ -89,6 +90,7 @@ export function draftOf(state: GameState): Draft {
       points: player.points,
       turnsTaken: player.turnsTaken,
       runePool: copyPool(player.runePool),
+      xp: player.xp,
       scoredThisTurn: [...player.scoredThisTurn],
       zones: {
         base: [...player.zones.base],
@@ -134,6 +136,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
         points: player.points,
         turnsTaken: player.turnsTaken,
         runePool: player.runePool,
+        xp: player.xp,
         scoredThisTurn: player.scoredThisTurn,
         zones: player.zones,
       }),

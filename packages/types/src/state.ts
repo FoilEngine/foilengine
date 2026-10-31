@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 13;
+export const STATE_VERSION = 14;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -66,6 +66,8 @@ export type PlayerState = {
   /** Turns this player has started; the First Turn Process of the mode depends on it (485.7). */
   readonly turnsTaken: number;
   readonly runePool: RunePool;
+  /** XP (728–733): a public resource (729.2), never below 0, with no limit (733). */
+  readonly xp: number;
   /** Battlefields this player has Scored this turn: once per battlefield per turn (472). */
   readonly scoredThisTurn: readonly ObjectId[];
   /** Ordered zones list the top of the deck first. */
