@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 7;
+export const STATE_VERSION = 8;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -81,15 +81,17 @@ export type CombatState = {
   readonly attacker: PlayerId;
   /** The other player with units there (466.2.c.2). */
   readonly defender: PlayerId;
-  /** Step 1, the Combat Showdown (466), or step 2, the Combat Damage Step (467). */
   /** The Combat Showdown (466), the Combat Damage Step (467), then the Resolution Step (468). */
   readonly step: 'showdown' | 'damage' | 'resolution';
   /** Damage assigned in the Combat Damage Step; null until the player has assigned it. */
   readonly attackerAssignment: readonly DamageAssignment[] | null;
   readonly defenderAssignment: readonly DamageAssignment[] | null;
+  /** Units with the Attacker designation (466.2.c.3), kept up to date by cleanups (323.2). */
+  readonly attackers: readonly ObjectId[];
+  /** Units with the Defender designation (466.2.c.3, 323.2). */
+  readonly defenders: readonly ObjectId[];
 };
 
-/** A Showdown in progress (341–348). The turn is then in a Showdown State (343.1). */
 /** An ability on the Chain: ability `index` of the card of `source` (377.3, 383.3). */
 export type ChainAbility = {
   readonly source: ObjectId;
@@ -158,6 +160,7 @@ export type ChainState = {
   readonly triggered: boolean;
 };
 
+/** A Showdown in progress (341–348). The turn is then in a Showdown State (343.1). */
 export type ShowdownState = {
   readonly battlefield: ObjectId;
   /** The player with Focus, and so with Priority (313.2). */

@@ -7,6 +7,7 @@ export type {
   AssignCombatDamage,
   Concede,
   EndTurn,
+  FinalizeAbility,
   MoveDestination,
   Mulligan,
   OrderTriggers,
@@ -29,6 +30,7 @@ export {
 export type {
   AssignDamageDecision,
   Decision,
+  FinalizeAbilityDecision,
   FocusDecision,
   MulliganDecision,
   OrderTriggersDecision,
@@ -54,6 +56,7 @@ export {
   type CardRecycled,
   type ChainItemAdded,
   type ChainItemFinalized,
+  type ChainItemRemoved,
   type ChainItemResolved,
   type CombatEnded,
   type CombatStarted,

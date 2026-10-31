@@ -289,6 +289,16 @@ export type AbilityAdded = EventBase & {
   readonly targets: readonly ObjectId[];
 };
 
+/**
+ * A Pending item left the Chain without being finalized: a "you may" ability its controller
+ * declined (383.3.a.2), or an ability with no valid target (355.8, 358.5).
+ */
+export type ChainItemRemoved = EventBase & {
+  readonly type: 'ChainItemRemoved';
+  readonly player: PlayerId;
+  readonly object: ObjectId;
+};
+
 /** A Pending Chain Item became a Finalized one (329.3, 359.1). */
 export type ChainItemFinalized = EventBase & {
   readonly type: 'ChainItemFinalized';
@@ -416,7 +426,8 @@ export type GameEvent =
   | ChainItemFinalized
   | PriorityPassed
   | ChainItemResolved
-  | AbilityAdded;
+  | AbilityAdded
+  | ChainItemRemoved;
 
 export type GameEventType = GameEvent['type'];
 
@@ -467,6 +478,7 @@ export const PRIVATE_EVENT_FIELDS = {
   PriorityPassed: [],
   ChainItemResolved: [],
   AbilityAdded: [],
+  ChainItemRemoved: [],
 } as const satisfies { readonly [T in GameEventType]: readonly (keyof EventOfType<T>)[] };
 
 /** An event as seen by a player it is not visible to. */
