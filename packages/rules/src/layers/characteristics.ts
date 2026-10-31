@@ -15,6 +15,7 @@ import type {
   PlayerId,
   ValuedKeyword,
 } from '@foilengine/types';
+import { conditionsMet } from '../abilities/conditions.ts';
 import { controllerOf, type Draft, findObject } from '../draft.ts';
 
 /** What the layers need to read, from a state or from a draft. */
@@ -27,6 +28,8 @@ export type BoardReader = {
   /** Units on the board with a passive ability (365.1). */
   passiveSources(): readonly ObjectId[];
   controllerOf(id: ObjectId): PlayerId;
+  /** A player's XP, for Level (824). */
+  xpOf(player: PlayerId): number;
   /** The Combat in progress, for the Attacker and Defender designations (466.2.c.3). */
   readonly combat: GameState['combat'];
 };
@@ -41,6 +44,8 @@ export type Characteristics = {
   readonly shield: number;
   /** Its Deflect Value, 0 without the keyword; several instances add up (809.2, 809.3). */
   readonly deflect: number;
+  /** Its Hunt Value, 0 without the keyword; several instances add up (823.2, 823.3). */
+  readonly hunt: number;
 };
 
 /** Every object on the board: in bases and at battlefields (runes included). */
@@ -85,6 +90,7 @@ export function readerOfState(state: GameState): BoardReader {
     ...boardOf(() => onBoard(state.players, state.battlefields), state.cards, objectAt),
     // No effect changes control yet: a unit is controlled by its owner (190.3.a.2 arrives later).
     controllerOf: (id) => state.objects[id]?.owner as PlayerId,
+    xpOf: (player) => state.players.find((p) => p.id === player)?.xp ?? 0,
     combat: state.combat,
   };
 }
@@ -97,6 +103,7 @@ export function readerOfDraft(draft: Draft): BoardReader {
     objectAt,
     ...boardOf(() => onBoard(draft.players, draft.battlefields), draft.cards, objectAt),
     controllerOf: (id) => controllerOf(draft, id),
+    xpOf: (player) => draft.players.find((p) => p.id === player)?.xp ?? 0,
     combat: draft.combat,
   };
 }
@@ -114,8 +121,8 @@ function attachedCards(
 
 /**
  * Its keywords: printed, and those of the Effect Text of the cards Attached to it, appended to its
- * Rules Text (718.3, 719.1). Several instances of Assault, Shield or Deflect add up (807.2, 814.2,
- * 809.2).
+ * Rules Text (718.3, 719.1). Several instances of Assault, Shield, Deflect or Hunt add up (807.2,
+ * 814.2, 809.2, 823.2).
  */
 function keywordsOf(
   definition: CardDefinition | undefined,
@@ -139,6 +146,7 @@ function keywordsOf(
     assault: valued('assault'),
     shield: valued('shield'),
     deflect: valued('deflect'),
+    hunt: valued('hunt'),
   };
 }
 
@@ -167,9 +175,9 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   const definition =
     object === undefined ? undefined : (reader.cards[object.card] as CardDefinition);
   const attached = attachedCards(reader.cards, reader.objectAt, object);
-  const { keywords: flags, assault, shield, deflect } = keywordsOf(definition, attached);
+  const { keywords: flags, assault, shield, deflect, hunt } = keywordsOf(definition, attached);
   if (object === undefined || definition?.category !== 'unit') {
-    return { might: null, keywords: flags, assault, shield, deflect };
+    return { might: null, keywords: flags, assault, shield, deflect, hunt };
   }
   // Buffs and effects only ever apply to objects on the board: an object that leaves it becomes a
   // new object, without buffs (705, 124), that no effect targets.
@@ -186,6 +194,9 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
         | undefined;
       for (const ability of card?.abilities ?? []) {
         if (ability.kind !== 'passive') continue;
+        // 727.1.c.2: a passive ability of a Dependent Keyword applies while it is Active.
+        const owner = reader.controllerOf(source);
+        if (!conditionsMet(ability.requires, owner, reader.xpOf)) continue;
         const applies =
           ability.affects === 'self'
             ? source === id
@@ -198,7 +209,7 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   // a defender, I have +X [M]", for as long as the unit has the designation.
   if (reader.combat?.attackers.includes(id) === true) might += assault;
   if (reader.combat?.defenders.includes(id) === true) might += shield;
-  return { might, keywords: flags, assault, shield, deflect };
+  return { might, keywords: flags, assault, shield, deflect, hunt };
 }
 
 /** The characteristics of an object of the state (public API, docs/03-rules-engine.md). */

@@ -14,11 +14,12 @@ import type {
   Trigger,
 } from '@foilengine/types';
 import { addAbility, finalize, givePriorityToNewest, removeFromChain } from '../chain/chain.ts';
-import { controllerOf, type Draft, emit, findObject } from '../draft.ts';
+import { controllerOf, type Draft, emit, findObject, playerOf } from '../draft.ts';
 import { deflectCost, withDeflect } from '../effects/deflect.ts';
 import { isValidTarget, validTargets } from '../effects/targets.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { autoPaymentOnDraft, payCost, useRunes } from '../resources/payment.ts';
+import { conditionsMet } from './conditions.ts';
 
 /**
  * The Condition `kind` is met for these permanents: each of their triggered abilities with that
@@ -31,10 +32,10 @@ export function trigger(draft: Draft, kind: Trigger['kind'], sources: readonly O
     const abilities = (draft.cards[object.card] as CardDefinition | undefined)?.abilities ?? [];
     for (const [index, ability] of abilities.entries()) {
       if (ability.kind !== 'triggered' || ability.trigger.kind !== kind) continue;
-      draft.triggered = [
-        ...draft.triggered,
-        { source, card: object.card, index, controller: controllerOf(draft, source) },
-      ];
+      const controller = controllerOf(draft, source);
+      // 727.1.c.1: an ability of a Dependent Keyword triggers only while it is Active.
+      if (!conditionsMet(ability.requires, controller, (p) => playerOf(draft, p).xp)) continue;
+      draft.triggered = [...draft.triggered, { source, card: object.card, index, controller }];
     }
   }
 }
