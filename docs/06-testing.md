@@ -69,6 +69,7 @@ The parts of the harness:
 | `uncovered` | Neither |
 | `stale` | The rule's text changed in a new version of the Core Rules since the test was written: to re-check |
 | `not-applicable` | Rule with no effect on the engine (definitions, advice), with a justification |
+| `deferred` | Rule that needs something a later milestone brings, with the milestone and the reason (ADR 0018) |
 | `question` | Ambiguous rule, pending in `docs/rules/questions.md` |
 
 The report is written to `reports/rule-coverage.json` (every rule, for the console and the CI) and `reports/rule-coverage.md` (a per-section summary, for the PR); `reports/` is not committed.
@@ -79,7 +80,7 @@ The report is written to `reports/rule-coverage.json` (every rule, for the conso
 - a pinned rule that is no longer covered is a **regression**;
 - a newly covered rule must be pinned: `pnpm test:rules --pin`, and the pins file is committed with the scenarios.
 
-`pnpm test:rules` fails (and so does the CI) on failing scenarios, stale rules, regressions, unpinned rules, and rule numbers that do not exist in the current version. Rules with no effect on the engine are listed in `docs/rules/not-applicable.json`, each with its reason; the list starts empty, and a rule is added to it only after review. Open questions are read from `docs/rules/questions.md` (entries whose status is `open`).
+`pnpm test:rules` fails (and so does the CI) on failing scenarios, stale rules, regressions, unpinned rules, and rule numbers that do not exist in the current version. Rules with no effect on the engine are listed in `docs/rules/not-applicable.json`, each with its reason; rules that need a later milestone are listed in `docs/rules/deferred.json`, with the milestone (or `unplanned`) and the reason. A rule is added to either list only after its text was read and judged. The report fails if a rule is in both lists, if a listed rule is covered by a scenario, or if a listed number does not exist. Open questions are read from `docs/rules/questions.md` (entries whose status is `open`).
 
 The games played for `exercised` are fuzzer games (`uniform` policy), played to the end.
 
