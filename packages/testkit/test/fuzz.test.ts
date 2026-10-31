@@ -40,7 +40,8 @@ describe('fuzz (short run; the nightly CI runs 10,000 games)', () => {
       ).filter((r) => r.replay.actions.at(-1)?.type === 'Concede').length;
     expect(conceded('concede')).toBeGreaterThan(0);
     expect(conceded('uniform')).toBe(0);
-  });
+    // Twenty full games with every invariant checked: as long as the run above.
+  }, 30_000);
 
   it('the full-mulligan policy sets aside as many cards as allowed (117.1)', () => {
     const { replay: played, violation } = playFuzzGame({
