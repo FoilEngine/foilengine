@@ -298,6 +298,39 @@ export const TEST_CARDS = {
     ],
     text: 'When you play me, pay [1] to draw 1.',
   }),
+  /** A Passive Ability of a permanent (363–365): "Other friendly units have +1 [M]." */
+  banner: card('test:banner', 'unit', {
+    name: 'Banner',
+    cost: { energy: 2, power: [] },
+    might: 1,
+    abilities: [{ kind: 'passive', affects: 'other-friendly-units', might: 1 }],
+    text: 'Other friendly units have +1 [M].',
+  }),
+  /** An Arithmetic effect for this turn (479.4). */
+  rally: card('test:rally', 'spell', {
+    name: 'Rally',
+    cost: { energy: 1, power: [] },
+    keywords: ['action'],
+    targets: [{ kind: 'unit' }],
+    instructions: [{ kind: 'give-might', amount: 2, target: 0 }],
+    text: '[Action] Give a unit +2 [M] this turn.',
+  }),
+  /** A decrease, for this turn (479.4). */
+  wither: card('test:wither', 'spell', {
+    name: 'Wither',
+    cost: { energy: 1, power: [] },
+    targets: [{ kind: 'unit' }],
+    instructions: [{ kind: 'give-might', amount: -2, target: 0 }],
+    text: 'Give a unit -2 [M] this turn.',
+  }),
+  /** A buff (702.2.a). */
+  bless: card('test:bless', 'spell', {
+    name: 'Bless',
+    cost: { energy: 1, power: [] },
+    targets: [{ kind: 'unit', controller: 'friendly' }],
+    instructions: [{ kind: 'buff', target: 0 }],
+    text: 'Buff a friendly unit.',
+  }),
 } as const;
 
 /** The test units with abilities, for decks that exercise them. */
@@ -314,10 +347,19 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.martyr,
   TEST_CARDS.bounty,
   TEST_CARDS.toll,
+  TEST_CARDS.banner,
 ];
 
 /** The test spells, for decks that exercise the Chain. */
-export const TEST_SPELLS = [TEST_CARDS.insight, TEST_CARDS.bolt, TEST_CARDS.snap, TEST_CARDS.smite];
+export const TEST_SPELLS = [
+  TEST_CARDS.insight,
+  TEST_CARDS.bolt,
+  TEST_CARDS.snap,
+  TEST_CARDS.smite,
+  TEST_CARDS.rally,
+  TEST_CARDS.wither,
+  TEST_CARDS.bless,
+];
 
 /** Every test card, keyed by id. */
 export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = Object.fromEntries(
@@ -354,8 +396,8 @@ export function testDeck(overrides: Partial<DeckList> = {}): DeckList {
 }
 
 /**
- * A legal 1v1 deck with spells: the test champion, Vanilla 1 to 31, and two of each test spell
- * (40 cards). For scenarios and fuzzing that need the Chain.
+ * A legal 1v1 deck with spells: the test champion, Vanilla 1 to 31, and two of each test spell.
+ * For scenarios and fuzzing that need the Chain.
  */
 export function testDeckWithSpells(): DeckList {
   return testDeck({
@@ -369,7 +411,7 @@ export function testDeckWithSpells(): DeckList {
 
 /**
  * A legal 1v1 deck with spells and units with abilities: the test champion, Vanilla 1 to 11, one
- * of each test spell and two of each test unit with abilities (40 cards).
+ * of each test spell and two of each test unit with abilities.
  */
 export function testDeckWithAbilities(): DeckList {
   return testDeck({

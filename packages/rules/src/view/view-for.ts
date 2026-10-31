@@ -18,13 +18,15 @@ import type {
 } from '@foilengine/types';
 import { pendingDecision } from '../engine.ts';
 import { EngineInvariantError } from '../errors.ts';
+import { type BoardReader, characteristicsWith, readerOfState } from '../layers/characteristics.ts';
 
 export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
   const self = state.players.find((player) => player.id === viewer);
   if (self === undefined) throw new EngineInvariantError(`${viewer} is not a player of this game`);
+  const reader = readerOfState(state);
 
   const visible = (ids: readonly ObjectId[]): VisibleObject[] =>
-    ids.map((id) => show(objectOf(state, id)));
+    ids.map((id) => show(objectOf(state, id), reader));
   const publicZones = (player: PlayerState) => ({
     base: visible(player.zones.base),
     legendZone: visible(player.zones.legendZone),
@@ -67,7 +69,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
     opponents,
     turnOrder: state.turnOrder,
     battlefields: state.battlefields.map((battlefield) => ({
-      object: show(objectOf(state, battlefield.object)),
+      object: show(objectOf(state, battlefield.object), reader),
       controller: battlefield.controller,
       contestedBy: battlefield.contestedBy,
       showdownStaged: battlefield.showdownStaged,
@@ -82,7 +84,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
         ? null
         : {
             items: state.chain.items.map((item) => ({
-              object: item.ability === null ? show(objectOf(state, item.object)) : null,
+              object: item.ability === null ? show(objectOf(state, item.object), reader) : null,
               ability: item.ability,
               controller: item.controller,
               status: item.status,
@@ -98,13 +100,16 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
   };
 }
 
-function show(object: GameObject): VisibleObject {
+function show(object: GameObject, reader: BoardReader): VisibleObject {
   return {
     id: object.id,
     card: object.card,
     owner: object.owner,
     exhausted: object.exhausted,
     damage: object.damage,
+    buffs: object.buffs,
+    // Continuous effects are public: the Might is shown as they make it (143.2.a).
+    might: characteristicsWith(reader, object.id).might,
   };
 }
 

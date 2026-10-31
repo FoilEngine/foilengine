@@ -4,9 +4,7 @@
 import type {
   AssignCombatDamage,
   AssignDamageDecision,
-  CardDefinition,
   DamageAssignment,
-  GameObject,
   GameState,
   IllegalReason,
   ObjectId,
@@ -26,30 +24,45 @@ import {
   updateObject,
 } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
+import {
+  type BoardReader,
+  characteristics,
+  characteristicsWith,
+  readerOfDraft,
+  readerOfState,
+} from '../layers/characteristics.ts';
 import { score } from '../scoring/score.ts';
 
-type UnitsView = Pick<GameState, 'objects' | 'cards'>;
-
-/** A unit's Might (143.2); below 0 it counts as 0 (143.2.c). No layers before M3. */
-export function mightOf(state: UnitsView, unit: ObjectId): number {
-  const object = state.objects[unit];
-  return object === undefined ? 0 : mightOfObject(state.cards, object);
-}
-
-function mightOfObject(cards: GameState['cards'], object: GameObject): number {
-  return Math.max(0, (cards[object.card] as CardDefinition | undefined)?.might ?? 0);
+/**
+ * A unit's Might as spells, abilities and combat damage use it (143.2): its Effective Might, layers
+ * applied (characteristics), treated as 0 when below 0 (143.2.c).
+ */
+export function mightOf(state: GameState, unit: ObjectId): number {
+  return Math.max(0, characteristics(state, unit).might ?? 0);
 }
 
 /** Damage still needed to make the unit's damage lethal: non-zero and at least its Might (142.4.b). */
-export function lethalAmount(state: UnitsView, unit: ObjectId): number {
-  return Math.max(1, mightOf(state, unit) - (state.objects[unit]?.damage ?? 0));
+export function lethalAmount(state: GameState, unit: ObjectId): number {
+  return lethalWith(readerOfState(state), state, unit);
+}
+
+/** mightOf, with a reader shared by several units of the same state. */
+function mightWith(reader: BoardReader, unit: ObjectId): number {
+  return Math.max(0, characteristicsWith(reader, unit).might ?? 0);
+}
+
+function lethalWith(reader: BoardReader, state: GameState, unit: ObjectId): number {
+  const might = mightWith(reader, unit);
+  return Math.max(1, might - (state.objects[unit]?.damage ?? 0));
 }
 
 const unitsOf = (draft: Draft, battlefield: ObjectId, player: PlayerId) =>
   battlefieldOf(draft, battlefield).units.filter((unit) => controllerOf(draft, unit) === player);
 
-const sumMight = (draft: Draft, units: readonly ObjectId[]) =>
-  units.reduce((total, unit) => total + mightOfObject(draft.cards, objectOf(draft, unit)), 0);
+const sumMight = (draft: Draft, units: readonly ObjectId[]) => {
+  const reader = readerOfDraft(draft);
+  return units.reduce((total, unit) => total + mightWith(reader, unit), 0);
+};
 
 /**
  * 323.12, 466: a Combat begins at a battlefield where it is staged. It opens with a Combat
@@ -149,6 +162,7 @@ export function closeCombatShowdown(draft: Draft): void {
 export function damageDecision(state: GameState): AssignDamageDecision | null {
   const combat = state.combat;
   if (combat === null || combat.step !== 'damage') return null;
+  const reader = readerOfState(state);
   const battlefield = state.battlefields.find((b) => b.object === combat.battlefield);
   if (battlefield === undefined) return null;
   const unitsOfPlayer = (player: PlayerId) =>
@@ -157,7 +171,7 @@ export function damageDecision(state: GameState): AssignDamageDecision | null {
     kind: 'AssignDamage',
     player,
     battlefield: combat.battlefield,
-    amount: unitsOfPlayer(player).reduce((total, unit) => total + mightOf(state, unit), 0),
+    amount: unitsOfPlayer(player).reduce((total, unit) => total + mightWith(reader, unit), 0),
     targets: unitsOfPlayer(opponent),
     rule: '467.2.c',
   });
@@ -197,7 +211,8 @@ export function checkAssignment(
   if (total !== decision.amount) {
     return invalid(`${decision.amount} damage must be assigned, not ${total}`, '467.2.c');
   }
-  const lethal = new Map(decision.targets.map((unit) => [unit, lethalAmount(state, unit)]));
+  const reader = readerOfState(state);
+  const lethal = new Map(decision.targets.map((unit) => [unit, lethalWith(reader, state, unit)]));
   const assigned = (unit: ObjectId) => amounts.get(unit) ?? 0;
   const partial = decision.targets.filter(
     (unit) => assigned(unit) > 0 && assigned(unit) < (lethal.get(unit) ?? 1),
@@ -226,11 +241,14 @@ export function assignmentOptions(state: GameState): AssignCombatDamage[] {
   const decision = damageDecision(state);
   if (decision === null) return [];
   const options = new Map<string, AssignCombatDamage>();
+  // The lethal amount of each unit, once: the same for every order.
+  const reader = readerOfState(state);
+  const lethal = new Map(decision.targets.map((unit) => [unit, lethalWith(reader, state, unit)]));
   for (const order of permutations(decision.targets)) {
     let remaining = decision.amount;
     const assignment: DamageAssignment[] = [];
     for (const unit of order) {
-      const amount = Math.min(lethalAmount(state, unit), remaining);
+      const amount = Math.min(lethal.get(unit) ?? 1, remaining);
       remaining -= amount;
       if (amount > 0) assignment.push({ unit, amount });
     }
@@ -312,17 +330,26 @@ export function killLethalUnits(draft: Draft): boolean {
       },
     })),
   ];
-  for (const location of locations) {
-    const dying = location.list.filter((id) => {
-      const object = objectOf(draft, id);
-      return object.damage > 0 && object.damage >= mightOfObject(draft.cards, object);
-    });
-    if (dying.length === 0) continue;
-    location.set(location.list.filter((id) => !dying.includes(id)));
-    for (const unit of dying) {
-      // 808.1.d.2, 383.2.c.3: its abilities that trigger on its own death are processed just
-      // before it goes to the trash, while what they need about it can still be noted.
-      trigger(draft, 'dies', [unit]);
+  // 323.4: every unit with lethal damage is killed at the same time: which ones is decided on the
+  // board as it is, before any of them leaves it (a dying unit's passive ability still counts).
+  // 142.4.b, 143.2.b: non-zero damage equal to or greater than its Might. Only damaged units can
+  // die: the board is read only if there are some.
+  const damaged = locations.map((location) =>
+    location.list.filter((id) => objectOf(draft, id).damage > 0),
+  );
+  if (damaged.every((units) => units.length === 0)) return false;
+  const reader = readerOfDraft(draft);
+  const dying = damaged.map((units) =>
+    units.filter((id) => objectOf(draft, id).damage >= mightWith(reader, id)),
+  );
+  // 808.1.d.2, 383.2.c.3: abilities that trigger on their source's death are processed just
+  // before it goes to the trash, while what they need about it can still be noted.
+  for (const units of dying) trigger(draft, 'dies', units);
+  for (const [index, location] of locations.entries()) {
+    const units = dying[index] ?? [];
+    if (units.length === 0) continue;
+    location.set(location.list.filter((id) => !units.includes(id)));
+    for (const unit of units) {
       // 429.2: from the board to its owner's trash; a Non-Board Zone, so a new object (124).
       const owner = objectOf(draft, unit).owner;
       const dead = renewObject(draft, unit);

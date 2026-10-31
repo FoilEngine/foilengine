@@ -7,6 +7,7 @@
 import type {
   ChainState,
   CombatState,
+  ContinuousEffect,
   GameEvent,
   GameObject,
   GameStage,
@@ -65,6 +66,7 @@ export type Draft = {
   chain: ChainState | null;
   triggered: readonly TriggeredAbility[];
   tasks: readonly Task[];
+  effects: readonly ContinuousEffect[];
   turnOrder: readonly PlayerId[];
   stage: GameStage;
   winner: PlayerId | null;
@@ -105,6 +107,7 @@ export function draftOf(state: GameState): Draft {
     chain: state.chain,
     triggered: state.triggered,
     tasks: state.tasks,
+    effects: state.effects,
     turnOrder: state.turnOrder,
     stage: state.stage,
     winner: state.winner,
@@ -136,6 +139,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
     chain: draft.chain,
     triggered: draft.triggered,
     tasks: draft.tasks,
+    effects: draft.effects,
     turnOrder: draft.turnOrder,
     stage: draft.stage,
     winner: draft.winner,
@@ -200,6 +204,7 @@ export function createObject(
     previousObjectId,
     exhausted: false,
     damage: 0,
+    buffs: 0,
   };
   draft.nextObjectId += 1;
   draft.changedObjects.set(object.id, object);

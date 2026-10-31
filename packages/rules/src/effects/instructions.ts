@@ -52,6 +52,42 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
         });
         break;
       }
+      case 'give-might': {
+        // 479.4: "Give [target] +X [M] this turn": a continuous effect in the Arithmetic layer,
+        // with a timestamp (482.1), until the end of the turn (317.2.c).
+        const target = legal(instruction.target);
+        if (target === null) break;
+        draft.effects = [
+          ...draft.effects,
+          {
+            timestamp: draft.eventSeq + 1,
+            target,
+            might: instruction.amount,
+            until: 'end-of-turn',
+          },
+        ];
+        emit(draft, {
+          type: 'MightGiven',
+          rule: '479.4',
+          visibility: { kind: 'public' },
+          unit: target,
+          amount: instruction.amount,
+        });
+        break;
+      }
+      case 'buff': {
+        // 702.2.a: place a buff on the unit; one that already has a buff gets none (702.3.a).
+        const target = legal(instruction.target);
+        if (target === null || objectOf(draft, target).buffs > 0) break;
+        updateObject(draft, target, { buffs: 1 });
+        emit(draft, {
+          type: 'UnitBuffed',
+          rule: '702.2.a',
+          visibility: { kind: 'public' },
+          unit: target,
+        });
+        break;
+      }
       default:
         assertNever(instruction);
     }
@@ -69,8 +105,10 @@ export function effectOf(
   const ability = (draft.cards[item.ability.card] as CardDefinition).abilities?.[
     item.ability.index
   ];
-  if (ability === undefined) {
-    throw new EngineInvariantError(`${item.ability.card} has no ability ${item.ability.index}`);
+  if (ability === undefined || ability.kind === 'passive') {
+    throw new EngineInvariantError(
+      `${item.ability.card} has no ability ${item.ability.index} that uses the Chain`,
+    );
   }
   return ability;
 }

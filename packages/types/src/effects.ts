@@ -30,7 +30,11 @@ export type Instruction =
   /** "Draw X." (414.3): its controller draws. */
   | { readonly kind: 'draw'; readonly amount: number }
   /** "Deal X to [target]." (418): `target` is the index of a target of the card. */
-  | { readonly kind: 'deal'; readonly amount: number; readonly target: number };
+  | { readonly kind: 'deal'; readonly amount: number; readonly target: number }
+  /** "Give [target] +X [M] this turn." (479.4): a negative `amount` gives -X [M]. */
+  | { readonly kind: 'give-might'; readonly amount: number; readonly target: number }
+  /** "Buff [target]." (702.2.a): place a buff on a unit, unless it already has one (702.3.a). */
+  | { readonly kind: 'buff'; readonly target: number };
 
 /** The cost of an activated ability (377.1): Energy, Power, and exhausting its source ([E]). */
 export type AbilityCost = {
@@ -54,8 +58,20 @@ export type Trigger =
   | { readonly kind: 'defend' }
   | { readonly kind: 'dies' };
 
-/** An ability of a card (361). Passive and replacement abilities arrive with the layers. */
+/**
+ * A Passive Ability of a permanent, active while it is on the board (363–365): a statement of fact
+ * that changes the Might of `affects` (479.4). Conditions ("while", "if", 364.3) arrive later.
+ */
+export type PassiveAbility = {
+  readonly kind: 'passive';
+  /** "I have …", or "Other friendly units have …" (units its controller controls). */
+  readonly affects: 'self' | 'other-friendly-units';
+  readonly might: number;
+};
+
+/** An ability of a card (361). Replacement abilities arrive later. */
 export type Ability =
+  | PassiveAbility
   /** "[cost]: [effect]" (377.1): activated by its controller, it uses the Chain (377.3). */
   | {
       readonly kind: 'activated';

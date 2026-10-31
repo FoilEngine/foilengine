@@ -3,6 +3,7 @@
 export { lethalAmount, mightOf } from './combat/combat.ts';
 export { apply, isLegal, legalActions, type Outcome, outcome, pendingDecision } from './engine.ts';
 export { EngineInvariantError, IllegalActionError } from './errors.ts';
+export { type Characteristics, characteristics } from './layers/characteristics.ts';
 export {
   DUEL_PLAYERS,
   DUEL_SECOND_PLAYER_EXTRA_RUNES,

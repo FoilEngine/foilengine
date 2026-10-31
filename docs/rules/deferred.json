@@ -241,16 +241,6 @@
       "reason": "End of turn effects need abilities."
     },
     {
-      "number": "317.2.b",
-      "milestone": "M3",
-      "reason": "Without abilities, a unit never keeps damage until the end of the turn: combat heals all units (468.1.a.1). Damage from spells arrives with M3."
-    },
-    {
-      "number": "317.2.c",
-      "milestone": "M3",
-      "reason": "\"This turn\" effects need abilities."
-    },
-    {
       "number": "317.2.e",
       "milestone": "M3",
       "reason": "The FEPR process arrives with the chain."
@@ -304,16 +294,6 @@
       "number": "321",
       "milestone": "M3",
       "reason": "Needs the chain."
-    },
-    {
-      "number": "322",
-      "milestone": "M3",
-      "reason": "No scenario found where a second cleanup changes the outcome without abilities: it needs a step that causes a change an earlier step handles, such as a unit killed by an effect."
-    },
-    {
-      "number": "322.1",
-      "milestone": "M3",
-      "reason": "Same as 322."
     },
     {
       "number": "323",
