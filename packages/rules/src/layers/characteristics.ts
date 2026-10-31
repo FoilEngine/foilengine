@@ -48,6 +48,8 @@ export type Characteristics = {
   readonly deflect: number;
   /** Its Hunt Value, 0 without the keyword; several instances add up (823.2, 823.3). */
   readonly hunt: number;
+  /** Its Disarm Value, 0 without the keyword; several instances add up (831.2, 831.3). */
+  readonly disarm: number;
 };
 
 /** Every object on the board: in bases and at battlefields (runes included). */
@@ -125,8 +127,8 @@ function attachedCards(
 
 /**
  * Its keywords: printed, and those of the Effect Text of the cards Attached to it, appended to its
- * Rules Text (718.3, 719.1). Several instances of Assault, Shield, Deflect or Hunt add up (807.2,
- * 814.2, 809.2, 823.2).
+ * Rules Text (718.3, 719.1). Several instances of Assault, Shield, Deflect, Hunt or Disarm add up
+ * (807.2, 814.2, 809.2, 823.2, 831.2).
  */
 function keywordsOf(
   definition: CardDefinition | undefined,
@@ -151,6 +153,7 @@ function keywordsOf(
     shield: valued('shield'),
     deflect: valued('deflect'),
     hunt: valued('hunt'),
+    disarm: valued('disarm'),
   };
 }
 
@@ -179,9 +182,16 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   const definition =
     object === undefined ? undefined : (reader.cards[object.card] as CardDefinition);
   const attached = attachedCards(reader.cards, reader.objectAt, object);
-  const { keywords: flags, assault, shield, deflect, hunt } = keywordsOf(definition, attached);
+  const {
+    keywords: flags,
+    assault,
+    shield,
+    deflect,
+    hunt,
+    disarm,
+  } = keywordsOf(definition, attached);
   if (object === undefined || definition?.category !== 'unit') {
-    return { might: null, keywords: flags, assault, shield, deflect, hunt };
+    return { might: null, keywords: flags, assault, shield, deflect, hunt, disarm };
   }
   // Buffs and effects only ever apply to objects on the board: an object that leaves it becomes a
   // new object, without buffs (705, 124), that no effect targets.
@@ -204,6 +214,7 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
           xpOf: reader.xpOf,
           finalizedBy: reader.finalizedBy,
           self: reader.objectAt(source)?.previousObjectId ?? null,
+          empowered: reader.objectAt(source)?.empowered === true,
         };
         if (!conditionsMet(ability.requires, owner, context)) continue;
         const applies =
@@ -218,7 +229,7 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   // a defender, I have +X [M]", for as long as the unit has the designation.
   if (reader.combat?.attackers.includes(id) === true) might += assault;
   if (reader.combat?.defenders.includes(id) === true) might += shield;
-  return { might, keywords: flags, assault, shield, deflect, hunt };
+  return { might, keywords: flags, assault, shield, deflect, hunt, disarm };
 }
 
 /** The characteristics of an object of the state (public API, docs/03-rules-engine.md). */

@@ -25,7 +25,7 @@ import {
 import { withDeflect } from '../effects/deflect.ts';
 import { isValidTarget } from '../effects/targets.ts';
 import { payCost, useRunes } from '../resources/payment.ts';
-import { conditionsMet } from './conditions.ts';
+import { failedCondition } from './conditions.ts';
 
 const illegal = (
   code: IllegalReason['code'],
@@ -102,15 +102,17 @@ export function activate(
       '377',
     );
   }
-  // 727.1.c.3: an ability of a Dependent Keyword is activated only while it is Active.
-  if (
-    !conditionsMet(
-      ability.requires,
-      action.player,
-      conditionContext(draft, source.previousObjectId),
-    )
-  ) {
-    return illegal('invalid-source', `${definition.name}'s ability is Inactive`, '727.1.b');
+  // 727.1.c.3: an ability of a Dependent Keyword is activated only while it is Active; an Empower
+  // ability only if its source is not Empowered (827.1.c.1).
+  const failed = failedCondition(
+    ability.requires,
+    action.player,
+    conditionContext(draft, source.previousObjectId, source.empowered === true),
+  );
+  if (failed !== null) {
+    return failed.kind === 'not-empowered'
+      ? illegal('invalid-source', `${definition.name} is already Empowered`, '827.1.c.1')
+      : illegal('invalid-source', `${definition.name}'s ability is Inactive`, '727.1.b');
   }
 
   // 402, 377.3.a: the ability goes on the Chain, Pending.
@@ -165,7 +167,7 @@ export function activate(
   // 406: check legality: targets (358.1, 355.9), timing (358.4, 381).
   for (const [index, spec] of specs.entries()) {
     const target = targets[index] as ObjectId;
-    if (!isValidTarget(draft, spec, target, action.player)) {
+    if (!isValidTarget(draft, spec, target, action.player, action.source)) {
       return illegal('invalid-target', `${target} is not a valid target`, '355.9');
     }
   }

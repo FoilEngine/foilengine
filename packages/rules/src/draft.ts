@@ -320,10 +320,11 @@ export function setAttached(draft: Draft, top: ObjectId, attached: readonly Obje
 }
 
 /** What the Conditions of Dependent Keywords read on the draft (727, 812, 824). */
-export function conditionContext(draft: Draft, self: ObjectId | null) {
+export function conditionContext(draft: Draft, self: ObjectId | null, empowered = false) {
   return {
     xpOf: (player: PlayerId) => playerOf(draft, player).xp,
     finalizedBy: (player: PlayerId) => playerOf(draft, player).finalizedThisTurn,
     self,
+    empowered,
   };
 }

@@ -114,6 +114,8 @@ function show(object: GameObject, reader: BoardReader): VisibleObject {
     buffs: object.buffs,
     // Continuous effects are public: the Might is shown as they make it (143.2.a).
     might: characteristicsWith(reader, object.id).might,
+    // 442.2: the Empowered status is public, like the permanent.
+    ...(object.empowered === true ? { empowered: true as const } : {}),
     // 148.1.a.2: gear on the board, attached ones included, is public.
     ...(attached.length === 0
       ? {}

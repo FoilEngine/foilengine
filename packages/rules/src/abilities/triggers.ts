@@ -34,7 +34,7 @@ export function trigger(draft: Draft, kind: Trigger['kind'], sources: readonly O
       if (ability.kind !== 'triggered' || ability.trigger.kind !== kind) continue;
       const controller = controllerOf(draft, source);
       // 727.1.c.1: an ability of a Dependent Keyword triggers only while it is Active.
-      const context = conditionContext(draft, object.previousObjectId);
+      const context = conditionContext(draft, object.previousObjectId, object.empowered === true);
       if (!conditionsMet(ability.requires, controller, context)) continue;
       draft.triggered = [...draft.triggered, { source, card: object.card, index, controller }];
     }
@@ -131,10 +131,11 @@ function cheapestTargets(
   draft: Draft,
   ability: Extract<Ability, { kind: 'triggered' }>,
   controller: PlayerId,
+  source: ObjectId | null,
 ): ObjectId[] {
   return (ability.targets ?? []).flatMap((spec) => {
     let best: { target: ObjectId; extra: number } | null = null;
-    for (const target of validTargets(draft, spec, controller)) {
+    for (const target of validTargets(draft, spec, controller, source)) {
       const extra = deflectCost(draft, controller, [target]).length;
       if (best === null || extra < best.extra) best = { target, extra };
       if (extra === 0) break;
@@ -196,7 +197,8 @@ export function finalizePending(draft: Draft): void {
     // but cannot be (383.3.b.1). A "you may" ability can still be declined.
     if (
       (ability.targets ?? []).some(
-        (spec) => validTargets(draft, spec, item.controller).length === 0,
+        (spec) =>
+          validTargets(draft, spec, item.controller, item.ability?.source ?? null).length === 0,
       )
     ) {
       removePending(draft, item, '355.8');
@@ -207,7 +209,7 @@ export function finalizePending(draft: Draft): void {
       draft,
       item.controller,
       costOf(ability) ?? NO_COST,
-      cheapestTargets(draft, ability, item.controller),
+      cheapestTargets(draft, ability, item.controller, item.ability?.source ?? null),
     );
     if (
       (cost.energy > 0 || cost.power.length > 0) &&
@@ -250,7 +252,8 @@ export function finalizeChosen(draft: Draft, action: FinalizeAbility): IllegalRe
     };
   }
   for (const [index, spec] of specs.entries()) {
-    if (!isValidTarget(draft, spec, targets[index] as ObjectId, item.controller)) {
+    const source = item.ability?.source ?? null;
+    if (!isValidTarget(draft, spec, targets[index] as ObjectId, item.controller, source)) {
       return {
         code: 'invalid-target',
         message: `${targets[index]} is not a valid target`,
