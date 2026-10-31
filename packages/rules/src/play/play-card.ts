@@ -10,6 +10,7 @@ import type {
   IllegalReason,
   ObjectId,
   PlayCard,
+  PlayerId,
 } from '@foilengine/types';
 import { trigger } from '../abilities/triggers.ts';
 import { addToChain, finalize, givePriorityToNewest, removeFromChain } from '../chain/chain.ts';
@@ -24,6 +25,7 @@ import {
   stateOf,
   updateObject,
 } from '../draft.ts';
+import { withDeflect } from '../effects/deflect.ts';
 import { isValidTarget } from '../effects/targets.ts';
 import { EngineInvariantError, IllegalActionError } from '../errors.ts';
 import { payCost, useRunes } from '../resources/payment.ts';
@@ -42,8 +44,16 @@ const illegal = (
  * - Showdown State: only with Action or Reaction (308.1.a, 806.1.c.1, 813.1.b).
  * - Neutral Open State: any card, by the Turn Player (310.1.a, 155); the decision checks it.
  */
-export function timingProblem(state: GameState, definition: CardDefinition): IllegalReason | null {
-  const keywords = definition.keywords ?? [];
+export function timingProblem(
+  state: GameState,
+  definition: CardDefinition,
+  ambush = false,
+): IllegalReason | null {
+  // 822.1.b: a unit with Ambush has Reaction while it is played to a battlefield where its
+  // player controls units.
+  const keywords = ambush
+    ? ['reaction', ...(definition.keywords ?? [])]
+    : (definition.keywords ?? []);
   if (state.chain !== null && !keywords.includes('reaction')) {
     return illegal('wrong-timing', `${definition.name} has no Reaction: not on a Chain`, '309.1.a');
   }
@@ -55,6 +65,22 @@ export function timingProblem(state: GameState, definition: CardDefinition): Ill
     );
   }
   return null;
+}
+
+/**
+ * 822.1.b, 822.1.c: playing a unit with Ambush to a battlefield where `player` controls units: a
+ * valid location for it (355.2.b), where it has Reaction.
+ */
+export function ambushes(
+  state: GameState,
+  definition: CardDefinition,
+  player: PlayerId,
+  location: PlayCard['location'],
+): boolean {
+  if (location?.kind !== 'battlefield' || definition.category !== 'unit') return false;
+  if (!(definition.keywords ?? []).includes('ambush')) return false;
+  const battlefield = state.battlefields.find((b) => b.object === location.battlefield);
+  return battlefield?.units.some((unit) => state.objects[unit]?.owner === player) === true;
 }
 
 /**
@@ -105,7 +131,8 @@ function playCard(
     }
     if (location.kind === 'battlefield') {
       const target = draft.battlefields.find((b) => b.object === location.battlefield);
-      if (target?.controller !== action.player) {
+      const ambush = ambushes(state, definition, action.player, location);
+      if (target === undefined || (target.controller !== action.player && !ambush)) {
         return illegal(
           'invalid-location',
           'A unit enters your base or a battlefield you control',
@@ -143,13 +170,18 @@ function playCard(
   // (356.2.b); runes add resources first (357.1.a), then the pool pays it (357.1).
   const runes = useRunes(draft, state, action.player, action.payment);
   if (runes !== null) return runes;
-  const total =
+  // Deflect is a mandatory additional cost of the targets chosen (809.1.d, 356.2.a.2).
+  const total = withDeflect(
+    draft,
+    action.player,
     extra === null
       ? definition.cost
       : {
           energy: definition.cost.energy + extra.energy,
           power: [...definition.cost.power, ...extra.power],
-        };
+        },
+    targets,
+  );
   const paid = payCost(draft, action.player, total);
   if (paid !== null) return paid; // 358.2
 
@@ -161,7 +193,11 @@ function playCard(
       return illegal('invalid-target', `${target} is not a valid target`, '355.9');
     }
   }
-  const timing = timingProblem(state, definition);
+  const timing = timingProblem(
+    state,
+    definition,
+    ambushes(state, definition, action.player, location),
+  );
   if (timing !== null) return timing;
   if (checkOnly) return null;
 

@@ -22,6 +22,7 @@ import {
   updateObject,
 } from '../draft.ts';
 import { IllegalActionError } from '../errors.ts';
+import { keywordsWith } from '../layers/characteristics.ts';
 import { settle } from '../tasks/tasks.ts';
 
 function invalid(message: string, rule: IllegalReason['rule']): IllegalReason {
@@ -53,9 +54,18 @@ function standardMove(draft: Draft, state: GameState, action: StandardMove): Ill
   }
 
   if (destination.kind === 'battlefield') {
-    // 144.4.a: from the base to a battlefield. Battlefield to battlefield needs Ganking (144.4.c.1, M3).
-    if (origins.some((origin) => origin.kind !== 'base')) {
-      return invalid('Units move to a battlefield from their base', '144.4.a');
+    // 144.4.a: from the base to a battlefield; 144.4.c.1, 810.1.b: from another battlefield
+    // only with Ganking.
+    for (const [index, origin] of origins.entries()) {
+      if (origin.kind === 'base') continue;
+      const unit = units[index] as ObjectId;
+      const ganking = keywordsWith(draft.cards, (id) => findObject(draft, id), unit).keywords;
+      if (!ganking.includes('ganking')) {
+        return invalid('Units move to a battlefield from their base', '144.4.a');
+      }
+      if (origin.battlefield.object === destination.battlefield) {
+        return invalid(`${unit} is already at that battlefield`, '810.1.b');
+      }
     }
     const target = draft.battlefields.find((b) => b.object === destination.battlefield);
     if (target === undefined)

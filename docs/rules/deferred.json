@@ -116,11 +116,6 @@
       "reason": "Needs more than two players; no multiplayer mode is on the roadmap."
     },
     {
-      "number": "144.4.c",
-      "milestone": "M3",
-      "reason": "Ganking is a keyword (810)."
-    },
-    {
       "number": "161.1.a",
       "milestone": "M3",
       "reason": "Only effects that refer to permanents can observe it."
@@ -411,11 +406,6 @@
       "reason": "\"As I am played\" choices need abilities."
     },
     {
-      "number": "355.2.b",
-      "milestone": "M3",
-      "reason": "Permissions to play elsewhere need effects."
-    },
-    {
       "number": "355.3",
       "milestone": "M3",
       "reason": "Modes belong to spells and abilities."
@@ -694,11 +684,6 @@
       "number": "356.2.a.1",
       "milestone": "M3",
       "reason": "Additional costs come from abilities."
-    },
-    {
-      "number": "356.2.a.2",
-      "milestone": "M3",
-      "reason": "Deflect is a keyword (809)."
     },
     {
       "number": "356.3",

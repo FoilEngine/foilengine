@@ -21,6 +21,7 @@ import {
   topMostOf,
   updateObject,
 } from '../draft.ts';
+import { withDeflect } from '../effects/deflect.ts';
 import { isValidTarget } from '../effects/targets.ts';
 import { payCost, useRunes } from '../resources/payment.ts';
 
@@ -136,10 +137,17 @@ export function activate(
   }
   const runes = useRunes(draft, state, action.player, action.payment);
   if (runes !== null) return runes;
-  const paid = payCost(draft, action.player, {
-    energy: ability.cost.energy ?? 0,
-    power: ability.cost.power ?? [],
-  });
+  // Deflect is a mandatory additional cost of the targets chosen (809.1.d, 356.2.a.2, 400).
+  const paid = payCost(
+    draft,
+    action.player,
+    withDeflect(
+      draft,
+      action.player,
+      { energy: ability.cost.energy ?? 0, power: ability.cost.power ?? [] },
+      targets,
+    ),
+  );
   if (paid !== null) return paid;
 
   // 406: check legality: targets (358.1, 355.9), timing (358.4, 381).

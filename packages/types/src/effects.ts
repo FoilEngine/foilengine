@@ -28,14 +28,23 @@ export type Keyword =
    * 818: "Equip [Cost]", short for "[Cost]: Attach this gear to a unit you control" (818.1.c.2):
    * a card with Equip also has that activated ability (an `attach` instruction).
    */
-  | 'equip';
+  | 'equip'
+  /** 810: "I may move to a battlefield from another battlefield with a standard move." */
+  | 'ganking'
+  /**
+   * 822: "I may be played to a battlefield where you control units", and "I have [Reaction] as
+   * long as I'm being played to a battlefield where you control units".
+   */
+  | 'ambush';
 
 /**
- * A keyword with a value (807.1.b, 814.1.b): Assault X, "While I am an attacker, I have +X [M]"
- * (807.1.c); Shield X, "While I am a defender, I have +X [M]" (814.1.c).
+ * A keyword with a value (807.1.b, 814.1.b, 809.1.b): Assault X, "While I am an attacker, I have
+ * +X [M]" (807.1.c); Shield X, "While I am a defender, I have +X [M]" (814.1.c); Deflect X,
+ * "Spells and abilities an opponent controls that target me cost X Power of any domain more for
+ * each time they choose me" (809.1.c, 809.1.c.1).
  */
 export type ValuedKeyword = {
-  readonly keyword: 'assault' | 'shield';
+  readonly keyword: 'assault' | 'shield' | 'deflect';
   readonly value: number;
 };
 

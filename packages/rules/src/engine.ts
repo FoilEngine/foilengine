@@ -4,6 +4,7 @@ import {
   type Action,
   type ActivateAbility,
   assertNever,
+  type Cost,
   type Decision,
   type GameEvent,
   type GameState,
@@ -32,8 +33,10 @@ import {
 } from './combat/combat.ts';
 import { checkConcede, concede } from './concede.ts';
 import { draftOf, stateOf } from './draft.ts';
+import { withDeflect } from './effects/deflect.ts';
 import { validTargets } from './effects/targets.ts';
 import { IllegalActionError } from './errors.ts';
+import { keywordsWith } from './layers/characteristics.ts';
 import { applyStandardMove, checkStandardMove, movableUnits } from './movement/standard-move.ts';
 import { applyPlayCard, checkPlayCard, timingProblem } from './play/play-card.ts';
 import { autoPayment } from './resources/payment.ts';
@@ -267,19 +270,26 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
       const decline: Action[] = decision.optional
         ? [{ type: 'FinalizeAbility', player, perform: false }]
         : [];
-      // 383.3.b: performing it means paying its cost, if it has one.
-      const payment = decision.cost === null ? [] : autoPayment(state, player, decision.cost);
-      if (payment === null) return decline;
+      // 383.3.b: performing it means paying its cost, if it has one, with the Deflect of its
+      // targets (809.1.d, 401).
+      const draft = draftOf(state);
+      const base = decision.cost ?? { energy: 0, power: [] };
       return [
-        ...targetChoices(draftOf(state), decision.targets, player).map(
-          (targets): Action => ({
-            type: 'FinalizeAbility',
-            player,
-            perform: true,
-            ...(targets.length === 0 ? {} : { targets }),
-            ...(payment.length === 0 ? {} : { payment }),
-          }),
-        ),
+        ...targetChoices(draft, decision.targets, player).flatMap((targets): Action[] => {
+          const cost = withDeflect(draft, player, base, targets);
+          const free = cost.energy === 0 && cost.power.length === 0;
+          const payment = free ? [] : autoPayment(state, player, cost);
+          if (payment === null) return [];
+          return [
+            {
+              type: 'FinalizeAbility',
+              player,
+              perform: true,
+              ...(targets.length === 0 ? {} : { targets }),
+              ...(payment.length === 0 ? {} : { payment }),
+            },
+          ];
+        }),
         ...decline,
       ];
     }
@@ -386,21 +396,33 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
     if (definition?.cost === undefined) continue;
     const category = definition.category;
     if (category !== 'unit' && category !== 'gear' && category !== 'spell') continue;
-    if (timingProblem(state, definition) !== null) continue;
+    // 822.1.b: a unit with Ambush may also be played, with Reaction, to a battlefield where its
+    // player controls units; checkPlayCard decides each location.
+    const ambush = category === 'unit' && (definition.keywords ?? []).includes('ambush');
+    if (!ambush && timingProblem(state, definition) !== null) continue;
     const payment = autoPayment(state, player, definition.cost);
     if (payment === null) continue;
+    const unitLocations = ambush ? [...locations, ...ambushLocations(state, player)] : locations;
     const candidates: PlayCard[] =
       category === 'unit'
-        ? locations.map((location) => ({ type: 'PlayCard', player, card, location, payment }))
+        ? unitLocations.map((location) => ({ type: 'PlayCard', player, card, location, payment }))
         : category === 'gear' // 149.2: to the base, no choice
           ? [{ type: 'PlayCard', player, card, payment }]
-          : targetChoices(lookup(), definition.targets ?? [], player).map((targets) => ({
-              type: 'PlayCard',
-              player,
-              card,
-              payment,
-              ...(targets.length === 0 ? {} : { targets }),
-            }));
+          : targetChoices(lookup(), definition.targets ?? [], player).flatMap((targets) => {
+              // 809.1.d: Deflect raises the cost with the targets chosen.
+              const cost = withDeflect(lookup(), player, definition.cost as Cost, targets);
+              const paid = cost === definition.cost ? payment : autoPayment(state, player, cost);
+              if (paid === null) return [];
+              return [
+                {
+                  type: 'PlayCard' as const,
+                  player,
+                  card,
+                  payment: paid,
+                  ...(targets.length === 0 ? {} : { targets }),
+                },
+              ];
+            });
     // 805: a unit with Accelerate may also be played paying [1][C] more, to enter ready.
     const domains = definition.domains;
     if (
@@ -414,7 +436,7 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
       };
       const accelerated = autoPayment(state, player, total);
       if (accelerated !== null) {
-        for (const location of locations) {
+        for (const location of unitLocations) {
           candidates.push({
             type: 'PlayCard',
             player,
@@ -455,9 +477,14 @@ function standardMoves(state: GameState, player: PlayerId): Action[] {
   const { base, battlefields } = movableUnits(state, player);
   const groups = (units: ObjectId[]) =>
     units.length > 1 ? [...units.map((u) => [u]), units] : units.map((u) => [u]);
+  // 810.1.b: units with Ganking may also move to another battlefield.
+  const objectAt = (id: ObjectId) => state.objects[id];
+  const gankers = battlefields.filter((u) =>
+    keywordsWith(state.cards, objectAt, u).keywords.includes('ganking'),
+  );
   const candidates: Action[] = [
     ...state.battlefields.flatMap((b) =>
-      groups(base).map(
+      groups([...base, ...gankers.filter((u) => !b.units.includes(u))]).map(
         (units): Action => ({
           type: 'StandardMove',
           player,
@@ -508,6 +535,16 @@ function orderings(count: number, cap = 120): number[][] {
   return result;
 }
 
+/** 822.1.b: battlefields the player does not control where they have units. */
+function ambushLocations(state: GameState, player: PlayerId): PlayLocation[] {
+  return state.battlefields
+    .filter(
+      (b) =>
+        b.controller !== player && b.units.some((unit) => state.objects[unit]?.owner === player),
+    )
+    .map((b): PlayLocation => ({ kind: 'battlefield', battlefield: b.object }));
+}
+
 /**
  * One ActivateAbility per activated ability of the permanents the player controls, timed for the
  * current state, and each choice of targets, paid with `autoPayment`.
@@ -529,18 +566,20 @@ function activatableAbilities(state: GameState, player: PlayerId): Action[] {
     const abilities = object === undefined ? [] : (state.cards[object.card]?.abilities ?? []);
     for (const [index, ability] of abilities.entries()) {
       if (ability.kind !== 'activated') continue;
-      const payment = autoPayment(state, player, {
-        energy: ability.cost.energy ?? 0,
-        power: ability.cost.power ?? [],
-      });
+      const cost: Cost = { energy: ability.cost.energy ?? 0, power: ability.cost.power ?? [] };
+      const payment = autoPayment(state, player, cost);
       if (payment === null) continue;
       for (const targets of targetChoices(lookup(), ability.targets ?? [], player)) {
+        // 809.1.d: Deflect raises the cost with the targets chosen.
+        const total = withDeflect(lookup(), player, cost, targets);
+        const paid = total === cost ? payment : autoPayment(state, player, total);
+        if (paid === null) continue;
         const action: ActivateAbility = {
           type: 'ActivateAbility',
           player,
           source,
           ability: index,
-          payment,
+          payment: paid,
           ...(targets.length === 0 ? {} : { targets }),
         };
         if (checkActivate(state, action) === null) actions.push(action);
