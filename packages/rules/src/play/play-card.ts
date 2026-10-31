@@ -5,6 +5,7 @@
 
 import type {
   CardDefinition,
+  Cost,
   GameState,
   IllegalReason,
   ObjectId,
@@ -124,11 +125,26 @@ function playCard(
     );
   }
 
-  // Steps 3 and 4 (356, 357): the total cost is the printed cost (no modifier yet); runes add
-  // resources first (357.1.a), then the pool pays it (357.1).
+  // Step 2 (355.1.a): whether to pay an optional additional cost: Accelerate (805).
+  const accelerate = action.accelerate === true;
+  const extra = accelerate ? accelerateCost(definition) : null;
+  if (accelerate && extra === null) {
+    return illegal('card-not-playable', `${definition.name} has no Accelerate`, '805.1.a');
+  }
+  if (extra !== null && 'code' in extra) return extra;
+
+  // Steps 3 and 4 (356, 357): the total cost is the printed cost plus the additional costs paid
+  // (356.2.b); runes add resources first (357.1.a), then the pool pays it (357.1).
   const runes = useRunes(draft, state, action.player, action.payment);
   if (runes !== null) return runes;
-  const paid = payCost(draft, action.player, definition.cost);
+  const total =
+    extra === null
+      ? definition.cost
+      : {
+          energy: definition.cost.energy + extra.energy,
+          power: [...definition.cost.power, ...extra.power],
+        };
+  const paid = payCost(draft, action.player, total);
   if (paid !== null) return paid; // 358.2
 
   // Step 5 (358): check legality. Targets (358.1, 355.9), timing (358.4). If a check fails,
@@ -145,7 +161,8 @@ function playCard(
 
   // Step 6 (359): finalize.
   finalize(draft, item);
-  if (definition.category === 'unit') enterBoard(draft, action, item, from, battlefield);
+  if (definition.category === 'unit')
+    enterBoard(draft, action, item, from, battlefield, accelerate);
   else givePriorityToNewest(draft); // 359.3.a, 337.4
   // Steps were taken with the state Closed; a cleanup follows (319.4, 319.6).
   cleanup(draft);
@@ -157,16 +174,39 @@ function playCard(
  * exhausted at the chosen location (359.2.c), as a new object (124). If it was the only item,
  * the Chain ends (330); otherwise the controller of the newest item gains Priority again.
  */
+/**
+ * 805.1.b: the Accelerate cost is [1][C]: 1 Energy and 1 Power of the unit's domain
+ * (805.1.b.1), or of any domain if it has none (805.1.b.2). A unit with several domains may pay
+ * with any of them (135.2.e.6.c): a choice the cost model cannot express yet.
+ */
+function accelerateCost(definition: CardDefinition): Cost | IllegalReason | null {
+  if (definition.category !== 'unit' || !(definition.keywords ?? []).includes('accelerate')) {
+    return null;
+  }
+  const [domain, ...others] = definition.domains;
+  if (others.length > 0) {
+    return illegal(
+      'not-implemented',
+      'Accelerate on a unit with several domains is not implemented yet',
+      '805.1.b.1',
+    );
+  }
+  return { energy: 1, power: [domain ?? 'any'] };
+}
+
 function enterBoard(
   draft: Draft,
   action: PlayCard,
   item: ObjectId,
   from: 'hand' | 'championZone',
   battlefield: ObjectId | null,
+  ready: boolean,
 ): void {
   removeFromChain(draft, item);
   const unit = renewObject(draft, item);
-  updateObject(draft, unit.id, { exhausted: true });
+  // 143.4, 359.2.c: a unit enters exhausted, unless Accelerate was paid: then it enters ready,
+  // a replacement of how it enters, not a readying (805.6).
+  if (!ready) updateObject(draft, unit.id, { exhausted: true });
   if (battlefield === null) playerOf(draft, action.player).zones.base.push(unit.id);
   else {
     const target = draft.battlefields.find((b) => b.object === battlefield);

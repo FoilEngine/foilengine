@@ -9,6 +9,7 @@ import {
   type TurnPhase,
   type TurnStep,
 } from '@foilengine/types';
+import { trigger } from '../abilities/triggers.ts';
 import { drawCards } from '../actions/draw.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
 import { healAllUnits } from '../combat/combat.ts';
@@ -75,9 +76,18 @@ export function runTurnStep(draft: Draft, step: TurnStep): void {
       awaken(draft);
       return;
     case 'beginning': {
-      // 315.2.a Beginning Step: start-of-phase effects (M3).
+      // 315.2.a Beginning Step: start-of-phase effects take place: the abilities of the Turn
+      // Player's permanents that trigger at the start of their Beginning Phase (816.1.c), which
+      // resolve before the Scoring Step.
       const { player, turnNumber } = currentTurn(draft);
       enterPhase(draft, player, turnNumber, 'beginning');
+      const controlled = [
+        ...playerOf(draft, player).zones.base,
+        ...draft.battlefields.flatMap((b) =>
+          b.units.filter((unit) => controllerOf(draft, unit) === player),
+        ),
+      ];
+      trigger(draft, 'beginning', controlled);
       return;
     }
     case 'scoring': {
