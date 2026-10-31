@@ -16,6 +16,7 @@ import type {
   PlayerSetup,
   Supertype,
   TargetSpec,
+  ValuedKeyword,
 } from '@foilengine/types';
 
 const card = (
@@ -28,7 +29,7 @@ const card = (
     name?: string;
     cost?: Cost;
     might?: number;
-    keywords?: Keyword[];
+    keywords?: (Keyword | ValuedKeyword)[];
     targets?: TargetSpec[];
     instructions?: Instruction[];
     abilities?: Ability[];
@@ -298,6 +299,46 @@ export const TEST_CARDS = {
     ],
     text: 'When you play me, pay [1] to draw 1.',
   }),
+  /** Assault 2 (807): +2 [M] while it is an attacker. */
+  bruiser: card('test:bruiser', 'unit', {
+    name: 'Bruiser',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: [{ keyword: 'assault', value: 2 }],
+    text: '[Assault 2]',
+  }),
+  /** Shield 2 (814): +2 [M] while it is a defender. */
+  wall: card('test:wall', 'unit', {
+    name: 'Wall',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: [{ keyword: 'shield', value: 2 }],
+    text: '[Shield 2]',
+  }),
+  /** Tank (815). */
+  guardian: card('test:guardian', 'unit', {
+    name: 'Guardian',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: ['tank'],
+    text: '[Tank]',
+  }),
+  /** Backline (826). */
+  archer: card('test:archer', 'unit', {
+    name: 'Archer',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: ['backline'],
+    text: '[Backline]',
+  }),
+  /** Tank and Backline: its controller's opponent chooses which applies (467.2.c.8). */
+  fickle: card('test:fickle', 'unit', {
+    name: 'Fickle',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: ['tank', 'backline'],
+    text: '[Tank] [Backline]',
+  }),
   /** A Passive Ability of a permanent (363–365): "Other friendly units have +1 [M]." */
   banner: card('test:banner', 'unit', {
     name: 'Banner',
@@ -348,6 +389,11 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.bounty,
   TEST_CARDS.toll,
   TEST_CARDS.banner,
+  TEST_CARDS.bruiser,
+  TEST_CARDS.wall,
+  TEST_CARDS.guardian,
+  TEST_CARDS.archer,
+  TEST_CARDS.fickle,
 ];
 
 /** The test spells, for decks that exercise the Chain. */

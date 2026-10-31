@@ -37,3 +37,12 @@ One entry per question. An entry is never removed: it is marked resolved, with t
 - **Sources consulted**: Core Rules CR-2026-10-09: 106, 107, 108.4.e, 108.5.d, 108.7.c, 109, 109.1, 109.2, 120–123, 128. No official FAQ or ruling found.
 - **Provisional decision**: the engine applies the privacy of each zone (108.4.e, 108.5.d, 108.7.c, 128): hands are private to their owner, decks are secret to everyone. 109.2 (the state of game objects is public) is tested on the Board (`packages/spec/test/rules/105-zones/zones.test.ts`). The privacy tests (`privacy.test.ts`, the no-leak test and the fuzzer's `no-leak` invariant) encode it.
 - **Status**: open
+
+### Q-003 — When does a token played by a resolving spell enter the board?
+
+- **Rules**: 158.3, 158.3.a, 185.2.a, 186, 328.1, 337.2, 350.2
+- **Version**: CR-2026-10-09
+- **Question**: card texts say, for example, "play a 1 [M] Recruit unit token into your base", sometimes followed by an instruction about that token. A token is played like a card (185.2.a, 350.2): it is placed on the Chain as part of being played (328.1), and a finalized unit resolves at once (337.2). But while a spell or an ability resolves, "no other spells or abilities can be finalized on the chain or resolved", and its effects are finished "before addressing any chain items" it added (158.3, 158.3.a). Does a token played by a resolving spell or ability enter the board during that resolution, so that a later instruction of the same spell can affect it, or only once the spell has finished resolving? And is it created on the Chain (186) and finalized like a card, with its costs treated as 0 (185.3.a.1)?
+- **Sources consulted**: Core Rules CR-2026-10-09: 158.3, 158.3.a, 185.2.a, 185.3.a.1, 186, 328.1, 337.2, 350.2, 359.3.e.14 (linked instructions). No official FAQ or ruling found.
+- **Provisional decision**: none. Tokens are not implemented until this is settled.
+- **Status**: open

@@ -44,6 +44,7 @@ export type {
   PassiveAbility,
   TargetSpec,
   Trigger,
+  ValuedKeyword,
 } from './effects.ts';
 export {
   type AbilityAdded,

@@ -230,7 +230,47 @@ export function checkAssignment(
       '467.2.c.4',
     );
   }
+  const full = (unit: ObjectId) => assigned(unit) >= (lethal.get(unit) ?? 1);
+  if (!respectsRanks(reader, decision.targets, assigned, full)) {
+    return invalid(
+      'Units with Tank get lethal damage before the others, and units with Backline after them',
+      '467.2.c.6',
+    );
+  }
   return null;
+}
+
+/**
+ * 467.2.c.6, 815.1.b, 826.3: units with Tank are assigned lethal damage first, units with Backline
+ * last, the others in between; within a rank, in any order (467.2.c.7). A unit with both chooses
+ * which one applies, first or last, never in between (467.2.c.8, 467.2.c.9). An assignment
+ * respects the ranks if, for some such choice, no unit of a later rank gets damage while a unit
+ * of an earlier rank has not got lethal damage. All the targets have the same controller (the
+ * opponent of the assigning player).
+ */
+function respectsRanks(
+  reader: BoardReader,
+  targets: readonly ObjectId[],
+  assigned: (unit: ObjectId) => number,
+  full: (unit: ObjectId) => boolean,
+): boolean {
+  const choices = targets.map((unit): readonly number[] => {
+    const keywords = characteristicsWith(reader, unit).keywords;
+    const tank = keywords.includes('tank');
+    const backline = keywords.includes('backline');
+    return tank && backline ? [0, 2] : tank ? [0] : backline ? [2] : [1];
+  });
+  const fits = (ranks: readonly number[]) =>
+    targets.every(
+      (later, j) =>
+        assigned(later) === 0 ||
+        targets.every((earlier, i) => (ranks[i] ?? 1) >= (ranks[j] ?? 1) || full(earlier)),
+    );
+  const search = (index: number, ranks: number[]): boolean =>
+    index === targets.length
+      ? fits(ranks)
+      : (choices[index] ?? [1]).some((rank) => search(index + 1, [...ranks, rank]));
+  return search(0, []);
 }
 
 /**
@@ -244,7 +284,14 @@ export function assignmentOptions(state: GameState): AssignCombatDamage[] {
   // The lethal amount of each unit, once: the same for every order.
   const reader = readerOfState(state);
   const lethal = new Map(decision.targets.map((unit) => [unit, lethalWith(reader, state, unit)]));
-  for (const order of permutations(decision.targets)) {
+  // Tank first, Backline last (467.2.c.6): the first orders generated respect the ranks, so the
+  // cap on orders never leaves none that does.
+  const rank = (unit: ObjectId) => {
+    const keywords = characteristicsWith(reader, unit).keywords;
+    return keywords.includes('tank') ? 0 : keywords.includes('backline') ? 2 : 1;
+  };
+  const targets = [...decision.targets].sort((a, b) => rank(a) - rank(b));
+  for (const order of permutations(targets)) {
     let remaining = decision.amount;
     const assignment: DamageAssignment[] = [];
     for (const unit of order) {
@@ -256,6 +303,11 @@ export function assignmentOptions(state: GameState): AssignCombatDamage[] {
     if (remaining > 0 && last !== undefined)
       assignment[assignment.length - 1] = { ...last, amount: last.amount + remaining };
     const sorted = [...assignment].sort((a, b) => (a.unit < b.unit ? -1 : 1));
+    // An order that breaks Tank or Backline (467.2.c.6) gives no legal assignment.
+    const full = (unit: ObjectId) =>
+      (sorted.find((a) => a.unit === unit)?.amount ?? 0) >= (lethal.get(unit) ?? 1);
+    const amountOf = (unit: ObjectId) => sorted.find((a) => a.unit === unit)?.amount ?? 0;
+    if (!respectsRanks(reader, decision.targets, amountOf, full)) continue;
     options.set(JSON.stringify(sorted), {
       type: 'AssignCombatDamage',
       player: decision.player,

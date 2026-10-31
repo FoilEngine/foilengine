@@ -11,7 +11,20 @@ export type Keyword =
   /** 813: all of Action, and may also be played during Closed States, on any player's turn. */
   | 'reaction'
   /** 808: "[Deathknell][>] [Effect]", short for "When I die, [Effect]" (a `dies` ability). */
-  | 'deathknell';
+  | 'deathknell'
+  /** 815: assigned lethal combat damage before its controller's units without Tank. */
+  | 'tank'
+  /** 826: assigned lethal combat damage after its controller's units without Backline. */
+  | 'backline';
+
+/**
+ * A keyword with a value (807.1.b, 814.1.b): Assault X, "While I am an attacker, I have +X [M]"
+ * (807.1.c); Shield X, "While I am a defender, I have +X [M]" (814.1.c).
+ */
+export type ValuedKeyword = {
+  readonly keyword: 'assault' | 'shield';
+  readonly value: number;
+};
 
 /**
  * A target chosen as the card is played (355.5, 355.7). "Unit" means a unit on the board
