@@ -54,9 +54,11 @@ function locations(state: GameState): { id: ObjectId; where: string }[] {
   return found;
 }
 
+/** How many objects each player owns, tokens aside: tokens come and go (180, 186.1). */
 function ownedCounts(state: GameState): Map<PlayerId, number> {
   const counts = new Map<PlayerId, number>();
   for (const object of Object.values(state.objects)) {
+    if (state.cards[object.card]?.token === true) continue;
     counts.set(object.owner, (counts.get(object.owner) ?? 0) + 1);
   }
   return counts;
@@ -161,7 +163,7 @@ export const INVARIANTS: readonly Invariant[] = [
   },
   {
     name: 'card-count',
-    description: 'each player owns as many objects as at the start (no token before M3)',
+    description: 'each player owns as many objects as at the start, tokens aside',
     check: ({ initial, state }) => {
       const before = ownedCounts(initial);
       const now = ownedCounts(state);

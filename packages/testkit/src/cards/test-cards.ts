@@ -322,6 +322,35 @@ export const TEST_CARDS = {
     ],
     text: '[Temporary]',
   }),
+  /** A token (187.1): a domainless 1 [M] unit token with the Recruit tag. Never in a deck. */
+  recruit: {
+    ...card('test:recruit', 'unit', { name: 'Recruit', tags: ['Recruit'], domains: [], might: 1 }),
+    token: true,
+  },
+  /** Plays a token from a spell, then affects it with a linked instruction (359.3.e.14). */
+  muster: card('test:muster', 'spell', {
+    name: 'Muster',
+    cost: { energy: 2, power: [] },
+    instructions: [
+      { kind: 'play-token', token: 'test:recruit' as CardId },
+      { kind: 'buff', target: 'token' },
+    ],
+    text: 'Play a 1 [M] Recruit unit token into your base, then buff it.',
+  }),
+  /** Plays a token from a Play Effect (383.4.a). */
+  summoner: card('test:summoner', 'unit', {
+    name: 'Summoner',
+    cost: { energy: 2, power: [] },
+    might: 1,
+    abilities: [
+      {
+        kind: 'triggered',
+        trigger: { kind: 'played' },
+        instructions: [{ kind: 'play-token', token: 'test:recruit' as CardId }],
+      },
+    ],
+    text: 'When you play me, play a 1 [M] Recruit unit token into your base.',
+  }),
   /** Assault 2 (807): +2 [M] while it is an attacker. */
   bruiser: card('test:bruiser', 'unit', {
     name: 'Bruiser',
@@ -419,6 +448,7 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.fickle,
   TEST_CARDS.sprinter,
   TEST_CARDS.sprite,
+  TEST_CARDS.summoner,
 ];
 
 /** The test spells, for decks that exercise the Chain. */
@@ -430,6 +460,7 @@ export const TEST_SPELLS = [
   TEST_CARDS.rally,
   TEST_CARDS.wither,
   TEST_CARDS.bless,
+  TEST_CARDS.muster,
 ];
 
 /** Every test card, keyed by id. */
@@ -448,6 +479,7 @@ export const TEST_CARD_DEFINITIONS: Readonly<Record<CardId, CardDefinition>> = O
     TEST_CARDS.spell,
     ...TEST_SPELLS,
     ...TEST_ABILITY_UNITS,
+    TEST_CARDS.recruit,
   ].map((definition) => [definition.id, definition]),
 );
 
