@@ -39,7 +39,7 @@ From section 400 on, CR-2026-10-09 shifted the numbers by one to three compared 
 - Every game object has an **`ObjectId`**, unique within the game, assigned by a counter in the state (deterministic): `o1`, `o2`…
 - **Rule 124: a change to or from a Non-Board Zone creates a new object.** Drawing (main deck → hand), recycling (hand → deck), playing a card (hand → chain), a unit dying (board → trash): each gives a new `ObjectId`. The object keeps its `card` (the `CardId` of its definition) and its `previousObjectId`, for effects that must follow it.
 - A card has an **owner** (`owner`, the player who brought it into the game, 127.1, never changes) and, on the board, a **controller** (`controller`, can change, section 188; arrives with M2).
-- **Tokens** are not cards (185): they will have a token definition instead of a `CardId`, and cease to exist when they leave the board (186).
+- **Tokens** are not cards (185): a token is a `CardDefinition` marked `token: true`, given with the cards of the setup and never in a deck. An effect plays it into its controller's base (`play-token`, 350.2, 184.2); it ceases to exist when it goes to a Non-Board Zone other than the Chain (186.1, event `TokenCeasedToExist`). It enters the board at once, during the resolution of the effect that plays it: a provisional decision, see Q-003 in `docs/rules/questions.md`.
 
 ## Zones
 
@@ -72,7 +72,7 @@ The exact types are in `@foilengine/types` (`src/state.ts`); they hold what M1 n
 
 ```ts
 type GameState = {
-  version: 10;                      // STATE_VERSION, incremented on every shape change
+  version: 11;                      // STATE_VERSION, incremented on every shape change
   rulesVersion: RulesVersion;       // e.g. "CR-2026-10-09"
   mode: ModeId;                     // '1v1-duel' | '1v1-match' | 'ffa3' | 'ffa4' | '2v2' (487–491)
   rng: RngState;                    // xoshiro128** state, four uint32 words (ADR 0003)
@@ -100,7 +100,7 @@ Each `GameObject` also carries `buffs` (701: at most one, 702.3) and `exhausted`
 
 ## Card definitions and effects
 
-`CardDefinition` holds the printed characteristics, and the card's effects as plain JSON (ADR 0019): its `keywords` (806 Action, 813 Reaction, 808 Deathknell, 815 Tank, 826 Backline, 805 Accelerate, 816 Temporary, and the valued 807 Assault X and 814 Shield X, written `{ keyword, value }`), the `targets` it chooses as it is played (355.5), a spell's `instructions`, executed from top to bottom when it resolves (158.1), and its `abilities` (361): activated ones with their cost (energy, Power, exhausting the source), keywords, targets and instructions (377), and triggered ones with their Condition (when played, conquers, holds, attacks, defends, 383.4; dies, 808), the choices they make as they are finalized ("you may" first, 383.3.a; targets, 355.5; a cost to pay, 383.3.b) and instructions. The `deathknell` keyword (808) marks a card whose ability triggers when it dies. Passive abilities (363) change the Might of the permanent itself or of the other friendly units while it is on the board. The instructions include `give-might` (+X or -X [M] this turn, 479.4), `buff` (702.2.a) and `kill` (429.6, a target or `self`). A card with Temporary carries its ability as data: a `beginning` trigger (the start of its controller's Beginning Phase, 816.1.c) that kills it. The vocabulary is in `@foilengine/types` (`effects.ts`): `draw` (414) and `deal` (418) for now; it grows with the mechanics, and the engine interprets every building block. Since `cards` is in the state, a game and its replay carry the effects of its cards.
+`CardDefinition` holds the printed characteristics, and the card's effects as plain JSON (ADR 0019): its `keywords` (806 Action, 813 Reaction, 808 Deathknell, 815 Tank, 826 Backline, 805 Accelerate, 816 Temporary, and the valued 807 Assault X and 814 Shield X, written `{ keyword, value }`), the `targets` it chooses as it is played (355.5), a spell's `instructions`, executed from top to bottom when it resolves (158.1), and its `abilities` (361): activated ones with their cost (energy, Power, exhausting the source), keywords, targets and instructions (377), and triggered ones with their Condition (when played, conquers, holds, attacks, defends, 383.4; dies, 808), the choices they make as they are finalized ("you may" first, 383.3.a; targets, 355.5; a cost to pay, 383.3.b) and instructions. The `deathknell` keyword (808) marks a card whose ability triggers when it dies. Passive abilities (363) change the Might of the permanent itself or of the other friendly units while it is on the board. The instructions include `give-might` (+X or -X [M] this turn, 479.4), `buff` (702.2.a), `kill` (429.6) and `play-token` (350.2). An instruction affects a target of the card (its index), `self` (the permanent the ability is on) or `token` (the token an earlier instruction of the same effect played: a linked instruction, 359.3.e.14). A card with Temporary carries its ability as data: a `beginning` trigger (the start of its controller's Beginning Phase, 816.1.c) that kills it. The vocabulary is in `@foilengine/types` (`effects.ts`): `draw` (414) and `deal` (418) for now; it grows with the mechanics, and the engine interprets every building block. Since `cards` is in the state, a game and its replay carry the effects of its cards.
 
 ## The turn
 
