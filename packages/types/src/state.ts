@@ -6,7 +6,7 @@ import type { CardId, ObjectId, PlayerId, RulesVersion } from './ids.ts';
 import type { ModeId } from './setup.ts';
 import type { PlayerZoneId } from './zones.ts';
 
-export const STATE_VERSION = 15;
+export const STATE_VERSION = 16;
 
 /** State of the seeded PRNG (ADR 0003): `xoshiro128**` and its four uint32 words. Read and advanced by `rules` only. */
 export type RngState = {
@@ -68,6 +68,11 @@ export type PlayerState = {
   readonly runePool: RunePool;
   /** XP (728–733): a public resource (729.2), never below 0, with no limit (733). */
   readonly xp: number;
+  /**
+   * The cards this player has finalized this turn (359.1), as the objects they were on the Chain:
+   * Legion asks whether there is one other than the card with Legion (812.1.c).
+   */
+  readonly finalizedThisTurn: readonly ObjectId[];
   /** Battlefields this player has Scored this turn: once per battlefield per turn (472). */
   readonly scoredThisTurn: readonly ObjectId[];
   /** Ordered zones list the top of the deck first. */

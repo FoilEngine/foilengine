@@ -44,6 +44,7 @@ export type {
   Ability,
   AbilityCondition,
   AbilityCost,
+  DiscountAbility,
   Instruction,
   InstructionObject,
   Keyword,
