@@ -355,6 +355,30 @@ export const TEST_CARDS = {
     ],
     text: 'When you play me, play a 1 [M] Recruit unit token into your base.',
   }),
+  /** Ganking (810): may move from a battlefield to another battlefield. */
+  ganker: card('test:ganker', 'unit', {
+    name: 'Ganker',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: ['ganking'],
+    text: '[Ganking]',
+  }),
+  /** Ambush (822): may be played, with Reaction, to a battlefield where you control units. */
+  ambusher: card('test:ambusher', 'unit', {
+    name: 'Ambusher',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: ['ambush'],
+    text: '[Ambush]',
+  }),
+  /** Deflect 1 (809): opponents' spells and abilities that target it cost [A] more. */
+  warder: card('test:warder', 'unit', {
+    name: 'Warder',
+    cost: { energy: 1, power: [] },
+    might: 2,
+    keywords: [{ keyword: 'deflect', value: 1 }],
+    text: '[Deflect]',
+  }),
   /** A gear with an activated ability (151): "[1], [E]: Draw 1." It must enter ready (149.1). */
   lantern: card('test:lantern', 'gear', {
     name: 'Lantern',
@@ -484,6 +508,9 @@ export const TEST_ABILITY_UNITS = [
   TEST_CARDS.sprinter,
   TEST_CARDS.sprite,
   TEST_CARDS.summoner,
+  TEST_CARDS.ganker,
+  TEST_CARDS.ambusher,
+  TEST_CARDS.warder,
 ];
 
 /** The test gear, for decks that exercise them. */
