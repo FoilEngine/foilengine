@@ -85,7 +85,7 @@ export function runTurnStep(draft: Draft, step: TurnStep): void {
       const controlled = [
         ...playerOf(draft, player).zones.base,
         ...draft.battlefields.flatMap((b) =>
-          b.units.filter((unit) => controllerOf(draft, unit) === player),
+          [...b.units, ...b.gear].filter((id) => controllerOf(draft, id) === player),
         ),
       ];
       trigger(draft, 'beginning', controlled);
@@ -209,7 +209,9 @@ function awaken(draft: Draft): void {
   };
   for (const id of player.zones.base) ready(id);
   for (const battlefield of draft.battlefields) {
-    for (const unit of battlefield.units) if (controllerOf(draft, unit) === playerId) ready(unit);
+    for (const id of [...battlefield.units, ...battlefield.gear]) {
+      if (controllerOf(draft, id) === playerId) ready(id);
+    }
   }
   for (const id of exhausted) updateObject(draft, id, { exhausted: false });
   if (exhausted.length > 0) {

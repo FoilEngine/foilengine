@@ -492,8 +492,19 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
     const candidates: PlayCard[] =
       category === 'unit'
         ? unitLocations.map((location) => ({ type: 'PlayCard', player, card, location, payment }))
-        : category === 'gear' // 149.2: to the base, no choice
-          ? [{ type: 'PlayCard', player, card, payment }]
+        : category === 'gear'
+          ? (definition.keywords ?? []).includes('deploy')
+            ? // 830.1.b.1: with Deploy, to any battlefield.
+              state.battlefields.map(
+                (b): PlayCard => ({
+                  type: 'PlayCard',
+                  player,
+                  card,
+                  location: { kind: 'battlefield', battlefield: b.object },
+                  payment,
+                }),
+              )
+            : [{ type: 'PlayCard', player, card, payment }] // 149.2: to the base, no choice
           : targetChoices(lookup(), definition.targets ?? [], player).flatMap((targets) => {
               // 809.1.d: Deflect raises the cost with the targets chosen.
               const cost = discounted(
@@ -512,6 +523,29 @@ function playableCards(state: GameState, player: PlayerId): Action[] {
                 },
               ];
             });
+    // 820.1.d: a spell with Repeat may also be played paying its Repeat cost; legalActions offers
+    // the repeated execution with the same targets, and isLegal accepts any (820.2.a).
+    const repeatCost = definition.repeat;
+    if (category === 'spell' && repeatCost !== undefined) {
+      for (const spell of [...candidates]) {
+        const chosen = spell.targets ?? [];
+        const cost = discounted(
+          withDeflect(
+            lookup(),
+            player,
+            {
+              energy: definition.cost.energy + repeatCost.energy,
+              power: [...definition.cost.power, ...repeatCost.power],
+            },
+            [...chosen, ...chosen],
+          ),
+          discount,
+        );
+        const paid = autoPayment(state, player, cost);
+        if (paid !== null)
+          candidates.push({ ...spell, payment: paid, repeat: { targets: chosen } });
+      }
+    }
     // 805: a unit with Accelerate may also be played paying [1][C] more, to enter ready.
     const domains = definition.domains;
     if (
@@ -662,7 +696,9 @@ function activatableAbilities(state: GameState, player: PlayerId): Action[] {
   const owned = state.players.find((p) => p.id === player)?.zones.base ?? [];
   const permanents = [
     ...owned,
-    ...state.battlefields.flatMap((b) => b.units.filter((u) => state.objects[u]?.owner === player)),
+    ...state.battlefields.flatMap((b) =>
+      [...b.units, ...b.gear].filter((u) => state.objects[u]?.owner === player),
+    ),
   ];
   const actions: Action[] = [];
   let draft: ReturnType<typeof draftOf> | null = null;

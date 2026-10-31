@@ -92,6 +92,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
               controller: item.controller,
               status: item.status,
               targets: item.targets,
+              ...(item.repeat === undefined ? {} : { repeat: item.repeat }),
             })),
             priority: state.chain.priority,
             passes: state.chain.passes,

@@ -30,6 +30,9 @@ import { isValidTarget } from './targets.ts';
  * that needs a player's choice records it in `draft.resolving` and stops (ADR 0020): it returns
  * false, and the resolution resumes once the choice is made. It returns true when the last
  * instruction has run.
+ *
+ * With Repeat paid, the instructions are executed one more time, with the targets chosen for that
+ * execution (820.1.d, 820.2.a): the index runs over every execution, one after the other.
  */
 export function executeInstructions(
   draft: Draft,
@@ -39,9 +42,13 @@ export function executeInstructions(
 ): boolean {
   const effect = effectOf(draft, item);
   const specs = effect.targets ?? [];
+  const instructions = effect.instructions ?? [];
+  const executions = item.repeat === undefined ? 1 : 2;
+  // The targets of the current execution.
+  let chosen = item.targets;
   const legal = (index: number) => {
     const spec = specs[index];
-    const target = item.targets[index];
+    const target = chosen[index];
     return spec !== undefined &&
       target !== undefined &&
       isValidTarget(draft, spec, target, item.controller, item.ability?.source ?? null)
@@ -57,9 +64,12 @@ export function executeInstructions(
     const found = object === 'self' ? (item.ability?.source ?? null) : token;
     return found !== null && locationOf(draft, found) !== null ? found : null;
   };
-  const instructions = effect.instructions ?? [];
-  for (let index = from; index < instructions.length; index++) {
-    const instruction = instructions[index] as Instruction;
+  for (let index = from; index < instructions.length * executions; index++) {
+    const step = index % instructions.length;
+    chosen = index < instructions.length ? item.targets : (item.repeat ?? []);
+    // Each execution starts anew: its linked instructions refer to its own objects (359.3.e.14).
+    if (step === 0 && index > 0) token = null;
+    const instruction = instructions[step] as Instruction;
     if (draft.winner !== null) return true;
     switch (instruction.kind) {
       case 'draw':

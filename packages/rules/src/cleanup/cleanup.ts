@@ -5,12 +5,15 @@
 // Steps implemented: 1 (victory), 3a (lethal damage), 4 (loss of control), 6 and 7 (stage
 // showdowns and combats), 7a (unstage), 8 (remove Contested), 9 and 10 (begin a showdown or
 // a combat). Step 2 has nothing to do: the Attacker and Defender designations live with the
-// Combat (466.2.c.3). Step 5 recalls gear and misplaced runes, which cannot exist yet. Step 10a
+// Combat (466.2.c.3). Step 5 recalls unattached gear at battlefields, except gear with Deploy;
+// misplaced runes and permanents in another player's base cannot exist yet. Step 10a
 // needs a unit to arrive during a non-combat Showdown, which needs spells (M3).
 
+import type { ObjectId } from '@foilengine/types';
 import { killLethalUnits, startCombat, updateDesignations } from '../combat/combat.ts';
-import { controllerOf, type Draft, emit, playerOf, playersAt } from '../draft.ts';
+import { controllerOf, type Draft, emit, findObject, playerOf, playersAt } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
+import { keywordsWith } from '../layers/characteristics.ts';
 import { DUEL_VICTORY_SCORE } from '../modes/duel.ts';
 import { startShowdown } from '../showdown/showdown.ts';
 
@@ -152,11 +155,13 @@ export function checkVictory(draft: Draft, rule: '323.1' | '432.3.c.1'): boolean
   return false;
 }
 
-/** 323.6: recalls the gear at battlefields, per controller in turn order. */
+/** 323.6: recalls the gear at battlefields, per controller in turn order, except Deploy's (830.1.b.3). */
 function recallGear(draft: Draft): boolean {
+  const deployed = (id: ObjectId) =>
+    keywordsWith(draft.cards, (o) => findObject(draft, o), id).keywords.includes('deploy');
   const recalled = draft.battlefields.flatMap((battlefield) => {
-    const gear = battlefield.gear;
-    battlefield.gear = [];
+    const gear = battlefield.gear.filter((id) => !deployed(id));
+    battlefield.gear = battlefield.gear.filter(deployed);
     return gear;
   });
   if (recalled.length === 0) return false;
