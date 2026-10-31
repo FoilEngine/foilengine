@@ -86,7 +86,7 @@ function choose(
 
 /** Plays one game to its end, checking the invariants at every step, then replays it. */
 export function playFuzzGame(fuzzCase: FuzzCase, options: FuzzGameOptions = {}): FuzzGameResult {
-  const setup = options.setup ?? testSetup({ distinctDecks: true });
+  const setup = options.setup ?? testSetup({ distinctDecks: true, withSpells: true });
   const invariants = options.invariants ?? INVARIANTS;
   const created = createGame(setup, fuzzCase.seed as Seed);
   if (!created.ok) throw new Error(`Fuzz setup refused: ${JSON.stringify(created.problems)}`);

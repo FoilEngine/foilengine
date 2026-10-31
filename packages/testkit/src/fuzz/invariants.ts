@@ -47,6 +47,7 @@ function locations(state: GameState): { id: ObjectId; where: string }[] {
     for (const id of battlefield.units)
       found.push({ id, where: `battlefield ${battlefield.object}` });
   }
+  for (const item of state.chain?.items ?? []) found.push({ id: item.object, where: 'chain' });
   return found;
 }
 
