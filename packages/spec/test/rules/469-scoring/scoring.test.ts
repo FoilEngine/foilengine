@@ -5,13 +5,14 @@ import { describe } from 'vitest';
 import {
   A,
   act,
-  afterConquest,
   B,
   battlefield,
   endTurn,
   inHand,
   move,
   ofType,
+  turnFive,
+  turnFour,
   turnThree,
   unitsInBase,
 } from '../../battlefields.ts';
@@ -29,18 +30,6 @@ function play(
   if (payment === null) throw new Error(`A cannot pay for ${card}`);
   return act(state, { type: 'PlayCard', player: A, card: object, location, payment });
 }
-
-/**
- * After A's conquest of the first battlefield on turn 3, A also plays Vanilla 6 to their base.
- * Returns B's turn 4, Main Phase.
- */
-function turnFour(): GameState {
-  const conquered = afterConquest().state;
-  return endTurn(play(conquered, 'test:vanilla-6', { kind: 'base' }).state).state;
-}
-
-/** A's turn 5: two units at the first battlefield (Held this turn), Vanilla 6 ready in base. */
-const turnFive = () => endTurn(turnFour()).state;
 
 describe('469–474 Scoring', () => {
   scenario(
@@ -186,4 +175,125 @@ describe('469–474 Scoring', () => {
       },
     },
   );
+
+  scenario('rule 194: players gain points by Holding and by Conquering battlefields', {
+    rules: ['194', '194.1.a', '194.1.b', '471', '471.1.b'],
+    setup: turnThree,
+    check: (t) => {
+      // Conquer: A moves to the empty first battlefield; once the showdown closes, A establishes
+      // Control (471.1.b) and that Conquer gains a point.
+      const target = battlefield(t.state, 0);
+      t.act(
+        move(A, unitsInBase(t.state, A), target),
+        { type: 'PassFocus', player: A },
+        { type: 'PassFocus', player: B },
+      );
+      t.expect(
+        t.events
+          .map((e) => e.type)
+          .filter((type) =>
+            ['ControlEstablished', 'BattlefieldScored', 'PointsGained'].includes(type),
+          ),
+      ).toEqual(['ControlEstablished', 'BattlefieldScored', 'PointsGained']);
+      t.expect(ofType(t.events, 'BattlefieldScored')).toMatchObject([{ method: 'conquer' }]);
+      t.expect(t.player('A').points).toBe(1);
+      // Hold: at the start of A's next turn, A still controls it.
+      t.act({ type: 'EndTurn', player: A }, { type: 'EndTurn', player: B });
+      t.expect(ofType(t.events, 'BattlefieldScored')).toMatchObject([
+        { player: A, method: 'hold' },
+      ]);
+      t.expect(t.player('A').points).toBe(2);
+    },
+  });
+
+  scenario(
+    'rule 470.1: Scoring is not Gaining a Point: a Conquer short of the Final Point scores without a point',
+    {
+      rules: ['470.1', '470'],
+      setup: () => withPoints(turnThree(), A, 7),
+      check: (t) => {
+        t.act(
+          move(A, unitsInBase(t.state, A), battlefield(t.state, 0)),
+          { type: 'PassFocus', player: A },
+          { type: 'PassFocus', player: B },
+        );
+        t.expect(ofType(t.events, 'BattlefieldScored')).toHaveLength(1);
+        t.expect(ofType(t.events, 'PointsGained')).toEqual([]);
+        t.expect(t.player('A').scoredThisTurn).toEqual([battlefield(t.state, 0)]);
+      },
+    },
+  );
+
+  scenario(
+    'rule 194.2.a: when both players are at the Victory Score, the one with more points wins',
+    {
+      rules: ['194.2.a', '319.6'],
+      setup: () => withPoints(withPoints(turnThree(), A, 9), B, 8),
+      check: (t) => {
+        // A unit entering the board makes a Cleanup outstanding (319.6), which checks victory (323.1).
+        const { events } = play(t.state, 'test:vanilla-2', { kind: 'base' });
+        const types = events.map((e) => e.type);
+        t.expect(types.indexOf('CardPlayed')).toBeLessThan(types.indexOf('GameWon'));
+        t.expect(ofType(events, 'GameWon')).toMatchObject([{ player: A }]);
+      },
+    },
+  );
+
+  scenario(
+    'rule 194.2.b: tied at the Victory Score, play continues until a player has more points in a cleanup',
+    {
+      rules: ['194.2.b', '474', '319.2'],
+      setup: () => withPoints(withPoints(turnFour(), A, 8), B, 8),
+      check: (t) => {
+        // B's turn 4: tied at 8. Ending the turn goes through several cleanups without a winner,
+        // until A Holds the first battlefield in their Beginning Phase and has 9.
+        t.expect(t.state.winner).toBeNull();
+        t.act({ type: 'EndTurn', player: B });
+        const types = t.events.map((e) => e.type);
+        const won = types.indexOf('GameWon');
+        t.expect(types.indexOf('BattlefieldScored')).toBeLessThan(won);
+        t.expect(ofType(t.events, 'GameWon')).toMatchObject([{ player: A }]);
+        // 319.2: the Cleanup after the Beginning Phase ends the game: A does not channel.
+        t.expect(types.slice(won)).not.toContain('RuneChanneled');
+        t.expect(t.player('A').points).toBe(9);
+      },
+    },
+  );
+});
+
+describe('315 Start of Turn tasks', () => {
+  scenario('rule 315.1.a: each phase of the Start of Turn makes its task outstanding, in order', {
+    rules: ['315.1.a', '315.2.b', '315.2.b.1', '315.3.a', '315.4.a', '316.1'],
+    setup: turnFour,
+    check: (t) => {
+      // A's turn 5: ready (Awaken), Hold (Scoring Step of the Beginning Phase), channel, draw,
+      // then the Main Phase begins (316.1).
+      t.act({ type: 'EndTurn', player: B });
+      const start = t.events.findIndex((e) => e.type === 'TurnStarted');
+      const steps = t.events
+        .slice(start)
+        .filter((e) =>
+          [
+            'PhaseStarted',
+            'ObjectsReadied',
+            'BattlefieldScored',
+            'RuneChanneled',
+            'CardDrawn',
+          ].includes(e.type),
+        )
+        .map((e) => (e.type === 'PhaseStarted' ? e.phase : e.type));
+      t.expect(steps).toEqual([
+        'awaken',
+        'ObjectsReadied',
+        'beginning',
+        'BattlefieldScored',
+        'channel',
+        'RuneChanneled',
+        'RuneChanneled',
+        'draw',
+        'CardDrawn',
+        'main',
+      ]);
+    },
+  });
 });

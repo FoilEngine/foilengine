@@ -278,3 +278,138 @@ describe('160–168 Runes and Rune Pools', () => {
     },
   });
 });
+
+/** A's first Main Phase with two runes on top of a deck of Fury and `other` runes, and `hand`. */
+const withRunes = (
+  other: 'Calm Rune' | 'Domainless Rune',
+  top: [string, string],
+  hand: string[],
+) => {
+  const otherId = other === 'Calm Rune' ? TEST_CARDS.calmRune.id : TEST_CARDS.domainlessRune.id;
+  const deck = testDeck({
+    mainDeck: [
+      TEST_CARDS.champion.id,
+      TEST_CARDS.calmUnit.id,
+      ...TEST_CARDS.vanillas.map((c) => c.id).slice(1),
+    ],
+    runeDeck: [...Array(6).fill(TEST_CARDS.rune.id), ...Array(6).fill(otherId)],
+  });
+  return board()
+    .setup(
+      testSetup({
+        players: [
+          { id: A, deck },
+          { id: 'B' as PlayerId, deck: testDeck() },
+        ],
+      }),
+    )
+    .firstPlayer('A')
+    .player('A', { hand, mainDeckTop: [v(6)], runeDeckTop: top })
+    .afterMulligans();
+};
+
+describe('162–166 Energy and Power, and paying a cost (356–358)', () => {
+  scenario("rule 162: runes produce the Energy and Power that pay a card's cost, as it is paid", {
+    rules: ['162', '163', '166', '356', '357', '357.1.a', '358'],
+    setup: firstMainPhase(),
+    check: (t) => {
+      const [r1, r2] = runes(t);
+      t.act({
+        type: 'PlayCard',
+        player: A,
+        card: handCard(t, 'test:vanilla-5'),
+        location: { kind: 'base' },
+        payment: [
+          { rune: r1, use: 'exhaust' },
+          { rune: r2, use: 'recycle' },
+        ],
+      });
+      // 357.1.a: the runes' Reaction abilities add the resources during the payment step, then the
+      // total cost (356) is paid: with no modifier before M3, it is the printed cost.
+      t.expect(
+        t.events
+          .filter((e) => ['ResourcesAdded', 'ResourcesPaid', 'CardPlayed'].includes(e.type))
+          .map((e) => e.type),
+      ).toEqual(['ResourcesAdded', 'ResourcesAdded', 'ResourcesPaid', 'CardPlayed']);
+      t.expect(ofType(t.events, 'ResourcesPaid')[0]?.resources).toEqual({
+        energy: 1,
+        power: { fury: 1 },
+      });
+      t.expect(t.player('A').runePool).toMatchObject({ energy: 0, power: { fury: 0 } });
+    },
+  });
+
+  scenario('rule 163.1.a: Energy has no domain: Energy from a Calm rune pays any Energy cost', {
+    rules: ['163.1.a'],
+    setup: withRunes('Calm Rune', ['Calm Rune', 'Calm Rune'], [v(2), v(3), v(4), v(5)]),
+    check: (t) => {
+      // Vanilla 2 is a Fury unit that costs 2 Energy.
+      t.expect(t.state.cards['test:vanilla-2' as never]?.domains).toEqual(['fury']);
+      const [r1, r2] = runes(t);
+      t.act({
+        type: 'PlayCard',
+        player: A,
+        card: handCard(t, 'test:vanilla-2'),
+        location: { kind: 'base' },
+        payment: [
+          { rune: r1, use: 'exhaust' },
+          { rune: r2, use: 'exhaust' },
+        ],
+      });
+      t.expect(ofType(t.events, 'CardPlayed')).toHaveLength(1);
+    },
+  });
+
+  scenario('rule 163.2.a: Power has a domain: a recycled Calm rune adds Calm Power', {
+    rules: ['163.2.a'],
+    setup: withRunes('Calm Rune', ['Fury Rune', 'Calm Rune'], ['Calm Unit', v(2), v(3), v(4)]),
+    check: (t) => {
+      const [fury, calm] = runes(t);
+      t.act({
+        type: 'PlayCard',
+        player: A,
+        card: handCard(t, 'test:calm-unit'),
+        location: { kind: 'base' },
+        payment: [
+          { rune: fury, use: 'exhaust' },
+          { rune: calm, use: 'recycle' },
+        ],
+      });
+      t.expect(ofType(t.events, 'ResourcesAdded').at(-1)?.resources).toEqual({
+        energy: 0,
+        power: { calm: 1 },
+      });
+    },
+  });
+
+  scenario('rule 163.2.b: Universal Power pays a Power cost of any domain', {
+    rules: ['163.2.b'],
+    setup: withRunes(
+      'Domainless Rune',
+      ['Fury Rune', 'Domainless Rune'],
+      ['Calm Unit', v(2), v(3), v(4)],
+    ),
+    check: (t) => {
+      // 135.2.e.6.b: the [C] that a domainless rune adds when recycled is processed as [A].
+      const [fury, domainless] = runes(t);
+      t.act({
+        type: 'PlayCard',
+        player: A,
+        card: handCard(t, 'test:calm-unit'),
+        location: { kind: 'base' },
+        payment: [
+          { rune: fury, use: 'exhaust' },
+          { rune: domainless, use: 'recycle' },
+        ],
+      });
+      t.expect(ofType(t.events, 'ResourcesAdded').at(-1)?.resources).toEqual({
+        energy: 0,
+        power: { any: 1 },
+      });
+      t.expect(ofType(t.events, 'ResourcesPaid')[0]?.resources).toEqual({
+        energy: 1,
+        power: { any: 1 },
+      });
+    },
+  });
+});

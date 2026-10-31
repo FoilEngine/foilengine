@@ -1,3 +1,4 @@
+import { autoPayment } from '@foilengine/rules';
 import { scenario } from '@foilengine/testkit';
 import type { ObjectId } from '@foilengine/types';
 import { describe } from 'vitest';
@@ -125,6 +126,50 @@ describe('341–348 Showdowns without spells', () => {
     check: (t) => {
       t.act(move(A, unitsInBase(t.state, A) as ObjectId[], battlefield(t.state, 0)));
       t.expectIllegal({ type: 'PassFocus', player: B }, 'not-your-decision');
+    },
+  });
+
+  scenario(
+    'rule 316.8.b.1: moving to an empty battlefield stages a Non-Combat Showdown, which is not a Combat',
+    {
+      rules: ['316.8.b.1', '316.8', '316.8.b', '316.6', '319.8', '453', '343', '343.2', '348.2'],
+      setup: contested,
+      check: (t) => {
+        // 343.2: before the move, no Showdown: a Neutral State.
+        t.expect(t.state.showdown).toBeNull();
+        const target = battlefield(t.state, 0);
+        t.act(move(A, unitsInBase(t.state, A), target));
+        // 319.8, 316.8.b: the Cleanup after the Move stages the Showdown where Contested was applied.
+        t.expect(t.events.map((e) => e.type).slice(-3)).toEqual([
+          'UnitsMoved',
+          'BattlefieldContested',
+          'ShowdownStarted',
+        ]);
+        t.expect(t.state.combat).toBeNull();
+        // 348.2: when it closes, the only player there establishes Control.
+        t.act({ type: 'PassFocus', player: A }, { type: 'PassFocus', player: B });
+        t.expect(ofType(t.events, 'ControlEstablished')).toMatchObject([{ player: A }]);
+      },
+    },
+  );
+
+  scenario('rule 343.1.a: no card can be played during a Showdown', {
+    rules: ['343.1.a', '358.4'],
+    setup: contested,
+    check: (t) => {
+      const card = t
+        .player(A)
+        .zones.hand.find((id) => t.state.objects[id]?.card === 'test:vanilla-2') as ObjectId;
+      const play = (): Parameters<typeof t.act>[0] => ({
+        type: 'PlayCard',
+        player: A,
+        card,
+        location: { kind: 'base' },
+        payment: autoPayment(t.state, A, { energy: 2, power: [] }) ?? [],
+      });
+      t.expectLegal(play());
+      t.act(move(A, unitsInBase(t.state, A), battlefield(t.state, 0)));
+      t.actIllegal(play(), 'wrong-action');
     },
   });
 });

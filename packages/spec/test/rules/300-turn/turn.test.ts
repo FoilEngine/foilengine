@@ -197,3 +197,99 @@ describe('316 Main Phase, 317 Ending Phase', () => {
     },
   });
 });
+
+describe('316 Main Phase and 317 Ending Phase', () => {
+  scenario(
+    'rule 316.5: the Main Phase has no set structure: the Turn Player acts as many times as they wish',
+    {
+      rules: ['316.5', '316.5.a'],
+      setup: board()
+        .firstPlayer('A')
+        .player('A', { hand: [v(1), v(2), v(3), v(4)], mainDeckTop: [v(5), v(6), v(7)] })
+        .afterMulligans(),
+      check: (t) => {
+        // Turn 3 of A, with 4 runes: two cheap units, then the turn ends when A says so.
+        t.act({ type: 'EndTurn', player: A }, { type: 'EndTurn', player: B });
+        const plays = () => legalActions(t.state, A).filter((a) => a.type === 'PlayCard');
+        const first = plays().find(
+          (a) => a.type === 'PlayCard' && t.state.objects[a.card]?.card === 'test:vanilla-1',
+        );
+        if (first === undefined) throw new Error('A cannot play Vanilla 1');
+        t.act(first);
+        const second = plays().find(
+          (a) => a.type === 'PlayCard' && t.state.objects[a.card]?.card === 'test:vanilla-2',
+        );
+        if (second === undefined) throw new Error('A cannot play Vanilla 2');
+        t.act(second);
+        t.expect(t.state.stage).toMatchObject({ turnPlayer: A, phase: 'main' });
+        t.expectDecision({ kind: 'Priority', player: A });
+      },
+    },
+  );
+
+  scenario(
+    'rule 316.5.b: in the Neutral Open State of the Main Phase, only the Turn Player can act',
+    {
+      rules: ['316.5.b'],
+      setup: board()
+        .firstPlayer('A')
+        .player('B', { hand: [v(1), v(2), v(3), v(4)] })
+        .afterMulligans(),
+      check: (t) => {
+        t.expect(legalActions(t.state, B)).toEqual([{ type: 'Concede', player: B }]);
+        const card = t.player('B').zones.hand[0] as ObjectId;
+        t.actIllegal(
+          { type: 'PlayCard', player: B, card, location: { kind: 'base' }, payment: [] },
+          'not-your-decision',
+        );
+      },
+    },
+  );
+
+  scenario(
+    'rule 316.9.a: ending the turn ends the Main Phase, and play proceeds to the Ending Phase',
+    {
+      rules: ['316.9.a', '316.9.b'],
+      setup: board().firstPlayer('A').afterMulligans(),
+      act: (t) => t.act({ type: 'EndTurn', player: A }),
+      check: (t) => {
+        t.expect(ofType(t.events, 'PhaseStarted')[0]).toMatchObject({ phase: 'ending', player: A });
+      },
+    },
+  );
+
+  scenario(
+    'rule 317.2: the Expiration Step invokes the Ending Special Cleanup, which empties the Rune Pools',
+    {
+      rules: ['317.2', '317.2.a', '324', '324.1'],
+      setup: board()
+        .firstPlayer('A')
+        .player('A', { hand: [v(1), v(2), v(3), v(4)] })
+        .afterMulligans(),
+      check: (t) => {
+        // A pays Vanilla 1 (1 Energy) with two runes and keeps 1 Energy in their Rune Pool.
+        const [r1, r2] = t.player('A').zones.base as [ObjectId, ObjectId];
+        const card = t
+          .player('A')
+          .zones.hand.find((id) => t.state.objects[id]?.card === 'test:vanilla-1') as ObjectId;
+        t.act({
+          type: 'PlayCard',
+          player: A,
+          card,
+          location: { kind: 'base' },
+          payment: [
+            { rune: r1, use: 'exhaust' },
+            { rune: r2, use: 'exhaust' },
+          ],
+        });
+        t.expect(t.player('A').runePool.energy).toBe(1);
+        t.act({ type: 'EndTurn', player: A });
+        // 324.1: the Ending Phase defines the steps it adds to that Cleanup, among them 3e.
+        const types = t.events.map((e) => (e.type === 'PhaseStarted' ? e.phase : e.type));
+        const emptied = types.indexOf('RunePoolEmptied');
+        t.expect(types.indexOf('ending')).toBeLessThan(emptied);
+        t.expect(emptied).toBeLessThan(types.indexOf('TurnEnded'));
+      },
+    },
+  );
+});

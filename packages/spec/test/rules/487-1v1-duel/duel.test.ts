@@ -1,5 +1,5 @@
-import { createGame, SUPPORTED_MODES } from '@foilengine/rules';
-import { TEST_CARDS, testDeck, testSetup } from '@foilengine/testkit';
+import { createGame, SUPPORTED_MODES, viewFor } from '@foilengine/rules';
+import { scenario, TEST_CARDS, testDeck, testSetup } from '@foilengine/testkit';
 import type { PlayerId, Seed } from '@foilengine/types';
 import { describe, expect, it } from 'vitest';
 import { A, B, eventsOfType, start } from '../../support.ts';
@@ -57,5 +57,17 @@ describe('487 1v1 (Duel)', () => {
     expect(SUPPORTED_MODES).toEqual(['1v1-duel']);
     const result = createGame(testSetup({ mode: 'ffa3' }), 'seed' as Seed);
     expect(result.ok ? [] : result.problems).toMatchObject([{ code: 'unsupported-mode' }]);
+  });
+
+  scenario('rule 487: in a 1v1 Duel, each player has exactly one opponent and no teammate', {
+    rules: ['487', '487.2'],
+    setup: () => start().state,
+    check: (t) => {
+      t.expect(t.state.mode).toBe('1v1-duel');
+      for (const id of [A, B]) {
+        const view = viewFor(t.state, id);
+        t.expect(view.opponents.map((o) => o.id)).toEqual([id === A ? B : A]);
+      }
+    },
   });
 });

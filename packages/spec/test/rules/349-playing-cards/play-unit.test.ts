@@ -1,7 +1,8 @@
-import { apply } from '@foilengine/rules';
+import { apply, autoPayment } from '@foilengine/rules';
 import { board, scenario } from '@foilengine/testkit';
 import type { GameEvent, GameState, ObjectId, PlayerId } from '@foilengine/types';
 import { describe } from 'vitest';
+import { turnFive } from '../../battlefields.ts';
 
 const A = 'A' as PlayerId;
 const B = 'B' as PlayerId;
@@ -151,6 +152,29 @@ describe('349–359 Playing a unit', () => {
         { type: 'PlayCard', player: A, card, location: { kind: 'base' }, payment: [] },
         'card-not-playable',
       );
+    },
+  });
+
+  scenario('rule 350: a player plays a unit to the location they choose as they play it', {
+    rules: ['350', '351', '355', '355.2', '359'],
+    setup: turnFive,
+    check: (t) => {
+      // A controls the first battlefield: A chooses to play Vanilla 2 there (355.2), and it enters
+      // there (359.2.c).
+      const target = t.state.battlefields[0]?.object as ObjectId;
+      const card = inHand(t.state, 'test:vanilla-2');
+      const payment = autoPayment(t.state, A, { energy: 2, power: [] });
+      if (payment === null) throw new Error('A cannot pay 2 Energy');
+      t.act({
+        type: 'PlayCard',
+        player: A,
+        card,
+        location: { kind: 'battlefield', battlefield: target },
+        payment,
+      });
+      const [played] = ofType(t.events, 'CardPlayed');
+      t.expect(played).toMatchObject({ player: A, battlefield: target });
+      t.expect(t.state.battlefields[0]?.units).toContain(played?.object);
     },
   });
 });

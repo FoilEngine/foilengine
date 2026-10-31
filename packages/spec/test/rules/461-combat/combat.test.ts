@@ -302,4 +302,122 @@ describe('461–468 Combat', () => {
       t.expectIllegal({ type: 'EndTurn', player: B }, 'wrong-action');
     },
   });
+
+  scenario(
+    'rule 316.7.a: units of opposing players at the same battlefield cause a Combat, here through a Standard Move',
+    {
+      rules: [
+        '316.7.a',
+        '316.7',
+        '316.7.b',
+        '316.7.f',
+        '316.8.a',
+        '316.8.a.1',
+        '344.1',
+        '466',
+        '466.1',
+        '466.2.c',
+        '466.2.e.1',
+      ],
+      setup: () => beforeCombat('both'),
+      check: (t) => {
+        const target = battlefield(t.state, 0);
+        t.act(move(B, unitsInBase(t.state, B), target));
+        // The Combat opens with a Combat Showdown at that battlefield (344.1, 466.1, 316.8.a.1).
+        t.expect(t.events.map((e) => e.type).slice(-2)).toEqual([
+          'CombatStarted',
+          'ShowdownStarted',
+        ]);
+        t.expect(t.state.combat).toMatchObject({ battlefield: target, step: 'showdown' });
+        t.expect(t.state.showdown).toMatchObject({ battlefield: target });
+        // 466.2.e.1: no Combat Chain without abilities: the Combat Showdown goes on, Open.
+        t.expectDecision({ kind: 'Focus', player: B });
+      },
+    },
+  );
+
+  scenario(
+    'rule 467.2.c.1: assigning damage is not dealing it: nothing is dealt until both have assigned',
+    {
+      rules: ['467.2.c.1', '467', '467.2'],
+      setup: damageStep,
+      check: (t) => {
+        const v1 = ofCard(t.state, 'test:vanilla-1');
+        const v5 = ofCard(t.state, 'test:vanilla-5');
+        t.act(
+          assign(B, [
+            { unit: v1, amount: 1 },
+            { unit: v5, amount: 2 },
+          ]),
+        );
+        t.expect(ofType(t.events, 'DamageDealt')).toEqual([]);
+        t.expect(t.state.objects[v1]?.damage).toBe(0);
+        t.expect(t.state.objects[v5]?.damage).toBe(0);
+      },
+    },
+  );
+
+  scenario(
+    'rule 468: the Resolution Step: a Combat Cleanup, the combat result, then the combat ends',
+    {
+      rules: ['468', '468.1.a', '468.3', '316.7.e', '468.7.a'],
+      setup: damageStep,
+      check: (t) => {
+        const v1 = ofCard(t.state, 'test:vanilla-1');
+        const v5 = ofCard(t.state, 'test:vanilla-5');
+        t.act(
+          assign(B, [
+            { unit: v1, amount: 1 },
+            { unit: v5, amount: 2 },
+          ]),
+        );
+        const [b1, b2] = (t.state.battlefields[0]?.units ?? []).filter(
+          (u) => t.state.objects[u]?.owner === B,
+        ) as [ObjectId, ObjectId];
+        t.act(
+          assign(A, [
+            { unit: b1, amount: 1 },
+            { unit: b2, amount: 5 },
+          ]),
+        );
+        const types = t.events.map((e) => e.type);
+        // The Combat Cleanup kills (3a) then heals (3c), then the result, then the end.
+        t.expect(types.indexOf('DamageDealt')).toBeLessThan(types.indexOf('UnitKilled'));
+        t.expect(types.indexOf('UnitKilled')).toBeLessThan(types.indexOf('UnitsHealed'));
+        t.expect(types.indexOf('UnitsHealed')).toBeLessThan(types.indexOf('CombatEnded'));
+        // 468.7.a: no Attacker or Defender any more.
+        t.expect(t.state.combat).toBeNull();
+      },
+    },
+  );
+
+  scenario("rule 108.2.b: a unit killed in combat goes to its owner's Trash", {
+    rules: ['108.2.b', '323.3'],
+    setup: damageStep,
+    check: (t) => {
+      const v1 = ofCard(t.state, 'test:vanilla-1');
+      const v5 = ofCard(t.state, 'test:vanilla-5');
+      t.act(
+        assign(B, [
+          { unit: v1, amount: 1 },
+          { unit: v5, amount: 2 },
+        ]),
+      );
+      const [b1, b2] = (t.state.battlefields[0]?.units ?? []).filter(
+        (u) => t.state.objects[u]?.owner === B,
+      ) as [ObjectId, ObjectId];
+      t.act(
+        assign(A, [
+          { unit: b1, amount: 1 },
+          { unit: b2, amount: 5 },
+        ]),
+      );
+      const killed = ofType(t.events, 'UnitKilled');
+      t.expect(killed.length).toBeGreaterThan(0);
+      for (const kill of killed) {
+        const owner = t.state.objects[kill.object]?.owner as typeof A;
+        t.expect(t.player(owner).zones.trash).toContain(kill.object);
+      }
+    },
+  });
 });
