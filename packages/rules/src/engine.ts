@@ -2,17 +2,21 @@
 
 import {
   type Action,
+  type ActivateAbility,
   assertNever,
   type Decision,
   type GameEvent,
   type GameState,
   type IllegalReason,
   type ObjectId,
+  type OrderTriggers,
   type PlayCard,
   type PlayerId,
   type PlayLocation,
   type TargetSpec,
 } from '@foilengine/types';
+import { activate, checkActivate } from './abilities/activate.ts';
+import { placeInOrder, playerToOrder } from './abilities/triggers.ts';
 import { passPriority } from './chain/chain.ts';
 import {
   assignDamage,
@@ -34,6 +38,7 @@ import {
   mulliganDecision,
 } from './setup/mulligan.ts';
 import { passFocus } from './showdown/showdown.ts';
+import { settle } from './tasks/tasks.ts';
 import { endTurn } from './turn/turn.ts';
 
 export type Outcome =
@@ -48,9 +53,18 @@ export function pendingDecision(state: GameState): Decision | null {
   switch (stage.kind) {
     case 'mulligan':
       return mulliganDecision(state);
-    case 'turn':
-      if (stage.phase !== 'main') return null;
-      // 312.2.c, 312.2.d: on a Chain, the player it gave Priority to acts, Showdown or not.
+    case 'turn': {
+      // 383.3.d: a player orders the triggered abilities they control that triggered together.
+      const orderer = playerToOrder(state);
+      if (orderer !== null) {
+        return {
+          kind: 'OrderTriggers',
+          player: orderer,
+          abilities: state.triggered.filter((t) => t.controller === orderer),
+          rule: '383.3.d',
+        };
+      }
+      // 312.2.c, 312.2.d: on a Chain, the player it gave Priority to acts, in any phase.
       if (state.chain !== null) {
         return {
           kind: 'Priority',
@@ -58,6 +72,7 @@ export function pendingDecision(state: GameState): Decision | null {
           rule: state.chain.passes === 0 ? '312.2.c' : '312.2.d',
         };
       }
+      if (stage.phase !== 'main') return null;
       // 467.2.c: in the Combat Damage Step, the Attacker then the Defender assign damage.
       if (state.combat?.step === 'damage') return damageDecision(state);
       // 313.2, 347: in a Showdown, the player with Focus acts, and has Priority.
@@ -71,6 +86,7 @@ export function pendingDecision(state: GameState): Decision | null {
       }
       // 312.2.a: the Turn Player has Priority in their Main Phase, in a Neutral Open State.
       return { kind: 'Priority', player: stage.turnPlayer, rule: '312.2.a' };
+    }
     case 'ended':
       return null;
     default:
@@ -158,6 +174,14 @@ export function isLegal(state: GameState, action: Action): Legality {
       );
     case 'PassFocus':
       return checkDecision(decision, 'Focus', action.player);
+    case 'ActivateAbility':
+      return both(checkPlayDecision(decision, action.player), () =>
+        fromReason(checkActivate(state, action)),
+      );
+    case 'OrderTriggers':
+      return both(checkDecision(decision, 'OrderTriggers', action.player), () =>
+        fromReason(checkOrder(state, action)),
+      );
     case 'PassPriority':
       return both(checkDecision(decision, 'Priority', action.player), () =>
         state.chain === null
@@ -195,16 +219,31 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
     case 'Priority':
       // 338.1: on a Chain, play a Reaction or pass.
       if (state.chain !== null) {
-        return [...playableCards(state, player), { type: 'PassPriority', player }];
+        return [
+          ...playableCards(state, player),
+          ...activatableAbilities(state, player),
+          { type: 'PassPriority', player },
+        ];
       }
       return [
         ...playableCards(state, player),
+        ...activatableAbilities(state, player),
         ...standardMoves(state, player),
         { type: 'EndTurn', player },
       ];
     case 'Focus':
-      // 347: play a legally timed card (347.1), or pass (347.2).
-      return [...playableCards(state, player), { type: 'PassFocus', player }];
+      // 347: play a legally timed card or activated ability (347.1), or pass (347.2).
+      return [
+        ...playableCards(state, player),
+        ...activatableAbilities(state, player),
+        { type: 'PassFocus', player },
+      ];
+    case 'OrderTriggers':
+      return orderings(decision.abilities.length).map((order) => ({
+        type: 'OrderTriggers',
+        player,
+        order,
+      }));
     case 'AssignDamage':
       return assignmentOptions(state);
     default:
@@ -219,6 +258,16 @@ function decisionActions(state: GameState, decision: Decision, player: PlayerId)
 export function apply(state: GameState, action: Action): { state: GameState; events: GameEvent[] } {
   // Playing a card and moving are checked while they are applied: checking them first with
   // isLegal would play them twice. Only the decision is checked beforehand.
+  if (action.type === 'ActivateAbility') {
+    const decision = pendingDecision(state);
+    const turn = decision === null ? noDecision() : checkPlayDecision(decision, action.player);
+    if (!turn.ok) throw new IllegalActionError(turn.reason);
+    const draft = draftOf(state);
+    const reason = activate(draft, state, action);
+    if (reason !== null) throw new IllegalActionError(reason);
+    settle(draft);
+    return { state: stateOf(state, draft), events: draft.events };
+  }
   if (action.type === 'PlayCard' || action.type === 'StandardMove') {
     const decision = pendingDecision(state);
     const turn =
@@ -242,14 +291,17 @@ export function apply(state: GameState, action: Action): { state: GameState; eve
     case 'EndTurn':
     case 'PassFocus':
     case 'PassPriority':
+    case 'OrderTriggers':
     case 'AssignCombatDamage':
     case 'Concede': {
       const draft = draftOf(state);
       if (action.type === 'EndTurn') endTurn(draft);
       else if (action.type === 'PassFocus') passFocus(draft);
       else if (action.type === 'PassPriority') passPriority(draft);
+      else if (action.type === 'OrderTriggers') placeInOrder(draft, action.player, action.order);
       else if (action.type === 'Concede') concede(draft, action);
       else assignDamage(draft, action);
+      settle(draft);
       return { state: stateOf(state, draft), events: draft.events };
     }
     default:
@@ -344,4 +396,79 @@ function standardMoves(state: GameState, player: PlayerId): Action[] {
   return candidates.filter(
     (action) => action.type === 'StandardMove' && checkStandardMove(state, action) === null,
   );
+}
+
+/** 383.3.d: the order must list each of the player's waiting triggered abilities once. */
+function checkOrder(state: GameState, action: OrderTriggers): IllegalReason | null {
+  const count = state.triggered.filter((t) => t.controller === action.player).length;
+  const sorted = [...action.order].sort((a, b) => a - b);
+  return sorted.length === count && sorted.every((index, i) => index === i)
+    ? null
+    : {
+        code: 'invalid-order',
+        message: `Order all ${count} triggered abilities, each once`,
+        rule: '383.3.d',
+      };
+}
+
+/** Every order of `count` items, for legalActions (capped: the decision accepts any order). */
+function orderings(count: number, cap = 120): number[][] {
+  const result: number[][] = [];
+  const build = (prefix: number[], rest: number[]) => {
+    if (result.length >= cap) return;
+    if (rest.length === 0) {
+      result.push(prefix);
+      return;
+    }
+    for (const [i, next] of rest.entries()) {
+      build([...prefix, next], [...rest.slice(0, i), ...rest.slice(i + 1)]);
+    }
+  };
+  build(
+    [],
+    Array.from({ length: count }, (_, i) => i),
+  );
+  return result;
+}
+
+/**
+ * One ActivateAbility per activated ability of the permanents the player controls, timed for the
+ * current state, and each choice of targets, paid with `autoPayment`.
+ */
+function activatableAbilities(state: GameState, player: PlayerId): Action[] {
+  const owned = state.players.find((p) => p.id === player)?.zones.base ?? [];
+  const permanents = [
+    ...owned,
+    ...state.battlefields.flatMap((b) => b.units.filter((u) => state.objects[u]?.owner === player)),
+  ];
+  const actions: Action[] = [];
+  let draft: ReturnType<typeof draftOf> | null = null;
+  const lookup = () => {
+    draft ??= draftOf(state);
+    return draft;
+  };
+  for (const source of permanents) {
+    const object = state.objects[source];
+    const abilities = object === undefined ? [] : (state.cards[object.card]?.abilities ?? []);
+    for (const [index, ability] of abilities.entries()) {
+      if (ability.kind !== 'activated') continue;
+      const payment = autoPayment(state, player, {
+        energy: ability.cost.energy ?? 0,
+        power: ability.cost.power ?? [],
+      });
+      if (payment === null) continue;
+      for (const targets of targetChoices(lookup(), ability.targets ?? [], player)) {
+        const action: ActivateAbility = {
+          type: 'ActivateAbility',
+          player,
+          source,
+          ability: index,
+          payment,
+          ...(targets.length === 0 ? {} : { targets }),
+        };
+        if (checkActivate(state, action) === null) actions.push(action);
+      }
+    }
+  }
+  return actions;
 }

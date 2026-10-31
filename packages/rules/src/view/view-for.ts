@@ -82,7 +82,8 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
         ? null
         : {
             items: state.chain.items.map((item) => ({
-              object: show(objectOf(state, item.object)),
+              object: item.ability === null ? show(objectOf(state, item.object)) : null,
+              ability: item.ability,
               controller: item.controller,
               status: item.status,
               targets: item.targets,
@@ -90,6 +91,7 @@ export function viewFor(state: GameState, viewer: PlayerId): PlayerView {
             priority: state.chain.priority,
             passes: state.chain.passes,
           },
+    triggered: state.triggered,
     stage: state.stage,
     decision: decision !== null && decision.player === viewer ? decision : null,
     winner: state.winner,

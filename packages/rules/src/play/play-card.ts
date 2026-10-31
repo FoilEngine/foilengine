@@ -10,6 +10,7 @@ import type {
   ObjectId,
   PlayCard,
 } from '@foilengine/types';
+import { trigger } from '../abilities/triggers.ts';
 import { addToChain, finalize, givePriorityToNewest, removeFromChain } from '../chain/chain.ts';
 import { cleanup } from '../cleanup/cleanup.ts';
 import {
@@ -25,6 +26,7 @@ import {
 import { isValidTarget } from '../effects/targets.ts';
 import { EngineInvariantError, IllegalActionError } from '../errors.ts';
 import { payCost, useRunes } from '../resources/payment.ts';
+import { settle } from '../tasks/tasks.ts';
 
 const illegal = (
   code: IllegalReason['code'],
@@ -182,6 +184,8 @@ function enterBoard(
     from,
     battlefield,
   });
+  // 383.4.a.2: its Play Effects trigger once it has entered the board.
+  trigger(draft, 'played', [unit.id]);
   givePriorityToNewest(draft);
 }
 
@@ -196,6 +200,7 @@ export function applyPlayCard(
   const draft = draftOf(state);
   const reason = playCard(draft, state, action);
   if (reason !== null) throw new IllegalActionError(reason);
+  settle(draft);
   if (draft.stage.kind === 'ended' && draft.winner === null)
     throw new EngineInvariantError('Game ended without a winner');
   return { state: stateOf(state, draft), events: draft.events };

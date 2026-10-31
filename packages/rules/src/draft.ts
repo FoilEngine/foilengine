@@ -17,6 +17,8 @@ import type {
   PlayerZoneId,
   RngState,
   ShowdownState,
+  Task,
+  TriggeredAbility,
 } from '@foilengine/types';
 import { EngineInvariantError } from './errors.ts';
 import { copyPool } from './resources/rune-pool.ts';
@@ -61,6 +63,8 @@ export type Draft = {
   showdown: ShowdownState | null;
   combat: CombatState | null;
   chain: ChainState | null;
+  triggered: readonly TriggeredAbility[];
+  tasks: readonly Task[];
   turnOrder: readonly PlayerId[];
   stage: GameStage;
   winner: PlayerId | null;
@@ -99,6 +103,8 @@ export function draftOf(state: GameState): Draft {
     showdown: state.showdown,
     combat: state.combat,
     chain: state.chain,
+    triggered: state.triggered,
+    tasks: state.tasks,
     turnOrder: state.turnOrder,
     stage: state.stage,
     winner: state.winner,
@@ -128,6 +134,8 @@ export function stateOf(base: GameState, draft: Draft): GameState {
     showdown: draft.showdown,
     combat: draft.combat,
     chain: draft.chain,
+    triggered: draft.triggered,
+    tasks: draft.tasks,
     turnOrder: draft.turnOrder,
     stage: draft.stage,
     winner: draft.winner,
@@ -169,6 +177,13 @@ export function emptyZones(): MutableZones {
 export function emit(draft: Draft, event: EventInput): void {
   draft.eventSeq += 1;
   draft.events.push({ ...event, seq: draft.eventSeq } as GameEvent);
+}
+
+/** A fresh id for something that is not a card object, such as an ability on the Chain (123). */
+export function newId(draft: Draft): ObjectId {
+  const id = `o${draft.nextObjectId}` as ObjectId;
+  draft.nextObjectId += 1;
+  return id;
 }
 
 /** Creates a new object (119), ready. Ids come from a counter in the state: deterministic. */

@@ -12,7 +12,7 @@ import { drawCards } from '../actions/draw.ts';
 import { type Draft, draftOf, emit, objectOf, playerOf, renewObject, stateOf } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { shuffle } from '../rng/xoshiro128.ts';
-import { startTurn } from '../turn/turn.ts';
+import { settle } from '../tasks/tasks.ts';
 
 /** 117.1: up to two cards. */
 export const MULLIGAN_MAX = 2;
@@ -138,6 +138,7 @@ export function applyMulligan(
     visibility: { kind: 'public' },
     firstPlayer: first,
   });
-  startTurn(draft, first, 1);
+  draft.tasks = [{ kind: 'turn', step: 'next-turn' }];
+  settle(draft);
   return { state: stateOf(state, draft), events: draft.events };
 }

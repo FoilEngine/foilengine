@@ -22,6 +22,7 @@ import {
   updateObject,
 } from '../draft.ts';
 import { IllegalActionError } from '../errors.ts';
+import { settle } from '../tasks/tasks.ts';
 
 function invalid(message: string, rule: IllegalReason['rule']): IllegalReason {
   return { code: 'invalid-move', message, rule };
@@ -131,6 +132,7 @@ export function applyStandardMove(
   const draft = draftOf(state);
   const reason = standardMove(draft, state, action);
   if (reason !== null) throw new IllegalActionError(reason);
+  settle(draft);
   return { state: stateOf(state, draft), events: draft.events };
 }
 
