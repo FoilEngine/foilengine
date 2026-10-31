@@ -14,7 +14,7 @@ import { attach } from '../actions/attach.ts';
 import { drawCards } from '../actions/draw.ts';
 import { killPermanents } from '../actions/kill.ts';
 import { playToken } from '../actions/play-token.ts';
-import { type Draft, emit, locationOf, objectOf, updateObject } from '../draft.ts';
+import { type Draft, emit, locationOf, objectOf, playerOf, updateObject } from '../draft.ts';
 import { EngineInvariantError } from '../errors.ts';
 import { isValidTarget } from './targets.ts';
 
@@ -23,8 +23,18 @@ import { isValidTarget } from './targets.ts';
  * no longer valid is unaffected (359.3.e.5), and an instruction whose targets are all invalid
  * does not execute (359.3.e.7); the spell still resolves (359.3.e.1). A target that changed
  * zones is a new object, so it is no longer found on the board (359.3.e.2, 359.3.e.4).
+ *
+ * It starts at instruction `from`, with the `token` an earlier instruction played. An instruction
+ * that needs a player's choice records it in `draft.resolving` and stops (ADR 0020): it returns
+ * false, and the resolution resumes once the choice is made. It returns true when the last
+ * instruction has run.
  */
-export function executeInstructions(draft: Draft, item: ChainItem): void {
+export function executeInstructions(
+  draft: Draft,
+  item: ChainItem,
+  from = 0,
+  played: ObjectId | null = null,
+): boolean {
   const effect = effectOf(draft, item);
   const specs = effect.targets ?? [];
   const legal = (index: number) => {
@@ -37,7 +47,7 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
       : null;
   };
   // The token an earlier instruction played, for a later linked instruction (359.3.e.14).
-  let token: ObjectId | null = null;
+  let token = played;
   // The object an instruction affects: a valid target, or this permanent or the token if it is
   // still on the board.
   const affected = (object: InstructionObject): ObjectId | null => {
@@ -45,8 +55,10 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
     const found = object === 'self' ? (item.ability?.source ?? null) : token;
     return found !== null && locationOf(draft, found) !== null ? found : null;
   };
-  for (const instruction of effect.instructions ?? []) {
-    if (draft.winner !== null) return;
+  const instructions = effect.instructions ?? [];
+  for (let index = from; index < instructions.length; index++) {
+    const instruction = instructions[index] as Instruction;
+    if (draft.winner !== null) return true;
     switch (instruction.kind) {
       case 'draw':
         // 414.2.b: the player draws when instructed; "Draw X" draws for the spell's controller.
@@ -122,10 +134,31 @@ export function executeInstructions(draft: Draft, item: ChainItem): void {
         attach(draft, source, target);
         break;
       }
+      case 'predict': {
+        // 437.1, 437.1.a: its controller looks at the top cards of their Main Deck, as many as
+        // there are (437.4), without burning out (437.4.a), then chooses (ADR 0020).
+        const cards = playerOf(draft, item.controller).zones.mainDeck.slice(0, instruction.amount);
+        if (cards.length === 0) break;
+        emit(draft, {
+          type: 'Predicted',
+          rule: '437.1',
+          visibility: { kind: 'public' },
+          player: item.controller,
+          count: cards.length,
+        });
+        draft.resolving = {
+          item: item.object,
+          next: index + 1,
+          token,
+          choice: { kind: 'predict', player: item.controller, cards },
+        };
+        return false;
+      }
       default:
         assertNever(instruction);
     }
   }
+  return true;
 }
 
 /** What a Chain item does: a card's targets and instructions, or one of its abilities'. */

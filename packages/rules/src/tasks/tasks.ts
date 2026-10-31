@@ -19,6 +19,8 @@ export function settle(draft: Draft): void {
       throw new EngineInvariantError(`More than ${MAX_TASKS_PER_ACTION} tasks in one action`);
     }
     if (draft.winner !== null || draft.stage.kind === 'ended') return;
+    // ADR 0020, 158.3: while a resolution waits for a choice, nothing else happens.
+    if (draft.resolving !== null) return;
     if (draft.triggered.length > 0) {
       if (!placeTriggered(draft)) return; // a player orders their triggered abilities
       continue;

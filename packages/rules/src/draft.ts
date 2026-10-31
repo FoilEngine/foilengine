@@ -16,6 +16,7 @@ import type {
   PlayerId,
   PlayerState,
   PlayerZoneId,
+  ResolutionState,
   RngState,
   ShowdownState,
   Task,
@@ -68,6 +69,7 @@ export type Draft = {
   triggered: readonly TriggeredAbility[];
   tasks: readonly Task[];
   effects: readonly ContinuousEffect[];
+  resolving: ResolutionState | null;
   turnOrder: readonly PlayerId[];
   stage: GameStage;
   winner: PlayerId | null;
@@ -110,6 +112,7 @@ export function draftOf(state: GameState): Draft {
     triggered: state.triggered,
     tasks: state.tasks,
     effects: state.effects,
+    resolving: state.resolving,
     turnOrder: state.turnOrder,
     stage: state.stage,
     winner: state.winner,
@@ -142,6 +145,7 @@ export function stateOf(base: GameState, draft: Draft): GameState {
     triggered: draft.triggered,
     tasks: draft.tasks,
     effects: draft.effects,
+    resolving: draft.resolving,
     turnOrder: draft.turnOrder,
     stage: draft.stage,
     winner: draft.winner,
