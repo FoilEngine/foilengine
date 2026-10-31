@@ -22,6 +22,8 @@ export type BoardReader = {
   objectAt(id: ObjectId): GameObject | undefined;
   /** Units on the board: in bases and at battlefields. */
   unitsOnBoard(): readonly ObjectId[];
+  /** Units on the board with a passive ability (365.1). */
+  passiveSources(): readonly ObjectId[];
   controllerOf(id: ObjectId): PlayerId;
 };
 
@@ -49,13 +51,36 @@ function once<T>(compute: () => T): () => T {
   };
 }
 
+/** The board part of a reader, each list computed once. */
+function boardOf(
+  units: () => readonly ObjectId[],
+  cards: GameState['cards'],
+  objectAt: (id: ObjectId) => GameObject | undefined,
+): Pick<BoardReader, 'unitsOnBoard' | 'passiveSources'> {
+  const unitsOnBoard = once(units);
+  return {
+    unitsOnBoard,
+    passiveSources: once(() =>
+      unitsOnBoard().filter((id) =>
+        ((cards[objectAt(id)?.card as never] as CardDefinition | undefined)?.abilities ?? []).some(
+          (ability) => ability.kind === 'passive',
+        ),
+      ),
+    ),
+  };
+}
+
 export function readerOfState(state: GameState): BoardReader {
   const objectAt = (id: ObjectId) => state.objects[id];
   return {
     cards: state.cards,
     effects: state.effects,
     objectAt,
-    unitsOnBoard: once(() => unitsOn(state.players, state.battlefields, state.cards, objectAt)),
+    ...boardOf(
+      () => unitsOn(state.players, state.battlefields, state.cards, objectAt),
+      state.cards,
+      objectAt,
+    ),
     // No effect changes control yet: a unit is controlled by its owner (190.3.a.2 arrives later).
     controllerOf: (id) => state.objects[id]?.owner as PlayerId,
   };
@@ -67,7 +92,11 @@ export function readerOfDraft(draft: Draft): BoardReader {
     cards: draft.cards,
     effects: draft.effects,
     objectAt,
-    unitsOnBoard: () => unitsOn(draft.players, draft.battlefields, draft.cards, objectAt),
+    ...boardOf(
+      () => unitsOn(draft.players, draft.battlefields, draft.cards, objectAt),
+      draft.cards,
+      objectAt,
+    ),
     controllerOf: (id) => controllerOf(draft, id),
   };
 }
@@ -83,11 +112,14 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
   const definition =
     object === undefined ? undefined : (reader.cards[object.card] as CardDefinition);
   if (object === undefined || definition?.category !== 'unit') return { might: null };
-  let might = definition.might ?? 0;
-  const onBoard = reader.unitsOnBoard();
-  if (onBoard.includes(id)) {
+  // Buffs and effects only ever apply to objects on the board: an object that leaves it becomes a
+  // new object, without buffs (705, 124), that no effect targets.
+  let might = (definition.might ?? 0) + object.buffs; // 703
+  for (const effect of reader.effects) if (effect.target === id) might += effect.might;
+  const sources = reader.passiveSources();
+  if (sources.length > 0 && reader.unitsOnBoard().includes(id)) {
     const controller = reader.controllerOf(id);
-    for (const source of onBoard) {
+    for (const source of sources) {
       const card = reader.cards[reader.objectAt(source)?.card as never] as
         | CardDefinition
         | undefined;
@@ -100,8 +132,6 @@ export function characteristicsWith(reader: BoardReader, id: ObjectId): Characte
         if (applies) might += ability.might;
       }
     }
-    for (const effect of reader.effects) if (effect.target === id) might += effect.might;
-    might += object.buffs; // 703
   }
   return { might };
 }
