@@ -41,9 +41,6 @@ export function mightOf(state: GameState, unit: ObjectId): number {
   return Math.max(0, characteristics(state, unit).might ?? 0);
 }
 
-const mightOnDraft = (draft: Draft, unit: ObjectId): number =>
-  Math.max(0, characteristicsWith(readerOfDraft(draft), unit).might ?? 0);
-
 /** Damage still needed to make the unit's damage lethal: non-zero and at least its Might (142.4.b). */
 export function lethalAmount(state: GameState, unit: ObjectId): number {
   return lethalWith(readerOfState(state), state, unit);
@@ -62,8 +59,10 @@ function lethalWith(reader: BoardReader, state: GameState, unit: ObjectId): numb
 const unitsOf = (draft: Draft, battlefield: ObjectId, player: PlayerId) =>
   battlefieldOf(draft, battlefield).units.filter((unit) => controllerOf(draft, unit) === player);
 
-const sumMight = (draft: Draft, units: readonly ObjectId[]) =>
-  units.reduce((total, unit) => total + mightOnDraft(draft, unit), 0);
+const sumMight = (draft: Draft, units: readonly ObjectId[]) => {
+  const reader = readerOfDraft(draft);
+  return units.reduce((total, unit) => total + mightWith(reader, unit), 0);
+};
 
 /**
  * 323.12, 466: a Combat begins at a battlefield where it is staged. It opens with a Combat
@@ -333,15 +332,16 @@ export function killLethalUnits(draft: Draft): boolean {
   ];
   // 323.4: every unit with lethal damage is killed at the same time: which ones is decided on the
   // board as it is, before any of them leaves it (a dying unit's passive ability still counts).
+  // 142.4.b, 143.2.b: non-zero damage equal to or greater than its Might. Only damaged units can
+  // die: the board is read only if there are some.
+  const damaged = locations.map((location) =>
+    location.list.filter((id) => objectOf(draft, id).damage > 0),
+  );
+  if (damaged.every((units) => units.length === 0)) return false;
   const reader = readerOfDraft(draft);
-  const lethal = (id: ObjectId) => {
-    // 142.4.b, 143.2.b: non-zero damage equal to or greater than its Might.
-    const object = objectOf(draft, id);
-    return (
-      object.damage > 0 && object.damage >= Math.max(0, characteristicsWith(reader, id).might ?? 0)
-    );
-  };
-  const dying = locations.map((location) => location.list.filter(lethal));
+  const dying = damaged.map((units) =>
+    units.filter((id) => objectOf(draft, id).damage >= mightWith(reader, id)),
+  );
   // 808.1.d.2, 383.2.c.3: abilities that trigger on their source's death are processed just
   // before it goes to the trash, while what they need about it can still be noted.
   for (const units of dying) trigger(draft, 'dies', units);

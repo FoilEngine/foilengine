@@ -32,15 +32,11 @@ export type Characteristics = {
   readonly might: number | null;
 };
 
-const unitsOn = (
+/** Every object on the board: in bases and at battlefields (runes included). */
+const onBoard = (
   players: readonly { readonly zones: { readonly base: readonly ObjectId[] } }[],
   battlefields: readonly { readonly units: readonly ObjectId[] }[],
-  cards: GameState['cards'],
-  objectAt: (id: ObjectId) => GameObject | undefined,
-) =>
-  [...players.flatMap((p) => p.zones.base), ...battlefields.flatMap((b) => b.units)].filter(
-    (id) => cards[objectAt(id)?.card as never]?.category === 'unit',
-  );
+): ObjectId[] => [...players.flatMap((p) => p.zones.base), ...battlefields.flatMap((b) => b.units)];
 
 /** Computes `compute()` once, on first use: a reader is read many times, the board does not change. */
 function once<T>(compute: () => T): () => T {
@@ -53,18 +49,17 @@ function once<T>(compute: () => T): () => T {
 
 /** The board part of a reader, each list computed once. */
 function boardOf(
-  units: () => readonly ObjectId[],
+  ids: () => readonly ObjectId[],
   cards: GameState['cards'],
   objectAt: (id: ObjectId) => GameObject | undefined,
 ): Pick<BoardReader, 'unitsOnBoard' | 'passiveSources'> {
-  const unitsOnBoard = once(units);
+  const definitionOf = (id: ObjectId) =>
+    cards[objectAt(id)?.card as never] as CardDefinition | undefined;
   return {
-    unitsOnBoard,
+    unitsOnBoard: once(() => ids().filter((id) => definitionOf(id)?.category === 'unit')),
     passiveSources: once(() =>
-      unitsOnBoard().filter((id) =>
-        ((cards[objectAt(id)?.card as never] as CardDefinition | undefined)?.abilities ?? []).some(
-          (ability) => ability.kind === 'passive',
-        ),
+      ids().filter((id) =>
+        (definitionOf(id)?.abilities ?? []).some((ability) => ability.kind === 'passive'),
       ),
     ),
   };
@@ -76,11 +71,7 @@ export function readerOfState(state: GameState): BoardReader {
     cards: state.cards,
     effects: state.effects,
     objectAt,
-    ...boardOf(
-      () => unitsOn(state.players, state.battlefields, state.cards, objectAt),
-      state.cards,
-      objectAt,
-    ),
+    ...boardOf(() => onBoard(state.players, state.battlefields), state.cards, objectAt),
     // No effect changes control yet: a unit is controlled by its owner (190.3.a.2 arrives later).
     controllerOf: (id) => state.objects[id]?.owner as PlayerId,
   };
@@ -92,11 +83,7 @@ export function readerOfDraft(draft: Draft): BoardReader {
     cards: draft.cards,
     effects: draft.effects,
     objectAt,
-    ...boardOf(
-      () => unitsOn(draft.players, draft.battlefields, draft.cards, objectAt),
-      draft.cards,
-      objectAt,
-    ),
+    ...boardOf(() => onBoard(draft.players, draft.battlefields), draft.cards, objectAt),
     controllerOf: (id) => controllerOf(draft, id),
   };
 }
